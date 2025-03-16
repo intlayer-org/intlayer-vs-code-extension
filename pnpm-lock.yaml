@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@intlayer/chokidar':
-        specifier: ^5.3.4
-        version: 5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)(fast-glob@3.3.3)(intlayer@5.3.4)(react@19.0.0)
+        specifier: ^5.3.5
+        version: 5.3.5(@intlayer/api@5.3.4)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)(fast-glob@3.3.3)(intlayer@5.3.4)(react@19.0.0)
       '@intlayer/cli':
-        specifier: ^5.3.4
-        version: 5.3.4(@intlayer/api@5.3.4)(@intlayer/chokidar@5.3.4)(@intlayer/config@5.3.4)(@intlayer/dictionaries-entry@5.3.4)
+        specifier: ^5.3.5
+        version: 5.3.5(@intlayer/api@5.3.4)(@intlayer/chokidar@5.3.5)(@intlayer/config@5.3.5)(@intlayer/dictionaries-entry@5.3.5)
       '@intlayer/config':
-        specifier: ^5.3.4
-        version: 5.3.4(intlayer@5.3.4)
+        specifier: ^5.3.5
+        version: 5.3.5(intlayer@5.3.4)
     devDependencies:
       '@types/mocha':
         specifier: ^10.0.10
@@ -266,30 +266,30 @@ packages:
     peerDependencies:
       '@intlayer/config': 5.3.4
 
-  '@intlayer/chokidar@5.3.4':
-    resolution: {integrity: sha512-ysFDuaWOBRhHIKUoYy7Xe4geqiJ02ItQbqXTA+3ARw43mVMeU+/xvYzdjB4OV53QW4kgGMTzU1VREd327Ea9vQ==}
+  '@intlayer/chokidar@5.3.5':
+    resolution: {integrity: sha512-4fTjJryabUNkkMsLCTEgCBGzHQVMER3zPsFRNXzIGahVwy6xAhMDq57qRSOepFQvbXWMG3xppyVMp+M6G5Qo2Q==}
     engines: {node: '>=14.18'}
     peerDependencies:
-      '@intlayer/api': 5.3.4
-      '@intlayer/config': 5.3.4
-      '@intlayer/core': 5.3.4
+      '@intlayer/api': 5.3.5
+      '@intlayer/config': 5.3.5
+      '@intlayer/core': 5.3.5
       fast-glob: ^3.3.3
-      intlayer: 5.3.4
+      intlayer: 5.3.5
       react: '>=16.0.0'
 
-  '@intlayer/cli@5.3.4':
-    resolution: {integrity: sha512-krfgXsloc2jEFaLiSWo9Z7dG0143gFE6qNhnAHp6QafPPT2zyQuDZxq65oovvfL0QhSKvMSTdpGcrzwTXOKAqA==}
+  '@intlayer/cli@5.3.5':
+    resolution: {integrity: sha512-gtMNujILRSpZl07QHMYueiYBoui9KX32r7sKh+xXtfwl1Iq+HJcJMwlxtKo7xr28lnCdwhpWYjxilsDSeMgCiA==}
     peerDependencies:
-      '@intlayer/api': 5.3.4
-      '@intlayer/chokidar': 5.3.4
-      '@intlayer/config': 5.3.4
-      '@intlayer/dictionaries-entry': 5.3.4
+      '@intlayer/api': 5.3.5
+      '@intlayer/chokidar': 5.3.5
+      '@intlayer/config': 5.3.5
+      '@intlayer/dictionaries-entry': 5.3.5
 
-  '@intlayer/config@5.3.4':
-    resolution: {integrity: sha512-sFGDxZjicI0Mv1RrKRsydEHvQx71WWcL0jnMxe6+thXA9U63+KNdjHK4e4miDndkLd0T/FwCPdATuw4JMvdthg==}
+  '@intlayer/config@5.3.5':
+    resolution: {integrity: sha512-x3gGAxinbTvNBrpUkLYVpW7tZx/88FwSNETFnL6H/ONzjLR5VnSFKgCkkUJ7o75y3CtKCnGq4me6BsZVGKAweg==}
     engines: {node: '>=14.18'}
     peerDependencies:
-      intlayer: 5.3.4
+      intlayer: 5.3.5
 
   '@intlayer/core@5.3.4':
     resolution: {integrity: sha512-oejIqXne1tLiLzr5l9KcfqVj63GvUEroXGvuXHHvWNjVEUTa34UfFBfUtNJvllHQtPF7ZiBG3re9lXIbR0jomg==}
@@ -300,12 +300,12 @@ packages:
       '@intlayer/dictionaries-entry': 5.3.4
       intlayer: 5.3.4
 
-  '@intlayer/dictionaries-entry@5.3.4':
-    resolution: {integrity: sha512-kCuugOdFSK6urwyvYNP48m/bSdb5sftdEEocY1bSDqnEIM5AhOJNY4p3SOUTfp3MsHrr6Iry5BpvmyAVBbjgnQ==}
+  '@intlayer/dictionaries-entry@5.3.5':
+    resolution: {integrity: sha512-42t1wQEMCfV5qPb5KgWJrnPdWYZQgnga+/elBmSLobm+Tayd02zbQUw0BFk/VK+pFPz79Cp+alxb0JtHqKAtpA==}
     engines: {node: '>=14.18'}
     peerDependencies:
-      '@intlayer/config': 5.3.4
-      intlayer: 5.3.4
+      '@intlayer/config': 5.3.5
+      intlayer: 5.3.5
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -1584,53 +1584,53 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.2': {}
 
-  '@intlayer/api@5.3.4(@intlayer/config@5.3.4)':
+  '@intlayer/api@5.3.4(@intlayer/config@5.3.5)':
     dependencies:
-      '@intlayer/config': 5.3.4(intlayer@5.3.4)
+      '@intlayer/config': 5.3.5(intlayer@5.3.4)
 
-  '@intlayer/chokidar@5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)(fast-glob@3.3.3)(intlayer@5.3.4)(react@19.0.0)':
+  '@intlayer/chokidar@5.3.5(@intlayer/api@5.3.4)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)(fast-glob@3.3.3)(intlayer@5.3.4)(react@19.0.0)':
     dependencies:
-      '@intlayer/api': 5.3.4(@intlayer/config@5.3.4)
-      '@intlayer/config': 5.3.4(intlayer@5.3.4)
-      '@intlayer/core': 5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.4)(@intlayer/dictionaries-entry@5.3.4)(intlayer@5.3.4)
-      '@intlayer/dictionaries-entry': 5.3.4(@intlayer/config@5.3.4)(intlayer@5.3.4)
+      '@intlayer/api': 5.3.4(@intlayer/config@5.3.5)
+      '@intlayer/config': 5.3.5(intlayer@5.3.4)
+      '@intlayer/core': 5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.5)(@intlayer/dictionaries-entry@5.3.5)(intlayer@5.3.4)
+      '@intlayer/dictionaries-entry': 5.3.5(@intlayer/config@5.3.5)(intlayer@5.3.4)
       chokidar: 3.6.0
       crypto-js: 4.2.0
       deep-equal: 2.2.3
       deepmerge: 4.3.1
       fast-glob: 3.3.3
-      intlayer: 5.3.4(@intlayer/cli@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)
+      intlayer: 5.3.4(@intlayer/cli@5.3.5)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)
       p-limit: 3.1.0
       react: 19.0.0
 
-  '@intlayer/cli@5.3.4(@intlayer/api@5.3.4)(@intlayer/chokidar@5.3.4)(@intlayer/config@5.3.4)(@intlayer/dictionaries-entry@5.3.4)':
+  '@intlayer/cli@5.3.5(@intlayer/api@5.3.4)(@intlayer/chokidar@5.3.5)(@intlayer/config@5.3.5)(@intlayer/dictionaries-entry@5.3.5)':
     dependencies:
-      '@intlayer/api': 5.3.4(@intlayer/config@5.3.4)
-      '@intlayer/chokidar': 5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)(fast-glob@3.3.3)(intlayer@5.3.4)(react@19.0.0)
-      '@intlayer/config': 5.3.4(intlayer@5.3.4)
-      '@intlayer/dictionaries-entry': 5.3.4(@intlayer/config@5.3.4)(intlayer@5.3.4)
+      '@intlayer/api': 5.3.4(@intlayer/config@5.3.5)
+      '@intlayer/chokidar': 5.3.5(@intlayer/api@5.3.4)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)(fast-glob@3.3.3)(intlayer@5.3.4)(react@19.0.0)
+      '@intlayer/config': 5.3.5(intlayer@5.3.4)
+      '@intlayer/dictionaries-entry': 5.3.5(@intlayer/config@5.3.5)(intlayer@5.3.4)
       commander: 13.1.0
       fast-glob: 3.3.3
       p-limit: 3.1.0
 
-  '@intlayer/config@5.3.4(intlayer@5.3.4)':
+  '@intlayer/config@5.3.5(intlayer@5.3.4)':
     dependencies:
       dotenv: 16.4.7
       esbuild: 0.24.2
-      intlayer: 5.3.4(@intlayer/cli@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)
+      intlayer: 5.3.4(@intlayer/cli@5.3.5)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)
 
-  '@intlayer/core@5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.4)(@intlayer/dictionaries-entry@5.3.4)(intlayer@5.3.4)':
+  '@intlayer/core@5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.5)(@intlayer/dictionaries-entry@5.3.5)(intlayer@5.3.4)':
     dependencies:
-      '@intlayer/api': 5.3.4(@intlayer/config@5.3.4)
-      '@intlayer/config': 5.3.4(intlayer@5.3.4)
-      '@intlayer/dictionaries-entry': 5.3.4(@intlayer/config@5.3.4)(intlayer@5.3.4)
-      intlayer: 5.3.4(@intlayer/cli@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)
+      '@intlayer/api': 5.3.4(@intlayer/config@5.3.5)
+      '@intlayer/config': 5.3.5(intlayer@5.3.4)
+      '@intlayer/dictionaries-entry': 5.3.5(@intlayer/config@5.3.5)(intlayer@5.3.4)
+      intlayer: 5.3.4(@intlayer/cli@5.3.5)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)
       negotiator: 1.0.0
 
-  '@intlayer/dictionaries-entry@5.3.4(@intlayer/config@5.3.4)(intlayer@5.3.4)':
+  '@intlayer/dictionaries-entry@5.3.5(@intlayer/config@5.3.5)(intlayer@5.3.4)':
     dependencies:
-      '@intlayer/config': 5.3.4(intlayer@5.3.4)
-      intlayer: 5.3.4(@intlayer/cli@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4)
+      '@intlayer/config': 5.3.5(intlayer@5.3.4)
+      intlayer: 5.3.4(@intlayer/cli@5.3.5)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4)
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -2318,11 +2318,11 @@ snapshots:
       hasown: 2.0.2
       side-channel: 1.1.0
 
-  intlayer@5.3.4(@intlayer/cli@5.3.4)(@intlayer/config@5.3.4)(@intlayer/core@5.3.4):
+  intlayer@5.3.4(@intlayer/cli@5.3.5)(@intlayer/config@5.3.5)(@intlayer/core@5.3.4):
     dependencies:
-      '@intlayer/cli': 5.3.4(@intlayer/api@5.3.4)(@intlayer/chokidar@5.3.4)(@intlayer/config@5.3.4)(@intlayer/dictionaries-entry@5.3.4)
-      '@intlayer/config': 5.3.4(intlayer@5.3.4)
-      '@intlayer/core': 5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.4)(@intlayer/dictionaries-entry@5.3.4)(intlayer@5.3.4)
+      '@intlayer/cli': 5.3.5(@intlayer/api@5.3.4)(@intlayer/chokidar@5.3.5)(@intlayer/config@5.3.5)(@intlayer/dictionaries-entry@5.3.5)
+      '@intlayer/config': 5.3.5(intlayer@5.3.4)
+      '@intlayer/core': 5.3.4(@intlayer/api@5.3.4)(@intlayer/config@5.3.5)(@intlayer/dictionaries-entry@5.3.5)(intlayer@5.3.4)
 
   is-arguments@1.2.0:
     dependencies:

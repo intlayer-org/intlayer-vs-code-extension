@@ -75,8 +75,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/config": "^5.3.4",
-    "@intlayer/cli": "^5.3.4",
-    "@intlayer/chokidar": "^5.3.4"
+    "@intlayer/config": "^5.3.5",
+    "@intlayer/cli": "^5.3.5",
+    "@intlayer/chokidar": "^5.3.5"
   }
 }
