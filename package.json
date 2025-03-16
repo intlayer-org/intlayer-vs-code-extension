@@ -1,0 +1,82 @@
+{
+  "name": "intlayer-navigator",
+  "displayName": "Intlayer",
+  "description": "Intlayer official VSCode extension. Helps you navigate to content files using useIntlayer keys. It also provides commands, as to create dictionary files.",
+  "version": "5.3.4",
+  "engines": {
+    "vscode": "^1.98.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.createDictionaryFile.ts",
+        "title": "Intlayer: Create Dictionary File (TypeScript)"
+      },
+      {
+        "command": "extension.createDictionaryFile.esm",
+        "title": "Intlayer: Create Dictionary File (ESM)"
+      },
+      {
+        "command": "extension.createDictionaryFile.cjs",
+        "title": "Intlayer: Create Dictionary File (CommonJS)"
+      },
+      {
+        "command": "extension.createDictionaryFile.json",
+        "title": "Intlayer: Create Dictionary File (JSON)"
+      },
+      {
+        "command": "extension.buildDictionaries",
+        "title": "Intlayer: Build Dictionaries"
+      },
+      {
+        "command": "extension.pushDictionaries",
+        "title": "Intlayer: Push Dictionaries"
+      },
+      {
+        "command": "extension.pullDictionaries",
+        "title": "Intlayer: Pull Dictionaries"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onCommand:extension.createDictionaryFile.ts",
+    "onCommand:extension.createDictionaryFile.esm",
+    "onCommand:extension.createDictionaryFile.cjs",
+    "onCommand:extension.createDictionaryFile.json",
+    "onCommand:extension.buildDictionaries",
+    "onCommand:extension.pushDictionaries",
+    "onCommand:extension.pullDictionaries",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
+  ],
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.98.0",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.21.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@intlayer/config": "^5.3.4",
+    "@intlayer/cli": "^5.3.4",
+    "@intlayer/chokidar": "^5.3.4"
+  }
+}
