@@ -2,6 +2,8 @@
 
 🚀 **Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
+![Intlayer VS Code Extension](https://github.com/aymericzip/intlayer/blob/main/docs/assets/vs_code_extension_demo.gif?raw=true)
+
 ## ✨ Features
 
 ✅ **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.  
@@ -61,14 +63,6 @@ The extension allows you to generate dictionary content files in different forma
 - **JSON (`.json`)** – `extension.createDictionaryFile.json`
 
 These commands automatically generate properly structured dictionary files, making it easier to manage localized content.
-
-## 🛠️ Configuration
-
-By default, the extension follows the standard Intlayer project structure. If your content files are stored in a different location, you can configure it via VS Code settings:
-
-1. Open **Settings (`Cmd + ,` on macOS / `Ctrl + ,` on Windows/Linux)`**
-2. Search for `Intlayer`
-3. Set your **custom content file path pattern** if needed.
 
 ## 🔄 Development & Contribution
 
