@@ -2,6 +2,7 @@ import { window } from "vscode";
 import { pull } from "@intlayer/cli";
 import { fetchDistantDictionaryKeys } from "@intlayer/chokidar";
 import { findProjectRoot } from "./findProjectRoot";
+import { getConfiguration } from "@intlayer/config";
 
 export const pullCommand = async () => {
   const projectDir = findProjectRoot();
@@ -14,7 +15,10 @@ export const pullCommand = async () => {
   window.showInformationMessage("Fetching dictionaries...");
 
   try {
-    const dictionariesKeys = await fetchDistantDictionaryKeys();
+    const configuration = getConfiguration({
+      baseDir: projectDir,
+    });
+    const dictionariesKeys = await fetchDistantDictionaryKeys(configuration);
 
     if (!dictionariesKeys.length) {
       window.showWarningMessage("No dictionaries available.");

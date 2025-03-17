@@ -1,14 +1,47 @@
 {
-  "name": "intlayer-vs-code-extention",
+  "name": "intlayer-vs-code-extension",
   "displayName": "Intlayer",
   "description": "Intlayer official VSCode extension. Helps you navigate to content files using useIntlayer keys. It also provides commands, as to create dictionary files.",
-  "version": "5.3.6",
+  "private": false,
+  "keywords": [
+    "intlayer",
+    "content",
+    "markdown",
+    "multilingual",
+    "i18n",
+    "internationalization",
+    "vscode"
+  ],
+  "icon": "icon.png",
+  "homepage": "https://intlayer.org",
+  "bugs": {
+    "url": "https://github.com/aymericzip/intlayer-vs-code-extension/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aymericzip/intlayer-vs-code-extension.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Aymeric PINEAU",
+    "url": "https://github.com/aymericzip"
+  },
+  "contributors": [
+    {
+      "name": "Aymeric Pineau",
+      "email": "ay.pineau@gmail.com",
+      "url": "https://github.com/aymericzip"
+    }
+  ],
+  "version": "5.3.8",
+  "categories": [
+    "Programming Languages",
+    "Formatters"
+  ],
   "engines": {
     "vscode": "^1.98.0"
   },
-  "categories": [
-    "Other"
-  ],
+  "publisher": "intlayer",
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -56,10 +89,10 @@
     "onLanguage:typescriptreact"
   ],
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile && pnpm run lint",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
@@ -75,8 +108,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/chokidar": "^5.3.6",
-    "@intlayer/cli": "^5.3.6",
-    "@intlayer/config": "^5.3.6"
+    "@intlayer/chokidar": "^5.3.7",
+    "@intlayer/cli": "^5.3.7",
+    "@intlayer/config": "^5.3.7"
   }
 }
