@@ -17,7 +17,7 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
   while (
     currentDir &&
     currentDir !== dirname(currentDir) &&
-    currentDir !== repoDir
+    currentDir.length >= (repoDir?.length ?? 0)
   ) {
     if (
       existsSync(join(currentDir, "package.json")) &&
