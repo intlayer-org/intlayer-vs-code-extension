@@ -16,30 +16,43 @@ import {
  *   - export function MyComponent(...)
  *   - export default function MyComponent(...)
  */
-function detectExportedComponentName(fileText: string): string | null {
-  // Regex that captures the exported identifier in a few common forms:
-  const exportConstRegex = /export\s+const\s+(\w+)/;
-  const exportFunctionRegex = /export\s+function\s+(\w+)/;
-  const exportDefaultFunctionRegex = /export\s+default\s+function\s+(\w+)/;
+const detectExportedComponentName = (fileText: string): string | null => {
+  // Added regexes for default ESM, default CJS, and named exports
+  const defaultEsmFnRegex = /export\s+default\s+function\s+(\w+)/;
+  const defaultEsmVarRegex = /export\s+default\s+(\w+)/;
+  const cjsDefaultRegex = /module\.exports\s*=\s*(\w+)/;
+  const cjsDefaultVarRegex = /exports\.default\s*=\s*(\w+)/;
+  const namedExportRegex = /export\s+(?:const|function)\s+(\w+)/g;
 
-  const constMatch = fileText.match(exportConstRegex);
-  if (constMatch && constMatch[1]) {
-    return constMatch[1];
+  // 1) Check for default ESM function or variable
+  const defaultEsmFnMatch = fileText.match(defaultEsmFnRegex);
+  if (defaultEsmFnMatch) {
+    return defaultEsmFnMatch[1];
   }
 
-  const funcMatch = fileText.match(exportFunctionRegex);
-  if (funcMatch && funcMatch[1]) {
-    return funcMatch[1];
+  const defaultEsmVarMatch = fileText.match(defaultEsmVarRegex);
+  if (defaultEsmVarMatch) {
+    return defaultEsmVarMatch[1];
   }
 
-  const defaultFuncMatch = fileText.match(exportDefaultFunctionRegex);
-  if (defaultFuncMatch && defaultFuncMatch[1]) {
-    return defaultFuncMatch[1];
+  // 2) Check for default CJS
+  const cjsDefaultMatch =
+    fileText.match(cjsDefaultRegex) || fileText.match(cjsDefaultVarRegex);
+  if (cjsDefaultMatch) {
+    return cjsDefaultMatch[1];
+  }
+
+  // 3) Otherwise, look for capitalized named exports
+  let match;
+  while ((match = namedExportRegex.exec(fileText)) !== null) {
+    if (/^[A-Z]/.test(match[1])) {
+      return match[1];
+    }
   }
 
   // If we can’t find it, return null
   return null;
-}
+};
 
 const getContentPosition = (content: string): Position => {
   const lines = content.split("\n");
@@ -79,14 +92,18 @@ export const generateDictionaryContent = async (
   const baseName = detectedExportName ?? fileBaseName;
 
   // 2) Determine if it’s TS or JS-based to pick the correct extension for the content file
-  //    .tsx => .content.ts, .jsx => .content.js
-  const contentFileExtension =
-    ext === ".tsx"
-      ? ".content.ts"
-      : ext === ".jsx"
-      ? ".content.js"
-      : // Fallback if can't detect .tsx/.jsx
-        ".content.ts";
+  let contentFileExtension = ".ts";
+  switch (format) {
+    case "json":
+      contentFileExtension = ".json";
+      break;
+    case "cjs":
+      contentFileExtension = ".js";
+      break;
+    case "esm":
+      contentFileExtension = ".js";
+      break;
+  }
 
   // 3) Build the target dictionary file name
   //    e.g. MyComponent => myComponent.content.ts
