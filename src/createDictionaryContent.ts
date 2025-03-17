@@ -1,3 +1,4 @@
+import { getConfiguration } from "@intlayer/config";
 import { existsSync, writeFileSync } from "fs";
 import { basename, dirname, join, extname } from "path";
 import {
@@ -8,6 +9,7 @@ import {
   Selection,
   TextEditorRevealType,
 } from "vscode";
+import { findProjectRoot } from "./findProjectRoot";
 
 /**
  * Attempt to detect an exported React component name in the file text.
@@ -74,9 +76,15 @@ export const generateDictionaryContent = async (
     return;
   }
 
+  const projectDir = findProjectRoot();
+
   const currentFilePath = editor.document.uri.fsPath;
   const currentFileName = basename(currentFilePath); // e.g. 'MyComponent.tsx'
   const currentDir = dirname(currentFilePath);
+
+  const configuration = getConfiguration({
+    baseDir: projectDir,
+  });
 
   // Grab the entire file text to parse for an exported component name
   const fileText = editor.document.getText();
@@ -86,7 +94,7 @@ export const generateDictionaryContent = async (
 
   // 1) Derive base name (without extension) from something like 'MyComponent.tsx' => 'MyComponent'
   //    or from 'index.jsx' => 'index'
-  const { baseName: fileBaseName, ext } = parseFileName(currentFileName);
+  const { baseName: fileBaseName } = parseFileName(currentFileName);
 
   // If we found a name from an exported component, use that instead
   const baseName = detectedExportName ?? fileBaseName;
@@ -108,7 +116,12 @@ export const generateDictionaryContent = async (
   // 3) Build the target dictionary file name
   //    e.g. MyComponent => myComponent.content.ts
   //         index => index.content.ts
-  const targetFileName = toLowerCamelCase(baseName) + contentFileExtension;
+  const targetFileName =
+    toLowerCamelCase(baseName) +
+    (configuration.content.fileExtensions[0] ?? ".content.ts").replace(
+      ".ts",
+      contentFileExtension
+    );
   const targetPath = join(currentDir, targetFileName);
 
   // 4) Build the variable name and dictionary key
