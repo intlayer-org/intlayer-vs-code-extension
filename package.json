@@ -1,8 +1,8 @@
 {
-  "name": "intlayer-navigator",
+  "name": "intlayer-vs-code-extention",
   "displayName": "Intlayer",
   "description": "Intlayer official VSCode extension. Helps you navigate to content files using useIntlayer keys. It also provides commands, as to create dictionary files.",
-  "version": "5.3.4",
+  "version": "5.3.5",
   "engines": {
     "vscode": "^1.98.0"
   },
@@ -75,8 +75,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/config": "^5.3.5",
+    "@intlayer/chokidar": "^5.3.5",
     "@intlayer/cli": "^5.3.5",
-    "@intlayer/chokidar": "^5.3.5"
+    "@intlayer/config": "^5.3.5"
   }
 }

@@ -1,16 +1,33 @@
-import { workspace } from "vscode";
+import { window, workspace } from "vscode";
 import { existsSync } from "fs";
 import { dirname, join } from "path";
 
-export const findProjectRoot = (startPath: string): string => {
-  let currentDir = startPath;
+const getActiveFilePath = () => {
+  const activeFile = window.activeTextEditor?.document.uri.fsPath;
+  if (!activeFile) {
+    return undefined;
+  }
+  return activeFile;
+};
 
-  while (currentDir !== dirname(currentDir)) {
-    if (existsSync(join(currentDir, "package.json"))) {
+export const findProjectRoot = (startPath?: string): string | undefined => {
+  const repoDir = workspace.workspaceFolders?.[0]?.uri.fsPath;
+  let currentDir = startPath ?? getActiveFilePath();
+
+  while (
+    currentDir &&
+    currentDir !== dirname(currentDir) &&
+    currentDir !== repoDir
+  ) {
+    if (
+      existsSync(join(currentDir, "package.json")) &&
+      existsSync(join(currentDir, ".intlayer"))
+    ) {
+      // Check if .intlayer file exists in the same directory
       return currentDir;
     }
     currentDir = dirname(currentDir);
   }
 
-  return workspace.workspaceFolders?.[0]?.uri.fsPath || "";
+  return undefined;
 };

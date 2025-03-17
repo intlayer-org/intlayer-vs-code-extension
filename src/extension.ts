@@ -10,7 +10,9 @@ export const activate = (context: ExtensionContext) => {
   context.subscriptions.push(
     languages.registerDefinitionProvider(
       [
+        { language: "javascript", scheme: "file" },
         { language: "javascriptreact", scheme: "file" },
+        { language: "typescript", scheme: "file" },
         { language: "typescriptreact", scheme: "file" },
       ],
       redirectUseIntlayerKeyToDictionary

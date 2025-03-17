@@ -1,17 +1,15 @@
 import { window } from "vscode";
 import { push, getContentDeclaration } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
-import { dirname, relative } from "path";
+import { relative } from "path";
 import { findProjectRoot } from "./findProjectRoot";
 
 export const pushCommand = async () => {
-  const editor = window.activeTextEditor;
-  if (!editor) {
-    window.showErrorMessage("No active text editor found.");
+  const projectDir = findProjectRoot();
+
+  if (!projectDir) {
+    window.showErrorMessage("Could not find intlayer project root.");
     return;
   }
-
-  const fileDir = dirname(editor.document.uri.fsPath);
-  const projectDir = findProjectRoot(fileDir);
 
   window.showInformationMessage("Fetching dictionaries...");
 

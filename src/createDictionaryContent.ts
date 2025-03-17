@@ -1,6 +1,13 @@
-import * as vscode from "vscode";
 import { existsSync, writeFileSync } from "fs";
 import { basename, dirname, join, extname } from "path";
+import {
+  window,
+  workspace,
+  Position,
+  Range,
+  Selection,
+  TextEditorRevealType,
+} from "vscode";
 
 /**
  * Attempt to detect an exported React component name in the file text.
@@ -34,12 +41,23 @@ function detectExportedComponentName(fileText: string): string | null {
   return null;
 }
 
+const getContentPosition = (content: string): Position => {
+  const lines = content.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const column = lines[i].indexOf("content: {}");
+    if (column !== -1) {
+      return new Position(i, column + "content: {".length);
+    }
+  }
+  return new Position(0, 0);
+};
+
 export const generateDictionaryContent = async (
   format: "ts" | "esm" | "cjs" | "json"
 ) => {
-  const editor = vscode.window.activeTextEditor;
+  const editor = window.activeTextEditor;
   if (!editor) {
-    vscode.window.showErrorMessage("No active text editor");
+    window.showErrorMessage("No active text editor");
     return;
   }
 
@@ -101,7 +119,7 @@ export const generateDictionaryContent = async (
 
   // 6) Write the file if not existing already (or ask to overwrite)
   if (existsSync(targetPath)) {
-    const overwrite = await vscode.window.showWarningMessage(
+    const overwrite = await window.showWarningMessage(
       `${basename(targetPath)} already exists. Overwrite?`,
       "Yes",
       "No"
@@ -113,11 +131,18 @@ export const generateDictionaryContent = async (
 
   writeFileSync(targetPath, fileData, "utf8");
 
-  vscode.window.showInformationMessage(`Dictionary created: ${targetFileName}`);
+  window.showInformationMessage(`Dictionary created: ${targetFileName}`);
 
   // Open the newly created file in VS Code
-  const document = await vscode.workspace.openTextDocument(targetPath);
-  await vscode.window.showTextDocument(document);
+  const document = await workspace.openTextDocument(targetPath);
+  const newEditor = await window.showTextDocument(document); // Capture the newEditor instance
+
+  const position = getContentPosition(fileData);
+  newEditor.selection = new Selection(position, position);
+  newEditor.revealRange(
+    new Range(position, position),
+    TextEditorRevealType.InCenter
+  );
 };
 
 /**

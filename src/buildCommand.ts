@@ -1,29 +1,31 @@
 import { window } from "vscode";
-import { build } from "@intlayer/cli";
 import { findProjectRoot } from "./findProjectRoot";
-import { dirname } from "path";
+import { getConfiguration } from "@intlayer/config";
+import { prepareIntlayer } from "@intlayer/chokidar";
+import { createRequire } from "module";
+import path from "path";
 
 export const buildCommand = async () => {
-  const editor = window.activeTextEditor;
+  const projectDir = findProjectRoot();
 
-  if (!editor) {
-    window.showErrorMessage("No active text editor found.");
+  if (!projectDir) {
+    window.showErrorMessage("Could not find intlayer project root.");
     return;
   }
 
-  const fileDir = dirname(editor.document.uri.fsPath);
-
-  const projectDir = findProjectRoot(fileDir);
+  const projectRequire = createRequire(path.join(projectDir, "package.json"));
 
   window.showInformationMessage("Building Intlayer dictionaries...");
 
   try {
-    await build({
+    const configuration = getConfiguration({
       baseDir: projectDir,
     });
+    await prepareIntlayer(configuration, projectRequire);
 
     window.showInformationMessage("Intlayer build completed successfully!");
   } catch (error) {
+    console.error(error);
     window.showErrorMessage(
       `Intlayer build failed: ${(error as Error).message}`
     );
