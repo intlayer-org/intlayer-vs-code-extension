@@ -117,7 +117,7 @@ export const generateDictionaryContent = async (
   //    e.g. MyComponent => myComponent.content.ts
   //         index => index.content.ts
   const targetFileName =
-    toLowerCamelCase(baseName) +
+    toLowerCamelCase(fileBaseName) +
     (configuration.content.fileExtensions[0] ?? ".content.ts").replace(
       ".ts",
       contentFileExtension

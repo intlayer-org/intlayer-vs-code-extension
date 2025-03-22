@@ -1,9 +1,9 @@
 import { commands, ExtensionContext, languages } from "vscode";
-import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { generateDictionaryContent } from "./createDictionaryContent";
 import { buildCommand } from "./buildCommand";
 import { pushCommand } from "./pushCommand";
 import { pullCommand } from "./pullCommand";
+import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 
 export const activate = (context: ExtensionContext) => {
   // Register the definition provider
