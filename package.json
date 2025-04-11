@@ -33,13 +33,13 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "5.3.13",
+  "version": "5.3.14",
   "categories": [
     "Programming Languages",
     "Formatters"
   ],
   "engines": {
-    "vscode": "^1.98.0"
+    "vscode": "^1.96.0"
   },
   "publisher": "intlayer",
   "main": "./out/extension.js",
@@ -99,7 +99,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.98.0",
+    "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
     "@vscode/test-cli": "^0.0.10",
