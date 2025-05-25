@@ -39,10 +39,12 @@ export const pullCommand = async () => {
       return;
     }
 
-    window.showInformationMessage("Pulling Intlayer project...");
+    window.showInformationMessage("Pulling...");
 
     await pull({
-      baseDir: projectDir,
+      configOptions: {
+        baseDir: projectDir,
+      },
       dictionaries: selectedDictionaries.map((d) => d.label),
     });
 

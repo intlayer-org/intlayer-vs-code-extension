@@ -1,7 +1,8 @@
-import { Position, Uri, Location, DefinitionProvider, window } from "vscode";
 import { getConfiguration } from "@intlayer/config";
-import { dirname, join } from "path";
+import { type Dictionary } from "@intlayer/core";
 import { existsSync, readFileSync } from "fs";
+import { dirname, join } from "path";
+import { DefinitionProvider, Location, Position, Uri, window } from "vscode";
 import { findProjectRoot } from "./findProjectRoot";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
@@ -30,7 +31,10 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
 
     const config = getConfiguration({ baseDir: projectDir });
 
-    const dictionaryPath = join(config.content.dictionariesDir, `${word}.json`);
+    const dictionaryPath = join(
+      config.content.unmergedDictionariesDir,
+      `${word}.json`
+    );
 
     if (!existsSync(dictionaryPath)) {
       console.warn("Dictionary not found", { dictionaryPath });
@@ -39,12 +43,16 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
 
     const dictionaryFileContent = readFileSync(dictionaryPath, "utf8");
 
-    const dictionary = JSON.parse(dictionaryFileContent);
+    const dictionaryies = JSON.parse(dictionaryFileContent) as Dictionary[];
 
-    if (!dictionary || typeof dictionary.filePath !== "string") {
-      return null;
-    }
+    const locations: Location[] = dictionaryies
+      .map(
+        (dictionary) =>
+          dictionary.filePath &&
+          new Location(Uri.file(dictionary.filePath), new Position(0, 0))
+      )
+      .filter((location) => typeof location !== "undefined") as Location[];
 
-    return new Location(Uri.file(dictionary.filePath), new Position(0, 0));
+    return locations;
   },
 };

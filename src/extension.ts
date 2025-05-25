@@ -3,9 +3,13 @@ import { generateDictionaryContent } from "./createDictionaryContent";
 import { buildCommand } from "./buildCommand";
 import { pushCommand } from "./pushCommand";
 import { pullCommand } from "./pullCommand";
+import { fillCommand } from "./fillCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
+import { replaceConsoleLog } from "./replaceConsoleLog";
 
 export const activate = (context: ExtensionContext) => {
+  replaceConsoleLog();
+
   // Register the definition provider
   context.subscriptions.push(
     languages.registerDefinitionProvider(
@@ -14,6 +18,7 @@ export const activate = (context: ExtensionContext) => {
         { language: "javascriptreact", scheme: "file" },
         { language: "typescript", scheme: "file" },
         { language: "typescriptreact", scheme: "file" },
+        { language: "vue", scheme: "file" },
       ],
       redirectUseIntlayerKeyToDictionary
     ),
@@ -36,6 +41,7 @@ export const activate = (context: ExtensionContext) => {
     ),
     commands.registerCommand("extension.buildDictionaries", buildCommand),
     commands.registerCommand("extension.pushDictionaries", pushCommand),
-    commands.registerCommand("extension.pullDictionaries", pullCommand)
+    commands.registerCommand("extension.pullDictionaries", pullCommand),
+    commands.registerCommand("extension.fillDictionaries", fillCommand)
   );
 };

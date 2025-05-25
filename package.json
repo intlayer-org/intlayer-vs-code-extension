@@ -72,6 +72,10 @@
       {
         "command": "extension.pullDictionaries",
         "title": "Intlayer: Pull Dictionaries"
+      },
+      {
+        "command": "extension.fillDictionaries",
+        "title": "Intlayer: Fill Dictionaries"
       }
     ]
   },
@@ -108,8 +112,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/chokidar": "^5.3.7",
-    "@intlayer/cli": "^5.3.7",
-    "@intlayer/config": "^5.3.7"
+    "@intlayer/chokidar": "^5.5.0",
+    "@intlayer/cli": "^5.5.0",
+    "@intlayer/config": "^5.5.0"
   }
 }

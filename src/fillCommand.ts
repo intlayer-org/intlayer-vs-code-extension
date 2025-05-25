@@ -1,17 +1,16 @@
 import { window } from "vscode";
-import { push, getContentDeclaration } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
-import { relative } from "path";
+import { fill, getContentDeclaration } from "@intlayer/cli";
 import { findProjectRoot } from "./findProjectRoot";
+import { relative } from "path";
+import { Locales } from "@intlayer/config";
 
-export const pushCommand = async () => {
+export const fillCommand = async () => {
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
     window.showErrorMessage("Could not find intlayer project root.");
     return;
   }
-
-  window.showInformationMessage("Fetching dictionaries...");
 
   try {
     const dictionaries = getContentDeclaration({
@@ -41,19 +40,29 @@ export const pushCommand = async () => {
       return;
     }
 
-    window.showInformationMessage("Pushing...");
+    window.showInformationMessage("filling...");
 
-    await push({
-      configOptions: {
-        baseDir: projectDir,
-      },
-      dictionaries: selectedDictionaries.map((d) => d.label),
-    });
+    for (const { label: dict } of selectedDictionaries) {
+      window.showInformationMessage(`Filling ${dict}…`);
+      // await each fill before moving on
+      try {
+        const result = await fill({
+          configOptions: { baseDir: projectDir },
+          sourceLocale: undefined as unknown as Locales,
+          keys: dict,
+        });
+        window.showInformationMessage(`Result for ${dict}: ${result}`);
+      } catch (error) {
+        window.showErrorMessage(
+          `Intlayer fill failed: ${(error as Error).message}`
+        );
+      }
+    }
 
-    window.showInformationMessage("Intlayer push completed successfully!");
+    window.showInformationMessage("Intlayer fill completed successfully!");
   } catch (error) {
     window.showErrorMessage(
-      `Intlayer push failed: ${(error as Error).message}`
+      `Intlayer fill failed: ${(error as Error).message}`
     );
   }
 };

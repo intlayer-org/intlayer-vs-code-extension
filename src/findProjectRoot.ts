@@ -1,5 +1,5 @@
 import { window, workspace } from "vscode";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 
 const getActiveFilePath = () => {
@@ -19,10 +19,19 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
     currentDir !== dirname(currentDir) &&
     currentDir.length >= (repoDir?.length ?? 0)
   ) {
-    if (
-      existsSync(join(currentDir, "package.json")) &&
-      existsSync(join(currentDir, ".intlayer"))
-    ) {
+    if (existsSync(join(currentDir, "package.json"))) {
+      const packageJson = JSON.parse(
+        readFileSync(join(currentDir, "package.json"), "utf8")
+      );
+
+      if (
+        packageJson.dependencies.intlayer ||
+        packageJson.devDependencies.intlayer ||
+        packageJson.peerDependencies.intlayer
+      ) {
+        return currentDir;
+      }
+
       // Check if .intlayer file exists in the same directory
       return currentDir;
     }
