@@ -6,12 +6,12 @@
 
 ## ✨ Features
 
-✅ **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.  
-✅ **Seamless Integration** – Works with **React, TypeScript, and JavaScript** projects using `react-intlayer` and `next-intlayer`.
-✅ **Enhanced Developer Experience** – Eliminates the need to manually search for content files.  
-✅ **Works with Localized Content** – Supports multi-language projects powered by Intlayer.  
-✅ **Dictionary Commands** – Build, push, or pull content dictionaries with ease.  
-✅ **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
+- ✅ **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.
+- ✅ **Seamless Integration** – Works with **React, TypeScript, and JavaScript** projects using `react-intlayer` and `next-intlayer`.
+- ✅ **Enhanced Developer Experience** – Eliminates the need to manually search for content files.
+- ✅ **Works with Localized Content** – Supports multi-language projects powered by Intlayer.
+- ✅ **Dictionary Commands** – Build, push, or pull content dictionaries with ease.
+- ✅ **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
 
 ## 🛠️ Installation
 
@@ -71,7 +71,7 @@ Interested in improving the extension? Contributions are welcome!
 ### Clone the repository:
 
 ```sh
-git clone https://github.com/your-username/intlayer.git
+git clone https://github.com/aymericzip/intlayer.git
 cd intlayer
 npm install
 ```
