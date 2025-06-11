@@ -98,6 +98,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
+    "vscode:package": "vsce package",
+    "vscode:publish": "vsce publish",
+    "vscode:login": "vsce login intlayer",
     "test": "vscode-test"
   },
   "devDependencies": {
