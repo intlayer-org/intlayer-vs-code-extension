@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "5.5.9",
+  "version": "5.7.7",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -115,8 +115,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/chokidar": "^5.5.9",
-    "@intlayer/cli": "^5.5.9",
-    "@intlayer/config": "^5.5.9"
+    "@intlayer/chokidar": "^5.7.7",
+    "@intlayer/cli": "^5.7.7",
+    "@intlayer/config": "^5.7.7"
   }
 }
