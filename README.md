@@ -1,34 +1,27 @@
 # Intlayer
 
-🚀 **Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
+**Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
 ![Intlayer VS Code Extension](https://github.com/aymericzip/intlayer/blob/main/docs/assets/vs_code_extension_demo.gif?raw=true)
 
-## ✨ Features
+## Features
 
-- ✅ **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.
-- ✅ **Seamless Integration** – Works with **React, TypeScript, and JavaScript** projects using `react-intlayer` and `next-intlayer`.
-- ✅ **Enhanced Developer Experience** – Eliminates the need to manually search for content files.
-- ✅ **Works with Localized Content** – Supports multi-language projects powered by Intlayer.
-- ✅ **Dictionary Commands** – Build, push, or pull content dictionaries with ease.
-- ✅ **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
+- **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.
+- **Seamless Integration** – Works with **React, TypeScript, and JavaScript** projects using `react-intlayer` and `next-intlayer`.
+- **Enhanced Developer Experience** – Eliminates the need to manually search for content files.
+- **Works with Localized Content** – Supports multi-language projects powered by Intlayer.
+- **Dictionary Commands** – Build, push, or pull content dictionaries with ease.
+- **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
+- **Fill Dictionaries** – Fill dictionaries with content from your project.
+- **Test Dictionaries** – Test dictionaries for missing translations.
 
-## 🛠️ Installation
+## Documentation
 
-1. Open **VS Code**.
-2. Go to the **Extensions Marketplace**.
-3. Search for **"Intlayer"**.
-4. Click **Install**.
+Check out the [documentation](https://intlayer.org/docs/vs-code-extension) for more information on how to use Intlayer with VS Code.
 
-Alternatively, install it via the command line:
+## Usage
 
-```sh
-code --install-extension intlayer
-```
-
-## 🚀 Usage
-
-1. Open a project using **react-intlayer**.
+1. Open a project using **intlayer**, **react-intlayer**, **next-intlayer**, **vue-intlayer**, **nuxt-intlayer**, etc.
 2. Find any call to `useIntlayer()`, for example:
 
    ```tsx
@@ -38,11 +31,11 @@ code --install-extension intlayer
 3. **Command-click** (`⌘+Click` on macOS) or **Ctrl+Click** (on Windows/Linux) on `"app"`.
 4. VS Code will **automatically open** the corresponding content file, e.g., `examples/vite-app/src/app.content.tsx`.
 
-## 🛠️ Commands
+## Commands
 
 Intlayer includes several commands to help you manage content dictionaries efficiently. You can access them via the **Command Palette (`Cmd + Shift + P` on macOS / `Ctrl + Shift + P` on Windows/Linux)**.
 
-### 📌 Dictionary Management
+### Dictionary Management
 
 - **Build Dictionaries** (`extension.buildDictionaries`)  
   Builds all dictionary content files based on the current project structure.
@@ -53,7 +46,13 @@ Intlayer includes several commands to help you manage content dictionaries effic
 - **Pull Dictionaries** (`extension.pullDictionaries`)  
   Syncs the latest dictionary content from your content repository to your local environment.
 
-### 📜 Content Declaration File Generator
+- **Fill Dictionaries** (`extension.fillDictionaries`)  
+  Fills the dictionaries with content from your project.
+
+- **Test Dictionaries** (`extension.testDictionaries`)  
+  Test dictionaries for missing translations.
+
+### Content Declaration File Generator
 
 The extension allows you to generate dictionary content files in different formats:
 
@@ -64,26 +63,13 @@ The extension allows you to generate dictionary content files in different forma
 
 These commands automatically generate properly structured dictionary files, making it easier to manage localized content.
 
-## 🔄 Development & Contribution
+## Development & Contribution
 
-Interested in improving the extension? Contributions are welcome!
+Interested in improving the extension? Contributions are welcome! See [CONTRIBUTING.md](https://github.com/aymericzip/intlayer/blob/main/CONTRIBUTING.md) for more information.
 
-### Clone the repository:
+## Feedback & Issues
 
-```sh
-git clone https://github.com/aymericzip/intlayer.git
-cd intlayer
-npm install
-```
-
-### Run in development mode:
-
-1. Open the project in **VS Code**.
-2. Press `F5` to launch a new **Extension Development Host** window.
-
-## 📮 Feedback & Issues
-
-If you encounter any issues or have feature requests, please open an issue on [GitHub](https://github.com/your-username/intlayer/issues).
+If you encounter any issues or have feature requests, please open an issue on [GitHub](https://github.com/aymericzip/intlayer/issues).
 
 ## 📜 License
 
