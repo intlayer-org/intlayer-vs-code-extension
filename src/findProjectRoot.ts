@@ -25,9 +25,9 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
       );
 
       if (
-        packageJson.dependencies.intlayer ||
-        packageJson.devDependencies.intlayer ||
-        packageJson.peerDependencies.intlayer
+        packageJson?.dependencies?.intlayer ||
+        packageJson?.devDependencies?.intlayer ||
+        packageJson?.peerDependencies?.intlayer
       ) {
         return currentDir;
       }
@@ -38,5 +38,5 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
     currentDir = dirname(currentDir);
   }
 
-  return undefined;
+  return repoDir;
 };

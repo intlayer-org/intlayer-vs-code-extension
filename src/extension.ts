@@ -6,6 +6,7 @@ import { pullCommand } from "./pullCommand";
 import { fillCommand } from "./fillCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { replaceConsoleLog } from "./replaceConsoleLog";
+import { testCommand } from "./testCommand";
 
 export const activate = (context: ExtensionContext) => {
   replaceConsoleLog();
@@ -39,9 +40,11 @@ export const activate = (context: ExtensionContext) => {
       "extension.createDictionaryFile.json",
       async () => await generateDictionaryContent("json")
     ),
+
     commands.registerCommand("extension.buildDictionaries", buildCommand),
     commands.registerCommand("extension.pushDictionaries", pushCommand),
     commands.registerCommand("extension.pullDictionaries", pullCommand),
-    commands.registerCommand("extension.fillDictionaries", fillCommand)
+    commands.registerCommand("extension.fillDictionaries", fillCommand),
+    commands.registerCommand("extension.testDictionaries", testCommand)
   );
 };

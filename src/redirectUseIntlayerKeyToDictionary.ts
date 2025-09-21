@@ -46,10 +46,14 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
     const dictionaryies = JSON.parse(dictionaryFileContent) as Dictionary[];
 
     const locations: Location[] = dictionaryies
+      .filter((dictionary) => Boolean(dictionary.filePath))
       .map(
         (dictionary) =>
           dictionary.filePath &&
-          new Location(Uri.file(dictionary.filePath), new Position(0, 0))
+          new Location(
+            Uri.file(join(projectDir, dictionary.filePath)),
+            new Position(0, 0)
+          )
       )
       .filter((location) => typeof location !== "undefined") as Location[];
 

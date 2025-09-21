@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "5.7.7",
+  "version": "6.0.0",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -76,6 +76,10 @@
       {
         "command": "extension.fillDictionaries",
         "title": "Intlayer: Fill Dictionaries"
+      },
+      {
+        "command": "extension.testDictionaries",
+        "title": "Intlayer: Test Dictionaries"
       }
     ]
   },
@@ -87,6 +91,8 @@
     "onCommand:extension.buildDictionaries",
     "onCommand:extension.pushDictionaries",
     "onCommand:extension.pullDictionaries",
+    "onCommand:extension.fillDictionaries",
+    "onCommand:extension.testDictionaries",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
@@ -115,8 +121,10 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/chokidar": "^5.7.7",
-    "@intlayer/cli": "^5.7.7",
-    "@intlayer/config": "^5.7.7"
+    "intlayer": "^6.0.0",
+    "@intlayer/chokidar": "^6.0.0",
+    "@intlayer/cli": "^6.0.0",
+    "@intlayer/api": "^6.0.0",
+    "@intlayer/config": "^6.0.0"
   }
 }

@@ -1,8 +1,9 @@
 import { window } from "vscode";
 import { pull } from "@intlayer/cli";
-import { fetchDistantDictionaryKeys } from "@intlayer/chokidar";
+import { getIntlayerAPIProxy } from "@intlayer/api";
 import { findProjectRoot } from "./findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
+import { Dictionary } from "intlayer";
 
 export const pullCommand = async () => {
   const projectDir = findProjectRoot();
@@ -18,16 +19,19 @@ export const pullCommand = async () => {
     const configuration = getConfiguration({
       baseDir: projectDir,
     });
-    const dictionariesKeys = await fetchDistantDictionaryKeys(configuration);
+    const apiProxy = getIntlayerAPIProxy(undefined, configuration);
+    const dictionariesKeysResult =
+      await apiProxy.dictionary.getDictionariesKeys();
+    const dictionaries = dictionariesKeysResult.data as Dictionary[];
 
-    if (!dictionariesKeys.length) {
+    if (!dictionaries.length) {
       window.showWarningMessage("No dictionaries available.");
       return;
     }
 
     // Show a selection dialog with multiple choices
     const selectedDictionaries = await window.showQuickPick(
-      dictionariesKeys.map((dict) => ({ label: dict, picked: false })), // Display dictionary names
+      dictionaries.map((dict) => ({ label: dict.key, picked: false })), // Display dictionary names
       {
         canPickMany: true,
         placeHolder: "Select dictionaries to pull",

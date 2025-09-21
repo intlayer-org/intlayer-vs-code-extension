@@ -1,8 +1,9 @@
 import { window } from "vscode";
-import { fill, getContentDeclaration } from "@intlayer/cli";
+import { fill } from "@intlayer/cli";
+import { listDictionaries } from "@intlayer/chokidar";
 import { findProjectRoot } from "./findProjectRoot";
 import { relative } from "path";
-import { Locales } from "@intlayer/config";
+import { getConfiguration, Locales } from "@intlayer/config";
 
 export const fillCommand = async () => {
   const projectDir = findProjectRoot();
@@ -13,11 +14,10 @@ export const fillCommand = async () => {
   }
 
   try {
-    const dictionaries = getContentDeclaration({
-      configOptions: {
-        baseDir: projectDir,
-      },
+    const configuration = getConfiguration({
+      baseDir: projectDir,
     });
+    const dictionaries = listDictionaries(configuration);
 
     if (!dictionaries.length) {
       window.showWarningMessage("No dictionaries available.");

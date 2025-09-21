@@ -1,7 +1,8 @@
 import { window } from "vscode";
-import { push, getContentDeclaration } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
+import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
 import { relative } from "path";
 import { findProjectRoot } from "./findProjectRoot";
+import unmergedDictionariesRecord from "@intlayer/unmerged-dictionaries-entry";
 
 export const pushCommand = async () => {
   const projectDir = findProjectRoot();
@@ -14,20 +15,14 @@ export const pushCommand = async () => {
   window.showInformationMessage("Fetching dictionaries...");
 
   try {
-    const dictionaries = getContentDeclaration({
-      configOptions: {
-        baseDir: projectDir,
-      },
-    });
-
-    if (!dictionaries.length) {
+    if (!unmergedDictionariesRecord.length) {
       window.showWarningMessage("No dictionaries available.");
       return;
     }
 
     // Show a selection dialog with multiple choices
     const selectedDictionaries = await window.showQuickPick(
-      dictionaries
+      Object.keys(unmergedDictionariesRecord)
         .map((path) => relative(projectDir, path))
         .map((dict) => ({ label: dict, picked: false })), // Display dictionary names
       {
