@@ -6,8 +6,13 @@ All notable changes to the "intlayer" extension will be documented in this file.
 
 ## 2025-09-21
 
-- Added: add fill and test commands
-- Added: add documentation
+- Added: new Intlayer Activity Bar tab with two views:
+  - Search webview (`intlayer.searchBar`) for live dictionary/content search
+  - Dictionaries tree (`intlayer.dictionaries`) with environments, dictionaries, and files
+- Added: toolbar actions on Dictionaries view (Build, Pull, Push, Fill, Refresh, Test, Create File)
+- Added: context menu actions (Fill on files; Pull/Push on dictionaries)
+- Added: auto-reveal current editor file in Dictionaries tree
+- Added: fill and test commands
 
 ## 2025-08-13
 

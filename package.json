@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "6.0.0",
+  "version": "6.0.1",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -44,46 +44,162 @@
   "publisher": "intlayer",
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "intlayer",
+          "title": "Intlayer",
+          "icon": "logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "intlayer": [
+        {
+          "type": "webview",
+          "id": "intlayer.searchBar",
+          "name": "Search"
+        },
+        {
+          "id": "intlayer.dictionaries",
+          "name": "Dictionaries"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "extension.buildDictionaries",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@0"
+        },
+        {
+          "command": "extension.pullDictionaries",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@1"
+        },
+        {
+          "command": "extension.pushDictionaries",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@2"
+        },
+        {
+          "command": "extension.fillDictionaries",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@3"
+        },
+        {
+          "command": "intlayer.refreshDictionaries",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@4"
+        },
+        {
+          "command": "extension.testDictionaries",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@5"
+        },
+        {
+          "command": "extension.createDictionaryFile",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@6"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "intlayer.fillDictionary",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.file",
+          "group": "inline@1"
+        },
+        {
+          "command": "intlayer.pullDictionary",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.dictionary",
+          "group": "inline@2"
+        },
+        {
+          "command": "intlayer.pushDictionary",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.dictionary",
+          "group": "inline@3"
+        }
+      ]
+    },
     "commands": [
       {
+        "command": "intlayer.fillDictionary",
+        "title": "Intlayer: Fill Dictionary",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "intlayer.pullDictionary",
+        "title": "Intlayer: Pull Dictionary",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "intlayer.pushDictionary",
+        "title": "Intlayer: Push Dictionary",
+        "icon": "$(cloud-upload)"
+      },
+      {
         "command": "extension.createDictionaryFile.ts",
-        "title": "Intlayer: Create Dictionary File (TypeScript)"
+        "title": "Intlayer: Create Dictionary File (TypeScript)",
+        "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile.esm",
-        "title": "Intlayer: Create Dictionary File (ESM)"
+        "title": "Intlayer: Create Dictionary File (ESM)",
+        "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile.cjs",
-        "title": "Intlayer: Create Dictionary File (CommonJS)"
+        "title": "Intlayer: Create Dictionary File (CommonJS)",
+        "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile.json",
-        "title": "Intlayer: Create Dictionary File (JSON)"
+        "title": "Intlayer: Create Dictionary File (JSON)",
+        "icon": "$(symbol-parameter)"
+      },
+      {
+        "command": "extension.createDictionaryFile",
+        "title": "Intlayer: Create Dictionary File",
+        "icon": "$(new-file)"
       },
       {
         "command": "extension.buildDictionaries",
-        "title": "Intlayer: Build Dictionaries"
+        "title": "Intlayer: Build Dictionaries",
+        "icon": "$(tools)"
       },
       {
         "command": "extension.pushDictionaries",
-        "title": "Intlayer: Push Dictionaries"
+        "title": "Intlayer: Push Dictionaries",
+        "icon": "$(cloud-upload)"
       },
       {
         "command": "extension.pullDictionaries",
-        "title": "Intlayer: Pull Dictionaries"
+        "title": "Intlayer: Pull Dictionaries",
+        "icon": "$(cloud-download)"
       },
       {
         "command": "extension.fillDictionaries",
-        "title": "Intlayer: Fill Dictionaries"
+        "title": "Intlayer: Fill Dictionaries",
+        "icon": "$(wand)"
       },
       {
         "command": "extension.testDictionaries",
-        "title": "Intlayer: Test Dictionaries"
+        "title": "Intlayer: Test Dictionaries",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "intlayer.refreshDictionaries",
+        "title": "Intlayer: Refresh",
+        "icon": "$(refresh)"
       }
     ]
   },
   "activationEvents": [
+    "onView:intlayer.searchBar",
+    "onView:intlayer.dictionaries",
+    "onCommand:intlayer.pullDictionary",
+    "onCommand:extension.createDictionaryFile",
     "onCommand:extension.createDictionaryFile.ts",
     "onCommand:extension.createDictionaryFile.esm",
     "onCommand:extension.createDictionaryFile.cjs",
@@ -121,10 +237,11 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "intlayer": "^6.0.0",
-    "@intlayer/chokidar": "^6.0.0",
-    "@intlayer/cli": "^6.0.0",
-    "@intlayer/api": "^6.0.0",
-    "@intlayer/config": "^6.0.0"
+    "fuse.js": "^7.1.0",
+    "intlayer": "^6.0.1",
+    "@intlayer/chokidar": "^6.0.1",
+    "@intlayer/cli": "^6.0.1",
+    "@intlayer/api": "^6.0.1",
+    "@intlayer/config": "^6.0.1"
   }
 }

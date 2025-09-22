@@ -2,7 +2,15 @@ import { getConfiguration } from "@intlayer/config";
 import { type Dictionary } from "@intlayer/core";
 import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
-import { DefinitionProvider, Location, Position, Uri, window } from "vscode";
+import {
+  DefinitionLink,
+  DefinitionProvider,
+  Location,
+  Position,
+  Range,
+  Uri,
+  window,
+} from "vscode";
 import { findProjectRoot } from "./findProjectRoot";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
@@ -12,7 +20,11 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       return null;
     }
 
-    const word = document.getText(range).replace(/['"]/g, "");
+    const word = document.getText(range).replace(/["']/g, "");
+    const originSelectionRange = new Range(
+      range.start.translate(0, 1),
+      range.end.translate(0, -1)
+    );
 
     const lineText = document.lineAt(position.line).text;
     if (
@@ -45,18 +57,20 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
 
     const dictionaryies = JSON.parse(dictionaryFileContent) as Dictionary[];
 
-    const locations: Location[] = dictionaryies
+    const links: DefinitionLink[] = dictionaryies
       .filter((dictionary) => Boolean(dictionary.filePath))
-      .map(
-        (dictionary) =>
-          dictionary.filePath &&
-          new Location(
-            Uri.file(join(projectDir, dictionary.filePath)),
-            new Position(0, 0)
-          )
-      )
-      .filter((location) => typeof location !== "undefined") as Location[];
+      .map((dictionary) => {
+        if (!dictionary.filePath) {
+          return undefined;
+        }
+        return {
+          originSelectionRange,
+          targetUri: Uri.file(join(projectDir, dictionary.filePath)),
+          targetRange: new Range(new Position(0, 0), new Position(0, 0)),
+        } as DefinitionLink;
+      })
+      .filter((link) => typeof link !== "undefined") as DefinitionLink[];
 
-    return locations;
+    return links.length ? links : null;
   },
 };

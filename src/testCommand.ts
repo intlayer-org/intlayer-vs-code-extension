@@ -28,9 +28,11 @@ const writeMissingReport = (
 ) => {
   const out = window.createOutputChannel("Intlayer");
   out.clear();
-  out.appendLine("Intlayer — Missing Translations Report");
   out.appendLine("=====================================");
-  out.appendLine("");
+  out.appendLine("Intlayer — Missing Translations Report");
+  out.appendLine("Intlayer — Missing Translations Report2");
+  // out.appendLine("=====================================");
+  // out.appendLine("");
   out.appendLine(
     `Missing locales (any): ${result.missingLocales.length ? result.missingLocales.join(", ") : "—"}`
   );
@@ -40,8 +42,10 @@ const writeMissingReport = (
   out.appendLine("");
 
   if (!result.missingTranslations.length) {
+    out.appendLine("Intlayer — Missing Translations Report3");
     out.appendLine("✔ No missing translation keys found.");
   } else {
+    out.appendLine("Intlayer — Missing Translations Report4");
     out.appendLine(
       `⚠ ${result.missingTranslations.length} missing translation key(s):\n`
     );
@@ -53,6 +57,9 @@ const writeMissingReport = (
       out.appendLine("");
     }
   }
+
+  out.appendLine("Intlayer — Missing Translations Repor5");
+  out.appendLine("Intlayer — Missing Translations Report6");
 
   out.show(true);
 };
@@ -85,12 +92,9 @@ export const testCommand = async () => {
       dictionaries.localDictionaries
     );
 
-    // Run and present results with a modal + optional details
-
-    window.showInformationMessage(JSON.stringify(dictionaryRecords));
-
-    // @ts-ignore will be fixed in the next version
-    const result = listMissingTranslations(dictionaryRecords, configuration);
+    const result = listMissingTranslations(dictionaryRecords, {
+      baseDir: projectDir,
+    });
 
     const hasIssues =
       result.missingTranslations.length > 0 || result.missingLocales.length > 0;

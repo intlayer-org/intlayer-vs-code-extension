@@ -29,14 +29,30 @@ export const pullCommand = async () => {
       return;
     }
 
-    // Show a selection dialog with multiple choices
-    const selectedDictionaries = await window.showQuickPick(
-      dictionaries.map((dict) => ({ label: dict.key, picked: false })), // Display dictionary names
-      {
-        canPickMany: true,
-        placeHolder: "Select dictionaries to pull",
-      }
+    // Try to preselect based on the active editor file name matching a dictionary key
+    const activeEditor = window.activeTextEditor;
+    const activeFileName = activeEditor
+      ? activeEditor.document.uri.fsPath
+      : undefined;
+
+    const quickPickItems = dictionaries.map((dict) => ({
+      label: dict.key,
+      picked:
+        !!activeFileName &&
+        (activeFileName.endsWith(`${dict.key}.content.ts`) ||
+          activeFileName.endsWith(`${dict.key}.content.js`) ||
+          activeFileName.endsWith(`${dict.key}.content.json`)),
+    }));
+
+    // Place the preselected item(s) at the top of the list
+    quickPickItems.sort((a, b) =>
+      a.picked === b.picked ? 0 : a.picked ? -1 : 1
     );
+
+    const selectedDictionaries = await window.showQuickPick(quickPickItems, {
+      canPickMany: true,
+      placeHolder: "Select dictionaries to pull",
+    });
 
     if (!selectedDictionaries || selectedDictionaries.length === 0) {
       window.showWarningMessage("No dictionary selected.");

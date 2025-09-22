@@ -20,16 +20,26 @@ export const pushCommand = async () => {
       return;
     }
 
+    // Compute active file relative path to preselect if it is a content file
+    const activeEditor = window.activeTextEditor;
+    const activeRelativePath = activeEditor
+      ? relative(projectDir, activeEditor.document.uri.fsPath)
+      : undefined;
+
     // Show a selection dialog with multiple choices
-    const selectedDictionaries = await window.showQuickPick(
-      Object.keys(unmergedDictionariesRecord)
-        .map((path) => relative(projectDir, path))
-        .map((dict) => ({ label: dict, picked: false })), // Display dictionary names
-      {
-        canPickMany: true,
-        placeHolder: "Select dictionaries to push",
-      }
+    const quickPickItems = Object.keys(unmergedDictionariesRecord)
+      .map((path) => relative(projectDir, path))
+      .map((dict) => ({ label: dict, picked: dict === activeRelativePath }));
+
+    // Place the preselected item(s) at the top of the list
+    quickPickItems.sort((a, b) =>
+      a.picked === b.picked ? 0 : a.picked ? -1 : 1
     );
+
+    const selectedDictionaries = await window.showQuickPick(quickPickItems, {
+      canPickMany: true,
+      placeHolder: "Select dictionaries to push",
+    });
 
     if (!selectedDictionaries || selectedDictionaries.length === 0) {
       window.showWarningMessage("No dictionary selected.");

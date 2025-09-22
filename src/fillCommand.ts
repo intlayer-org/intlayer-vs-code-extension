@@ -24,16 +24,26 @@ export const fillCommand = async () => {
       return;
     }
 
+    // Compute active file relative path to preselect if it is a content file
+    const activeEditor = window.activeTextEditor;
+    const activeRelativePath = activeEditor
+      ? relative(projectDir, activeEditor.document.uri.fsPath)
+      : undefined;
+
     // Show a selection dialog with multiple choices
-    const selectedDictionaries = await window.showQuickPick(
-      dictionaries
-        .map((path) => relative(projectDir, path))
-        .map((dict) => ({ label: dict, picked: false })), // Display dictionary names
-      {
-        canPickMany: true,
-        placeHolder: "Select dictionaries to push",
-      }
+    const quickPickItems = dictionaries
+      .map((path) => relative(projectDir, path))
+      .map((dict) => ({ label: dict, picked: dict === activeRelativePath }));
+
+    // Place the preselected item(s) at the top of the list
+    quickPickItems.sort((a, b) =>
+      a.picked === b.picked ? 0 : a.picked ? -1 : 1
     );
+
+    const selectedDictionaries = await window.showQuickPick(quickPickItems, {
+      canPickMany: true,
+      placeHolder: "Select dictionaries to fill",
+    });
 
     if (!selectedDictionaries || selectedDictionaries.length === 0) {
       window.showWarningMessage("No dictionary selected.");
@@ -42,16 +52,15 @@ export const fillCommand = async () => {
 
     window.showInformationMessage("filling...");
 
-    for (const { label: dict } of selectedDictionaries) {
-      window.showInformationMessage(`Filling ${dict}…`);
+    for (const { label: dictionary } of selectedDictionaries) {
+      window.showInformationMessage(`Filling ${dictionary}…`);
       // await each fill before moving on
       try {
         const result = await fill({
           configOptions: { baseDir: projectDir },
-          sourceLocale: undefined as unknown as Locales,
-          keys: dict,
+          keys: dictionary,
         });
-        window.showInformationMessage(`Result for ${dict}: ${result}`);
+        window.showInformationMessage(`Result for ${dictionary}: ${result}`);
       } catch (error) {
         window.showErrorMessage(
           `Intlayer fill failed: ${(error as Error).message}`

@@ -14,6 +14,20 @@
 - **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
 - **Fill Dictionaries** – Fill dictionaries with content from your project.
 - **Test Dictionaries** – Test dictionaries for missing translations.
+- **Intlayer Tab (Activity Bar)** – Browse and search dictionaries from a dedicated side tab with toolbar and context actions (Build, Pull, Push, Fill, Refresh, Test, Create File).
+
+### Intlayer Tab (Activity Bar)
+
+Open the Intlayer tab by clicking the Intlayer icon in the VS Code Activity Bar. It contains two views:
+
+- **Search**: A live search bar to quickly filter dictionaries and their content. Typing updates the results instantly.
+- **Dictionaries**: A tree view of your environments/projects, dictionary keys, and the files contributing entries. You can:
+  - Click a file to open it in the editor.
+  - Use the toolbar to run actions: Build, Pull, Push, Fill, Refresh, Test, and Create Dictionary File.
+  - Use the context menu for item‑specific actions:
+    - On a dictionary: Pull or Push
+    - On a file: Fill Dictionary
+  - When you switch editors, the tree will reveal the matching file if it belongs to a dictionary.
 
 ## Documentation
 
