@@ -1,7 +1,7 @@
 import { window } from "vscode";
 import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
 import { relative } from "path";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../tab/findProjectRoot";
 import unmergedDictionariesRecord from "@intlayer/unmerged-dictionaries-entry";
 
 export const pushCommand = async () => {

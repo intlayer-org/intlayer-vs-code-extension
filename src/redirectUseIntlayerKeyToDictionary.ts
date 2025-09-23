@@ -11,7 +11,7 @@ import {
   Uri,
   window,
 } from "vscode";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "./tab/findProjectRoot";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
   provideDefinition(document, position) {

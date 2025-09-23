@@ -1,7 +1,7 @@
 import { window } from "vscode";
 import { pull } from "@intlayer/cli";
 import { getIntlayerAPIProxy } from "@intlayer/api";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../tab/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
 import { Dictionary } from "intlayer";
 

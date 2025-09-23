@@ -1,9 +1,9 @@
 import { window } from "vscode";
 import { fill } from "@intlayer/cli";
 import { listDictionaries } from "@intlayer/chokidar";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../tab/findProjectRoot";
 import { relative } from "path";
-import { getConfiguration, Locales } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config";
 
 export const fillCommand = async () => {
   const projectDir = findProjectRoot();

@@ -79,7 +79,9 @@ export class DictionaryTreeDataProvider
     for (const env of envs) {
       const relPath = relative(env.projectDir, absolutePath);
       // If the absolute path is outside this env, the relative path will start with ..
-      if (relPath.startsWith("..")) continue;
+      if (relPath.startsWith("..")) {
+        continue;
+      }
       for (const file of env.files) {
         try {
           const jsonPath = join(env.dir, file);
@@ -108,7 +110,9 @@ export class DictionaryTreeDataProvider
     try {
       if (!element) {
         const roots = findAllProjectRoots();
-        if (!roots.length) return [];
+        if (!roots.length) {
+          return [];
+        }
 
         const envs: {
           projectDir: string;
@@ -120,11 +124,15 @@ export class DictionaryTreeDataProvider
           try {
             const config = getConfiguration({ baseDir: projectDir });
             const dir = config.content.unmergedDictionariesDir;
-            if (!dir || !existsSync(dir)) continue;
+            if (!dir || !existsSync(dir)) {
+              continue;
+            }
             const files = readdirSync(dir)
               .filter((f) => extname(f) === ".json")
               .sort();
-            if (!files.length) continue;
+            if (!files.length) {
+              continue;
+            }
 
             // derive label from package.json name or fallback to directory name
             let label = basename(projectDir);
@@ -132,7 +140,9 @@ export class DictionaryTreeDataProvider
               const pkg = JSON.parse(
                 readFileSync(join(projectDir, "package.json"), "utf8")
               );
-              if (pkg?.name && typeof pkg.name === "string") label = pkg.name;
+              if (pkg?.name && typeof pkg.name === "string") {
+                label = pkg.name;
+              }
             } catch {}
 
             envs.push({ projectDir, dir, files, label });
@@ -206,7 +216,9 @@ export class DictionaryTreeDataProvider
         const env = (this.cachedEnvironments || []).find(
           (e) => e.projectDir === element.projectDir
         );
-        if (!env) return [];
+        if (!env) {
+          return [];
+        }
         return env.files.map((file) => ({
           type: "dictionary" as const,
           key: basename(file, ".json"),
@@ -284,7 +296,9 @@ export class DictionaryTreeDataProvider
       const env = (this.cachedEnvironments || []).find(
         (e) => e.projectDir === dict.projectDir
       );
-      if (!env) return undefined;
+      if (!env) {
+        return undefined;
+      }
       return {
         type: "environment",
         label: env.label,

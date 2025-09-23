@@ -1,7 +1,7 @@
 import { window } from "vscode";
 import { listMissingTranslations } from "@intlayer/cli";
 import { listDictionaries, loadDictionaries } from "@intlayer/chokidar";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../tab/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
 import { createRequire } from "module";
 import path from "path";

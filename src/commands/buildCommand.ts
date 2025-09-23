@@ -1,5 +1,5 @@
 import { window } from "vscode";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../tab/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
 import { prepareIntlayer } from "@intlayer/chokidar";
 import { createRequire } from "module";

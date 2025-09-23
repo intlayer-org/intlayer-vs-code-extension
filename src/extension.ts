@@ -1,18 +1,18 @@
 import { commands, ExtensionContext, languages, window } from "vscode";
 import { generateDictionaryContent } from "./createDictionaryContent";
-import { buildCommand } from "./buildCommand";
-import { pushCommand } from "./pushCommand";
-import { pullCommand } from "./pullCommand";
-import { fillCommand } from "./fillCommand";
+import { buildCommand } from "./commands/buildCommand";
+import { pushCommand } from "./commands/pushCommand";
+import { pullCommand } from "./commands/pullCommand";
+import { fillCommand } from "./commands/fillCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { replaceConsoleLog } from "./replaceConsoleLog";
-import { testCommand } from "./testCommand";
-import { DictionaryTreeDataProvider } from "./dictionaryExplorer";
-import { SearchBarViewProvider } from "./searchBarViewProvider";
-import { fillDictionary } from "./fillDictionary";
-import { pushDictionary } from "./pushDictionary";
-import { pullDictionary } from "./pullDictionary";
-import { createDictionaryFile } from "./createDictionaryFile";
+import { testCommand } from "./commands/testCommand";
+import { DictionaryTreeDataProvider } from "./tab/dictionaryExplorer";
+import { SearchBarViewProvider } from "./tab/searchBarViewProvider";
+import { fillDictionary } from "./tab/fillDictionary";
+import { pushDictionary } from "./tab/pushDictionary";
+import { pullDictionary } from "./tab/pullDictionary";
+import { createDictionaryFile } from "./commands/createDictionaryFile";
 
 export const activate = (context: ExtensionContext) => {
   replaceConsoleLog();

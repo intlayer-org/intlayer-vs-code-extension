@@ -1,5 +1,5 @@
 import { window } from "vscode";
-import { generateDictionaryContent } from "./createDictionaryContent";
+import { generateDictionaryContent } from "../createDictionaryContent";
 
 export const createDictionaryFile = async () => {
   const choice = await window.showQuickPick(
