@@ -5,7 +5,6 @@ import { pushCommand } from "./commands/pushCommand";
 import { pullCommand } from "./commands/pullCommand";
 import { fillCommand } from "./commands/fillCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
-import { replaceConsoleLog } from "./replaceConsoleLog";
 import { testCommand } from "./commands/testCommand";
 import { DictionaryTreeDataProvider } from "./tab/dictionaryExplorer";
 import { SearchBarViewProvider } from "./tab/searchBarViewProvider";
@@ -15,8 +14,6 @@ import { pullDictionary } from "./tab/pullDictionary";
 import { createDictionaryFile } from "./commands/createDictionaryFile";
 
 export const activate = (context: ExtensionContext) => {
-  replaceConsoleLog();
-
   // Register the definition provider
   context.subscriptions.push(
     languages.registerDefinitionProvider(

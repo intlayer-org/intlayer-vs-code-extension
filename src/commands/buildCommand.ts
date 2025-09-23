@@ -4,9 +4,10 @@ import { getConfiguration } from "@intlayer/config";
 import { prepareIntlayer } from "@intlayer/chokidar";
 import { createRequire } from "module";
 import path from "path";
-
 export const buildCommand = async () => {
   const projectDir = findProjectRoot();
+
+  console.log("buildCommand");
 
   if (!projectDir) {
     window.showErrorMessage("Could not find intlayer project root.");
