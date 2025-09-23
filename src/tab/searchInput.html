@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 8px;
+        background-color: var(--vscode-editor-background);
+        color: var(--vscode-editor-foreground);
+        font-family: var(--vscode-font-family);
+        font-size: var(--vscode-font-size);
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        background-color: var(--vscode-input-background);
+        color: var(--vscode-input-foreground);
+        border: 1px solid var(--vscode-input-border);
+        border-radius: 2px;
+        font-family: inherit;
+        font-size: inherit;
+      }
+      input:focus {
+        outline: 1px solid var(--vscode-focusBorder);
+        border-color: var(--vscode-focusBorder);
+      }
+      input::placeholder {
+        color: var(--vscode-input-placeholderForeground);
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      id="q"
+      type="text"
+      placeholder="Search dictionaries..."
+      value="{{searchQuery}}"
+    />
+    <script>
+      const vscode = acquireVsCodeApi();
+      const input = document.getElementById("q");
+      let last = input.value || "";
+      const post = (value) => vscode.postMessage({ type: "query", value });
+      input.addEventListener("input", () => {
+        const v = input.value || "";
+        if (v === last) return;
+        last = v;
+        post(v);
+      });
+    </script>
+  </body>
+</html>
