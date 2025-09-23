@@ -66,16 +66,47 @@ Intlayer includes several commands to help you manage content dictionaries effic
 - **Test Dictionaries** (`extension.testDictionaries`)  
   Test dictionaries for missing translations.
 
-### Content Declaration File Generator
+### Content Declaration Generator
 
-The extension allows you to generate dictionary content files in different formats:
+Easily generate structured dictionary files in different formats:
 
-- **TypeScript (`.ts`)** – `extension.createDictionaryFile.ts`
-- **ES Module (`.esm`)** – `extension.createDictionaryFile.esm`
-- **CommonJS (`.cjs`)** – `extension.createDictionaryFile.cjs`
-- **JSON (`.json`)** – `extension.createDictionaryFile.json`
+If you're currently working on a component, it will generate the `.content.{ts,tsx,js,jsx,mjs,cjs,json}` file for you.
 
-These commands automatically generate properly structured dictionary files, making it easier to manage localized content.
+Example of component:
+
+```tsx fileName="src/components/MyComponent/index.tsx"
+const MyComponent = () => {
+  const { myTranslatedContent } = useIntlayer("my-component");
+
+  return <span>{myTranslatedContent}</span>;
+};
+```
+
+Generated file in TypeScript format:
+
+```tsx fileName="src/components/MyComponent/index.content.ts"
+import { t, type Dictionary } from "intlayer";
+
+const componentContent = {
+  key: "my-component",
+  content: {
+    myTranslatedContent: t({
+      en: "Hello World",
+      es: "Hola Mundo",
+      fr: "Bonjour le monde",
+    }),
+  },
+};
+
+export default componentContent;
+```
+
+Available formats:
+
+- **TypeScript (`.ts`)**
+- **ES Module (`.esm`)**
+- **CommonJS (`.cjs`)**
+- **JSON (`.json`)**
 
 ## Development & Contribution
 
