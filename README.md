@@ -10,7 +10,7 @@
 - **Seamless Integration** – Works with **React, TypeScript, and JavaScript** projects using `react-intlayer` and `next-intlayer`.
 - **Enhanced Developer Experience** – Eliminates the need to manually search for content files.
 - **Works with Localized Content** – Supports multi-language projects powered by Intlayer.
-- **Dictionary Commands** – Build, push, or pull content dictionaries with ease.
+- **Dictionary Commands** – Build, push, pull, fill, test content dictionaries with ease.
 - **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
 - **Fill Dictionaries** – Fill dictionaries with content from your project.
 - **Test Dictionaries** – Test dictionaries for missing translations.
@@ -54,6 +54,9 @@ Intlayer includes several commands to help you manage content dictionaries effic
 - **Build Dictionaries** (`extension.buildDictionaries`)  
   Builds all dictionary content files based on the current project structure.
 
+- **Build Current Dictionary** (`extension.buildActiveDictionary`)  
+  Builds the dictionary for the currently active `.content.*` file.
+
 - **Push Dictionaries** (`extension.pushDictionaries`)  
   Uploads the latest dictionary content to your content repository.
 
@@ -63,8 +66,26 @@ Intlayer includes several commands to help you manage content dictionaries effic
 - **Fill Dictionaries** (`extension.fillDictionaries`)  
   Fills the dictionaries with content from your project.
 
+- **Fill Current Dictionary** (`extension.fillActiveDictionary`)  
+  Fills content for the currently active `.content.*` file.
+
 - **Test Dictionaries** (`extension.testDictionaries`)  
   Test dictionaries for missing translations.
+
+- **Refresh Dictionaries** (`intlayer.refreshDictionaries`)  
+  Refreshes the Intlayer views.
+
+- **Pull Dictionary (Context)** (`intlayer.pullDictionary`)  
+  Context menu action on a dictionary item in the side view.
+
+- **Push Dictionary (Context)** (`intlayer.pushDictionary`)  
+  Context menu action on a dictionary item in the side view.
+
+- **Fill Dictionary (Context)** (`intlayer.fillDictionary`)  
+  Context menu action on a file item in the side view.
+
+- **Select Environment** (`intlayer.selectEnvironment`)  
+  Choose the active environment for actions.
 
 ### Content Declaration Generator
 
@@ -101,12 +122,14 @@ const componentContent = {
 export default componentContent;
 ```
 
-Available formats:
+Available formats and related commands:
 
-- **TypeScript (`.ts`)**
-- **ES Module (`.esm`)**
-- **CommonJS (`.cjs`)**
-- **JSON (`.json`)**
+- **TypeScript (`.ts`)** — `extension.createDictionaryFile.ts`
+- **ES Module (`.esm`)** — `extension.createDictionaryFile.esm`
+- **CommonJS (`.cjs`)** — `extension.createDictionaryFile.cjs`
+- **JSON (`.json`)** — `extension.createDictionaryFile.json`
+
+Generic command: **Create Content File** — `extension.createDictionaryFile`.
 
 ## Development & Contribution
 

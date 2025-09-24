@@ -267,7 +267,6 @@
     "@intlayer/chokidar": "^6.0.2",
     "@intlayer/cli": "^6.0.2",
     "@intlayer/config": "^6.0.2",
-    "concurrently": "^9.2.1",
     "dotenv": "^17.2.2",
     "fuse.js": "^7.1.0",
     "intlayer": "^6.0.2"

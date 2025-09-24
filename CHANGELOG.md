@@ -4,6 +4,24 @@ All notable changes to the "intlayer" extension will be documented in this file.
 
 ## [Unreleased]
 
+## 2025-09-24
+
+- Changed: bump version to 6.0.2
+- Added: new commands available from Command Palette and views:
+  - Intlayer: Build Current Dictionary (`extension.buildActiveDictionary`)
+  - Intlayer: Fill Current Dictionary (`extension.fillActiveDictionary`)
+  - Intlayer: Refresh Dictionaries (`intlayer.refreshDictionaries`)
+  - Intlayer: Fill Dictionary (`intlayer.fillDictionary`)
+  - Intlayer: Pull Dictionary (`intlayer.pullDictionary`)
+  - Intlayer: Push Dictionary (`intlayer.pushDictionary`)
+  - Intlayer: Select Environment (`intlayer.selectEnvironment`)
+  - Intlayer: Create Content File (`extension.createDictionaryFile`) and format-specific variants:
+    - TypeScript (`extension.createDictionaryFile.ts`)
+    - ESM (`extension.createDictionaryFile.esm`)
+    - CommonJS (`extension.createDictionaryFile.cjs`)
+    - JSON (`extension.createDictionaryFile.json`)
+- Docs: update README Commands and Activity Bar documentation
+
 ## 2025-09-21
 
 - Added: new Intlayer Activity Bar tab with two views:
