@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "6.0.1",
+  "version": "6.0.2",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -67,6 +67,13 @@
       ]
     },
     "menus": {
+      "editor/title": [
+        {
+          "when": "resourceExtname =~ /\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
+          "command": "extension.buildActiveDictionary",
+          "group": "navigation@99"
+        }
+      ],
       "view/title": [
         {
           "command": "extension.buildDictionaries",
@@ -124,6 +131,11 @@
     },
     "commands": [
       {
+        "command": "extension.buildActiveDictionary",
+        "title": "Intlayer: Build Current Dictionary",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "intlayer.fillDictionary",
         "title": "Intlayer: Fill Dictionary",
         "icon": "$(wand)"
@@ -166,7 +178,7 @@
       {
         "command": "extension.buildDictionaries",
         "title": "Intlayer: Build Dictionaries",
-        "icon": "$(tools)"
+        "icon": "$(refresh)"
       },
       {
         "command": "extension.pushDictionaries",
@@ -205,6 +217,7 @@
     "onCommand:extension.createDictionaryFile.cjs",
     "onCommand:extension.createDictionaryFile.json",
     "onCommand:extension.buildDictionaries",
+    "onCommand:extension.buildActiveDictionary",
     "onCommand:extension.pushDictionaries",
     "onCommand:extension.pullDictionaries",
     "onCommand:extension.fillDictionaries",
@@ -237,11 +250,11 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@intlayer/api": "^6.0.2",
+    "@intlayer/chokidar": "^6.0.2",
+    "@intlayer/cli": "^6.0.2",
+    "@intlayer/config": "^6.0.2",
     "fuse.js": "^7.1.0",
-    "intlayer": "^6.0.1",
-    "@intlayer/chokidar": "^6.0.1",
-    "@intlayer/cli": "^6.0.1",
-    "@intlayer/api": "^6.0.1",
-    "@intlayer/config": "^6.0.1"
+    "intlayer": "^6.0.2"
   }
 }

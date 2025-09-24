@@ -7,6 +7,7 @@ import { fillCommand } from "./commands/fillCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { testCommand } from "./commands/testCommand";
 import { DictionaryTreeDataProvider } from "./tab/dictionaryExplorer";
+import { buildActiveDictionary } from "./activeFile/buildActiveDictionary";
 import { SearchBarViewProvider } from "./tab/searchBarViewProvider";
 import { fillDictionary } from "./tab/fillDictionary";
 import { pushDictionary } from "./tab/pushDictionary";
@@ -45,6 +46,10 @@ export const activate = (context: ExtensionContext) => {
     ),
 
     commands.registerCommand("extension.buildDictionaries", buildCommand),
+    commands.registerCommand(
+      "extension.buildActiveDictionary",
+      buildActiveDictionary
+    ),
     commands.registerCommand("extension.pushDictionaries", pushCommand),
     commands.registerCommand("extension.pullDictionaries", pullCommand),
     commands.registerCommand("extension.fillDictionaries", fillCommand),
