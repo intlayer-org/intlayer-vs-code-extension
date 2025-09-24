@@ -9,7 +9,7 @@ export const createDictionaryFile = async () => {
       { label: "CommonJS (.js)", value: "cjs" },
       { label: "JSON (.json)", value: "json" },
     ],
-    { placeHolder: "Select dictionary file format" }
+    { placeHolder: "Select content file format" }
   );
 
   if (!choice) {

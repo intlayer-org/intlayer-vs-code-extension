@@ -9,7 +9,7 @@ import {
   Selection,
   TextEditorRevealType,
 } from "vscode";
-import { findProjectRoot } from "./tab/findProjectRoot";
+import { findProjectRoot } from "./utils/findProjectRoot";
 
 /**
  * Attempt to detect an exported React component name in the file text.

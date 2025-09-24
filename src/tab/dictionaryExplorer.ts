@@ -10,7 +10,8 @@ import {
   window,
 } from "vscode";
 import { getConfiguration } from "@intlayer/config";
-import { findAllProjectRoots } from "./findProjectRoot";
+import { findAllProjectRoots } from "../utils/findProjectRoot";
+import { getSelectedEnvironment } from "../utils/envStore";
 
 type DictionaryEntry = {
   filePath?: string;
@@ -311,13 +312,17 @@ export class DictionaryTreeDataProvider
 
   getTreeItem(element: IntlayerTreeNode): TreeItem {
     if (element.type === "environment") {
+      const selectedEnv = getSelectedEnvironment(element.projectDir);
       const item = new TreeItem(
-        element.label,
+        selectedEnv ? `${element.label} [${selectedEnv}]` : element.label,
         TreeItemCollapsibleState.Collapsed
       );
       item.contextValue = "intlayer.environment";
       item.id = `env:${element.projectDir}`;
-      item.tooltip = element.projectDir;
+      item.tooltip = selectedEnv
+        ? `${element.projectDir} — env: ${selectedEnv}`
+        : element.projectDir;
+      (item as any).projectDir = element.projectDir;
       return item;
     }
 

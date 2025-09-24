@@ -1,13 +1,13 @@
 import { window } from "vscode";
-import { findProjectRoot } from "../tab/findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
 import { prepareIntlayer } from "@intlayer/chokidar";
 import { createRequire } from "module";
 import path from "path";
+import { getConfigurationOptions } from "../utils/getConfiguration";
+
 export const buildCommand = async () => {
   const projectDir = findProjectRoot();
-
-  console.log("buildCommand");
 
   if (!projectDir) {
     window.showErrorMessage("Could not find intlayer project root.");
@@ -19,9 +19,8 @@ export const buildCommand = async () => {
   window.showInformationMessage("Building Intlayer dictionaries...");
 
   try {
-    const configuration = getConfiguration({
-      baseDir: projectDir,
-    });
+    const configOptions = await getConfigurationOptions(projectDir);
+    const configuration = getConfiguration(configOptions);
     await prepareIntlayer(configuration, projectRequire);
 
     window.showInformationMessage("Intlayer build completed successfully!");

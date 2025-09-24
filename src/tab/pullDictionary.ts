@@ -1,6 +1,7 @@
 import { window } from "vscode";
 import { pull } from "@intlayer/cli";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const pullDictionary = async (element?: unknown) => {
   const node = element as {
@@ -25,9 +26,11 @@ export const pullDictionary = async (element?: unknown) => {
 
   try {
     const displayName = node.key;
+    const configOptions = await getConfigurationOptions(projectDir);
+
     window.showInformationMessage(`Pulling ${displayName}…`);
     await pull({
-      configOptions: { baseDir: projectDir },
+      configOptions,
       dictionaries: [node.key],
     });
     window.showInformationMessage(`Pulled ${displayName}`);

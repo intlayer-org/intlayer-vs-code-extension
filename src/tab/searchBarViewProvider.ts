@@ -32,6 +32,11 @@ export class SearchBarViewProvider implements WebviewViewProvider {
       if (msg?.type === "query") {
         const v = typeof msg.value === "string" ? msg.value : "";
         this.treeDataProvider.setSearchQuery(v);
+        return;
+      }
+      if (msg?.type === "refresh") {
+        this.treeDataProvider.refresh();
+        return;
       }
     });
   }

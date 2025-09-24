@@ -2,9 +2,10 @@ import { window } from "vscode";
 import { getConfiguration } from "@intlayer/config";
 import { buildDictionary, loadLocalDictionaries } from "@intlayer/chokidar";
 import { createTypes } from "@intlayer/chokidar";
-import { findProjectRoot } from "../tab/findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { createRequire } from "module";
 import path from "path";
+import { logFunctions } from "../utils/logFunctions";
 
 export const buildActiveDictionary = async () => {
   const editor = window.activeTextEditor;
@@ -23,13 +24,16 @@ export const buildActiveDictionary = async () => {
     return;
   }
 
+  const configOptions = {
+    baseDir: projectDir,
+    logFunctions,
+  };
+
   const projectRequire = createRequire(path.join(projectDir, "package.json"));
 
-  const config = getConfiguration({ baseDir: projectDir });
+  const config = getConfiguration(configOptions);
 
   try {
-    window.showInformationMessage("Building current Intlayer dictionary...");
-
     const localeDictionaries = await loadLocalDictionaries(
       filePath,
       config,

@@ -1,9 +1,10 @@
 import { window } from "vscode";
 import { fill } from "@intlayer/cli";
 import { listDictionaries } from "@intlayer/chokidar";
-import { findProjectRoot } from "../tab/findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { relative } from "path";
 import { getConfiguration } from "@intlayer/config";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const fillCommand = async () => {
   const projectDir = findProjectRoot();
@@ -14,9 +15,8 @@ export const fillCommand = async () => {
   }
 
   try {
-    const configuration = getConfiguration({
-      baseDir: projectDir,
-    });
+    const configOptions = await getConfigurationOptions(projectDir);
+    const configuration = getConfiguration(configOptions);
     const dictionaries = listDictionaries(configuration);
 
     if (!dictionaries.length) {
@@ -55,17 +55,11 @@ export const fillCommand = async () => {
     for (const { label: dictionary } of selectedDictionaries) {
       window.showInformationMessage(`Filling ${dictionary}…`);
       // await each fill before moving on
-      try {
-        const result = await fill({
-          configOptions: { baseDir: projectDir },
-          keys: dictionary,
-        });
-        window.showInformationMessage(`Result for ${dictionary}: ${result}`);
-      } catch (error) {
-        window.showErrorMessage(
-          `Intlayer fill failed: ${(error as Error).message}`
-        );
-      }
+
+      await fill({
+        configOptions,
+        keys: dictionary,
+      });
     }
 
     window.showInformationMessage("Intlayer fill completed successfully!");

@@ -1,6 +1,7 @@
 import { window } from "vscode";
 import { fill } from "@intlayer/cli";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const fillDictionary = async (element?: unknown) => {
   const node = element as {
@@ -24,9 +25,11 @@ export const fillDictionary = async (element?: unknown) => {
   }
 
   try {
+    const configOptions = await getConfigurationOptions(projectDir);
+
     window.showInformationMessage(`Filling ${node.filePath}…`);
     await fill({
-      configOptions: { baseDir: projectDir },
+      configOptions,
       file: node.filePath,
     });
     window.showInformationMessage(`Filled ${node.filePath}`);

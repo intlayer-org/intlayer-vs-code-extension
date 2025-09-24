@@ -69,46 +69,26 @@
     "menus": {
       "editor/title": [
         {
-          "when": "resourceExtname =~ /\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
+          "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
           "command": "extension.buildActiveDictionary",
           "group": "navigation@99"
+        },
+        {
+          "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
+          "command": "extension.fillActiveDictionary",
+          "group": "navigation@100"
+        },
+        {
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx)$/) && !(resourceFilename =~ /\\.content\\\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
+          "command": "extension.createDictionaryFile",
+          "group": "navigation@98"
         }
       ],
       "view/title": [
         {
-          "command": "extension.buildDictionaries",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@0"
-        },
-        {
-          "command": "extension.pullDictionaries",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@1"
-        },
-        {
-          "command": "extension.pushDictionaries",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@2"
-        },
-        {
-          "command": "extension.fillDictionaries",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@3"
-        },
-        {
           "command": "intlayer.refreshDictionaries",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@4"
-        },
-        {
-          "command": "extension.testDictionaries",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@5"
-        },
-        {
-          "command": "extension.createDictionaryFile",
-          "when": "view == intlayer.dictionaries",
-          "group": "navigation@6"
+          "when": "view == intlayer.searchBar",
+          "group": "navigation@0"
         }
       ],
       "view/item/context": [
@@ -118,14 +98,34 @@
           "group": "inline@1"
         },
         {
-          "command": "intlayer.pullDictionary",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.dictionary",
+          "command": "extension.buildDictionaries",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "group": "inline@1"
+        },
+        {
+          "command": "extension.fillDictionaries",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
           "group": "inline@2"
         },
         {
-          "command": "intlayer.pushDictionary",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.dictionary",
+          "command": "intlayer.pullDictionary",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
           "group": "inline@3"
+        },
+        {
+          "command": "intlayer.pushDictionary",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "group": "inline@4"
+        },
+        {
+          "command": "intlayer.selectEnvironment",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "group": "inline@0"
+        },
+        {
+          "command": "extension.testDictionaries",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "group": "inline@5"
         }
       ]
     },
@@ -134,6 +134,16 @@
         "command": "extension.buildActiveDictionary",
         "title": "Intlayer: Build Current Dictionary",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "intlayer.refreshDictionaries",
+        "title": "Intlayer: Refresh Dictionaries",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "extension.fillActiveDictionary",
+        "title": "Intlayer: Fill Current Dictionary",
+        "icon": "$(wand)"
       },
       {
         "command": "intlayer.fillDictionary",
@@ -152,27 +162,27 @@
       },
       {
         "command": "extension.createDictionaryFile.ts",
-        "title": "Intlayer: Create Dictionary File (TypeScript)",
+        "title": "Intlayer: Create Content File (TypeScript)",
         "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile.esm",
-        "title": "Intlayer: Create Dictionary File (ESM)",
+        "title": "Intlayer: Create Content File (ESM)",
         "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile.cjs",
-        "title": "Intlayer: Create Dictionary File (CommonJS)",
+        "title": "Intlayer: Create Content File (CommonJS)",
         "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile.json",
-        "title": "Intlayer: Create Dictionary File (JSON)",
+        "title": "Intlayer: Create Content File (JSON)",
         "icon": "$(symbol-parameter)"
       },
       {
         "command": "extension.createDictionaryFile",
-        "title": "Intlayer: Create Dictionary File",
+        "title": "Intlayer: Create Content File",
         "icon": "$(new-file)"
       },
       {
@@ -201,15 +211,16 @@
         "icon": "$(beaker)"
       },
       {
-        "command": "intlayer.refreshDictionaries",
-        "title": "Intlayer: Refresh",
-        "icon": "$(refresh)"
+        "command": "intlayer.selectEnvironment",
+        "title": "Intlayer: Select Environment",
+        "icon": "$(gear)"
       }
     ]
   },
   "activationEvents": [
     "onView:intlayer.searchBar",
     "onView:intlayer.dictionaries",
+    "onCommand:intlayer.refreshDictionaries",
     "onCommand:intlayer.pullDictionary",
     "onCommand:extension.createDictionaryFile",
     "onCommand:extension.createDictionaryFile.ts",
@@ -218,10 +229,12 @@
     "onCommand:extension.createDictionaryFile.json",
     "onCommand:extension.buildDictionaries",
     "onCommand:extension.buildActiveDictionary",
+    "onCommand:extension.fillActiveDictionary",
     "onCommand:extension.pushDictionaries",
     "onCommand:extension.pullDictionaries",
     "onCommand:extension.fillDictionaries",
     "onCommand:extension.testDictionaries",
+    "onCommand:intlayer.selectEnvironment",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
@@ -254,6 +267,8 @@
     "@intlayer/chokidar": "^6.0.2",
     "@intlayer/cli": "^6.0.2",
     "@intlayer/config": "^6.0.2",
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.2.2",
     "fuse.js": "^7.1.0",
     "intlayer": "^6.0.2"
   }

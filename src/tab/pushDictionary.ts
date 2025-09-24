@@ -4,7 +4,8 @@ import { getConfiguration } from "@intlayer/config";
 import { getBuiltDictionariesPath } from "@intlayer/chokidar";
 import { readFile } from "fs/promises";
 import { Dictionary } from "intlayer";
-import { findProjectRoot } from "./findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const pushDictionary = async (element?: unknown) => {
   const node = element as {
@@ -28,7 +29,8 @@ export const pushDictionary = async (element?: unknown) => {
   }
 
   try {
-    const configuration = getConfiguration({ baseDir: projectDir });
+    const configOptions = await getConfigurationOptions(projectDir);
+    const configuration = getConfiguration(configOptions);
     const builtDictionariesPath = getBuiltDictionariesPath(configuration);
 
     const dictionaryPath = builtDictionariesPath.find((p) =>
@@ -46,7 +48,7 @@ export const pushDictionary = async (element?: unknown) => {
     const displayName = dictionary.key;
     window.showInformationMessage(`Pushing ${displayName}…`);
     await push({
-      configOptions: { baseDir: projectDir },
+      configOptions,
       dictionaries: [dictionary.key],
     });
     window.showInformationMessage(`Pushed ${displayName}`);

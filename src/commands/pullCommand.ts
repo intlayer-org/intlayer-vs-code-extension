@@ -1,9 +1,10 @@
 import { window } from "vscode";
 import { pull } from "@intlayer/cli";
 import { getIntlayerAPIProxy } from "@intlayer/api";
-import { findProjectRoot } from "../tab/findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
 import { Dictionary } from "intlayer";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const pullCommand = async () => {
   const projectDir = findProjectRoot();
@@ -16,9 +17,8 @@ export const pullCommand = async () => {
   window.showInformationMessage("Fetching dictionaries...");
 
   try {
-    const configuration = getConfiguration({
-      baseDir: projectDir,
-    });
+    const configOptions = await getConfigurationOptions(projectDir);
+    const configuration = getConfiguration(configOptions);
     const apiProxy = getIntlayerAPIProxy(undefined, configuration);
     const dictionariesKeysResult =
       await apiProxy.dictionary.getDictionariesKeys();
@@ -62,9 +62,7 @@ export const pullCommand = async () => {
     window.showInformationMessage("Pulling...");
 
     await pull({
-      configOptions: {
-        baseDir: projectDir,
-      },
+      configOptions,
       dictionaries: selectedDictionaries.map((d) => d.label),
     });
 

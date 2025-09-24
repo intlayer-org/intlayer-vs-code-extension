@@ -7,14 +7,18 @@ import { fillCommand } from "./commands/fillCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { testCommand } from "./commands/testCommand";
 import { DictionaryTreeDataProvider } from "./tab/dictionaryExplorer";
-import { buildActiveDictionary } from "./activeFile/buildActiveDictionary";
+import { buildActiveDictionary } from "./editor/buildActiveDictionary";
+import { fillActiveDictionary } from "./editor/fillActiveDictionary";
 import { SearchBarViewProvider } from "./tab/searchBarViewProvider";
 import { fillDictionary } from "./tab/fillDictionary";
 import { pushDictionary } from "./tab/pushDictionary";
 import { pullDictionary } from "./tab/pullDictionary";
 import { createDictionaryFile } from "./commands/createDictionaryFile";
+import { initializeEnvironmentStore } from "./utils/envStore";
+import { selectEnvironment } from "./commands/selectEnvironment";
 
 export const activate = (context: ExtensionContext) => {
+  initializeEnvironmentStore(context);
   // Register the definition provider
   context.subscriptions.push(
     languages.registerDefinitionProvider(
@@ -50,6 +54,10 @@ export const activate = (context: ExtensionContext) => {
       "extension.buildActiveDictionary",
       buildActiveDictionary
     ),
+    commands.registerCommand(
+      "extension.fillActiveDictionary",
+      fillActiveDictionary
+    ),
     commands.registerCommand("extension.pushDictionaries", pushCommand),
     commands.registerCommand("extension.pullDictionaries", pullCommand),
     commands.registerCommand("extension.fillDictionaries", fillCommand),
@@ -66,6 +74,11 @@ export const activate = (context: ExtensionContext) => {
   context.subscriptions.push(
     commands.registerCommand("intlayer.refreshDictionaries", () =>
       treeDataProvider.refresh()
+    ),
+    commands.registerCommand(
+      "intlayer.selectEnvironment",
+      async (node?: any) =>
+        await selectEnvironment(node?.projectDir, treeDataProvider)
     ),
     commands.registerCommand("intlayer.fillDictionary", fillDictionary),
     commands.registerCommand("intlayer.pullDictionary", pullDictionary),

@@ -1,8 +1,9 @@
 import { window } from "vscode";
 import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
 import { relative } from "path";
-import { findProjectRoot } from "../tab/findProjectRoot";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import unmergedDictionariesRecord from "@intlayer/unmerged-dictionaries-entry";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const pushCommand = async () => {
   const projectDir = findProjectRoot();
@@ -46,12 +47,12 @@ export const pushCommand = async () => {
       return;
     }
 
+    const configOptions = await getConfigurationOptions(projectDir);
+
     window.showInformationMessage("Pushing...");
 
     await push({
-      configOptions: {
-        baseDir: projectDir,
-      },
+      configOptions,
       dictionaries: selectedDictionaries.map((d) => d.label),
     });
 
