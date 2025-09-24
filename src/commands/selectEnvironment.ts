@@ -1,12 +1,12 @@
-import { window } from "vscode";
+import { window, workspace } from "vscode";
 import { existsSync, readdirSync } from "fs";
-import { join } from "path";
+import { relative } from "path";
 import {
   getSelectedEnvironment,
   setSelectedEnvironment,
 } from "../utils/envStore";
 import { DictionaryTreeDataProvider } from "../tab/dictionaryExplorer";
-import { findAllProjectRoots } from "../utils/findProjectRoot";
+import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 
 const wellKnownEnvs = ["production", "development", "test"];
 
@@ -43,14 +43,33 @@ export const selectEnvironment = async (
       window.showWarningMessage("No Intlayer projects found in workspace.");
       return;
     }
-    const picked = await window.showQuickPick(
-      roots.map((r) => ({ label: r })),
-      { placeHolder: "Select a project to configure environment" }
-    );
+    const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const currentProjectAbs = findProjectRoot();
+    const orderedRoots = currentProjectAbs
+      ? [currentProjectAbs, ...roots.filter((r) => r !== currentProjectAbs)]
+      : roots;
+
+    const items = orderedRoots.map((absPath) => {
+      const relPath = workspaceRoot
+        ? relative(workspaceRoot, absPath)
+        : absPath;
+      return {
+        label: workspaceRoot ? (relPath ?? ".") : absPath,
+        description: absPath,
+      } as const;
+    });
+    const picked = await window.showQuickPick(items, {
+      placeHolder: "Select a project to configure environment",
+    });
     if (!picked) {
       return;
     }
-    projectDir = picked.label;
+    projectDir = (picked as any).description ?? picked.label;
+  }
+
+  if (!projectDir) {
+    window.showErrorMessage("No project directory selected.");
+    return;
   }
 
   const discovered = discoverEnvNames(projectDir);

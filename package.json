@@ -99,33 +99,33 @@
         },
         {
           "command": "extension.buildDictionaries",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "when": "view == intlayer.dictionaries && viewItem.includes(intlayer.environment)",
           "group": "inline@1"
         },
         {
           "command": "extension.fillDictionaries",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "when": "view === intlayer.dictionaries && (viewItem === intlayer.environment || viewItem === intlayer.environment.cms)",
           "group": "inline@2"
         },
         {
-          "command": "intlayer.pullDictionary",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "command": "extension.testDictionaries",
+          "when": "view === intlayer.dictionaries && (viewItem === intlayer.environment || viewItem === intlayer.environment.cms)",
           "group": "inline@3"
         },
         {
-          "command": "intlayer.pushDictionary",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
+          "command": "intlayer.pullDictionary",
+          "when": "view === intlayer.dictionaries && viewItem === intlayer.environment.cms",
           "group": "inline@4"
         },
         {
-          "command": "intlayer.selectEnvironment",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
-          "group": "inline@0"
+          "command": "intlayer.pushDictionary",
+          "when": "view === intlayer.dictionaries && viewItem === intlayer.environment.cms",
+          "group": "inline@5"
         },
         {
-          "command": "extension.testDictionaries",
-          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment",
-          "group": "inline@5"
+          "command": "intlayer.selectEnvironment",
+          "when": "view === intlayer.dictionaries && (viewItem === intlayer.environment || viewItem === intlayer.environment.cms)",
+          "group": "inline@6"
         }
       ]
     },

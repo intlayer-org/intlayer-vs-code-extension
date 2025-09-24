@@ -84,11 +84,7 @@ export const findAllProjectRoots = (startPath?: string): string[] => {
       if (existsSync(pkgPath)) {
         try {
           const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-          const hasIntlayer = Boolean(
-            pkg?.dependencies?.intlayer ||
-              pkg?.devDependencies?.intlayer ||
-              pkg?.peerDependencies?.intlayer
-          );
+          const hasIntlayer = Boolean(pkg?.dependencies?.intlayer);
           if (hasIntlayer) {
             roots.push(dir);
           }

@@ -8,10 +8,12 @@ import {
   TreeItemCollapsibleState,
   Uri,
   window,
+  workspace,
 } from "vscode";
 import { getConfiguration } from "@intlayer/config";
 import { findAllProjectRoots } from "../utils/findProjectRoot";
 import { getSelectedEnvironment } from "../utils/envStore";
+import { hasClientId } from "../utils/hasClientId";
 
 type DictionaryEntry = {
   filePath?: string;
@@ -60,7 +62,7 @@ export class DictionaryTreeDataProvider
   }
 
   getSearchQuery(): string {
-    return this.searchQuery || "";
+    return this.searchQuery ?? "";
   }
 
   refresh(): void {
@@ -76,7 +78,7 @@ export class DictionaryTreeDataProvider
     if (!this.cachedEnvironments) {
       await this.getChildren();
     }
-    const envs = this.cachedEnvironments || [];
+    const envs = this.cachedEnvironments ?? [];
     for (const env of envs) {
       const relPath = relative(env.projectDir, absolutePath);
       // If the absolute path is outside this env, the relative path will start with ..
@@ -88,7 +90,7 @@ export class DictionaryTreeDataProvider
           const jsonPath = join(env.dir, file);
           const content = readFileSync(jsonPath, "utf8");
           const dictionaries = JSON.parse(content) as DictionaryEntry[];
-          const hasMatch = (dictionaries || [])
+          const hasMatch = (dictionaries ?? [])
             .filter(Boolean)
             .some((d) => d.filePath === relPath);
           if (hasMatch) {
@@ -124,16 +126,15 @@ export class DictionaryTreeDataProvider
         for (const projectDir of roots) {
           try {
             const config = getConfiguration({ baseDir: projectDir });
-            const dir = config.content.unmergedDictionariesDir;
-            if (!dir || !existsSync(dir)) {
-              continue;
-            }
-            const files = readdirSync(dir)
-              .filter((f) => extname(f) === ".json")
-              .sort();
-            if (!files.length) {
-              continue;
-            }
+            const dir =
+              (config.content.unmergedDictionariesDir as string | undefined) ??
+              projectDir;
+
+            const files = existsSync(dir)
+              ? readdirSync(dir)
+                  .filter((f) => extname(f) === ".json")
+                  .sort()
+              : [];
 
             // derive label from package.json name or fallback to directory name
             let label = basename(projectDir);
@@ -153,56 +154,7 @@ export class DictionaryTreeDataProvider
         }
         this.cachedEnvironments = envs;
 
-        // If searching, flatten all dictionaries across environments
-        if (this.searchQuery) {
-          const allDicts: DictionaryNode[] = envs.flatMap((env) =>
-            env.files.map((file) => ({
-              type: "dictionary" as const,
-              key: basename(file, ".json"),
-              jsonPath: join(env.dir, file),
-              projectDir: env.projectDir,
-              envLabel: env.label,
-            }))
-          );
-
-          const Fuse = (require("fuse.js").default ||
-            require("fuse.js")) as any;
-          const items = allDicts.map((node) => {
-            let contentString = "";
-            try {
-              const raw = readFileSync(node.jsonPath, "utf8");
-              try {
-                contentString = JSON.stringify(JSON.parse(raw));
-              } catch {
-                contentString = raw;
-              }
-            } catch {
-              contentString = "";
-            }
-            return {
-              node,
-              key: node.key,
-              env: node.envLabel,
-              content: contentString,
-            };
-          });
-
-          const fuse = new Fuse(items, {
-            keys: [
-              { name: "key", weight: 0.35 },
-              { name: "env", weight: 0.15 },
-              { name: "content", weight: 0.5 },
-            ],
-            threshold: 0.4,
-            ignoreLocation: true,
-            minMatchCharLength: 2,
-          });
-
-          const results = fuse.search(this.searchQuery);
-          return results.map((r: any) => r.item.node as DictionaryNode);
-        }
-
-        // Not searching: return environments as roots
+        // Always return environments as roots (keep grouping by project)
         const envNodes: EnvironmentNode[] = envs.map((env) => ({
           type: "environment",
           label: env.label,
@@ -214,13 +166,35 @@ export class DictionaryTreeDataProvider
 
       if (element.type === "environment") {
         // List dictionaries for this environment
-        const env = (this.cachedEnvironments || []).find(
+        const env = (this.cachedEnvironments ?? []).find(
           (e) => e.projectDir === element.projectDir
         );
         if (!env) {
           return [];
         }
-        return env.files.map((file) => ({
+        let files = env.files;
+        if (this.searchQuery) {
+          const lowered = this.searchQuery.toLowerCase();
+          files = files.filter((file) => {
+            const key = basename(file, ".json").toLowerCase();
+            if (key.includes(lowered)) {
+              return true;
+            }
+            try {
+              const raw = readFileSync(join(env.dir, file), "utf8");
+              let contentString = "";
+              try {
+                contentString = JSON.stringify(JSON.parse(raw));
+              } catch {
+                contentString = raw;
+              }
+              return contentString.toLowerCase().includes(lowered);
+            } catch {
+              return false;
+            }
+          });
+        }
+        return files.map((file) => ({
           type: "dictionary" as const,
           key: basename(file, ".json"),
           jsonPath: join(env.dir, file),
@@ -233,7 +207,7 @@ export class DictionaryTreeDataProvider
         try {
           const content = readFileSync(element.jsonPath, "utf8");
           const dictionaries = JSON.parse(content) as DictionaryEntry[];
-          const entries = (dictionaries || []).filter(Boolean);
+          const entries = (dictionaries ?? []).filter(Boolean);
 
           let filePaths = entries
             .map((d) => d.filePath)
@@ -241,12 +215,7 @@ export class DictionaryTreeDataProvider
 
           if (this.searchQuery) {
             const lowered = this.searchQuery.toLowerCase();
-            const jsonString = JSON.stringify(entries).toLowerCase();
-            // if the whole dictionary content doesn't match, return empty children
-            if (!jsonString.includes(lowered)) {
-              return [];
-            }
-            // otherwise keep the files but we could also further filter by file path
+            // Reorder by path match; do not refilter dictionaries here
             filePaths = filePaths
               .filter((p) => p.toLowerCase().includes(lowered))
               .concat(
@@ -287,14 +256,14 @@ export class DictionaryTreeDataProvider
         jsonPath: element.dictionaryJsonPath,
         projectDir: element.projectDir,
         envLabel:
-          (this.cachedEnvironments || []).find(
+          (this.cachedEnvironments ?? []).find(
             (e) => e.projectDir === element.projectDir
-          )?.label || basename(element.projectDir),
+          )?.label ?? basename(element.projectDir),
       } as DictionaryNode;
     }
     if (element.type === "dictionary") {
       const dict = element as DictionaryNode;
-      const env = (this.cachedEnvironments || []).find(
+      const env = (this.cachedEnvironments ?? []).find(
         (e) => e.projectDir === dict.projectDir
       );
       if (!env) {
@@ -310,14 +279,20 @@ export class DictionaryTreeDataProvider
     return undefined;
   }
 
-  getTreeItem(element: IntlayerTreeNode): TreeItem {
+  async getTreeItem(element: IntlayerTreeNode): Promise<TreeItem> {
     if (element.type === "environment") {
       const selectedEnv = getSelectedEnvironment(element.projectDir);
       const item = new TreeItem(
         selectedEnv ? `${element.label} [${selectedEnv}]` : element.label,
         TreeItemCollapsibleState.Collapsed
       );
-      item.contextValue = "intlayer.environment";
+
+      // Set context value based on whether the project has clientId
+      const clientIdExists = await hasClientId(element.projectDir);
+      item.contextValue = clientIdExists
+        ? "intlayer.environment.cms"
+        : "intlayer.environment";
+
       item.id = `env:${element.projectDir}`;
       item.tooltip = selectedEnv
         ? `${element.projectDir} — env: ${selectedEnv}`
@@ -341,7 +316,11 @@ export class DictionaryTreeDataProvider
     }
 
     const fileAbs = join(element.projectDir, element.filePath);
-    const item = new TreeItem(element.filePath, TreeItemCollapsibleState.None);
+    const wsFolder = workspace.getWorkspaceFolder(Uri.file(fileAbs));
+    const workspaceRelative = wsFolder
+      ? relative(wsFolder.uri.fsPath, fileAbs)
+      : element.filePath;
+    const item = new TreeItem(workspaceRelative, TreeItemCollapsibleState.None);
     item.contextValue = "intlayer.file";
     item.id = `file:${element.dictionaryJsonPath}::${element.filePath}`;
     item.resourceUri = Uri.file(fileAbs);
