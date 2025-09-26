@@ -4,9 +4,10 @@ import { listDictionaries, loadDictionaries } from "@intlayer/chokidar";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
 import { createRequire } from "module";
-import path from "path";
-import { Dictionary } from "intlayer";
+import { join } from "path";
+import type { Dictionary } from "@intlayer/core";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
 
 const groupDictionariesByKey = (
   dictionaries: Dictionary[]
@@ -65,7 +66,7 @@ export const testCommand = async () => {
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
@@ -73,7 +74,7 @@ export const testCommand = async () => {
     const configOptions = await getConfigurationOptions(projectDir);
     const configuration = getConfiguration(configOptions);
     const dictionariesPath = listDictionaries(configuration);
-    const projectRequire = createRequire(path.join(projectDir, "package.json"));
+    const projectRequire = createRequire(join(projectDir, "package.json"));
 
     const dictionaries = await loadDictionaries(
       dictionariesPath,
@@ -82,7 +83,7 @@ export const testCommand = async () => {
     );
 
     if (!dictionaries.localDictionaries.length) {
-      window.showWarningMessage("No dictionaries available.");
+      window.showWarningMessage(`${prefix}No dictionaries available.`);
       return;
     }
 
@@ -98,11 +99,11 @@ export const testCommand = async () => {
     if (hasIssues) {
       await writeMissingReport(result);
     } else {
-      window.showInformationMessage("No missing translations found.");
+      window.showInformationMessage(`${prefix}No missing translations found.`);
     }
   } catch (error) {
     window.showErrorMessage(
-      `Intlayer test failed: ${(error as Error).message}`
+      `${prefix} test failed: ${(error as Error).message}`
     );
   }
 };

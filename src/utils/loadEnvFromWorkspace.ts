@@ -1,10 +1,12 @@
 import { window, workspace, Uri } from "vscode";
 import { parse } from "dotenv";
-import { join } from "path";
+import { basename, join } from "path";
+import { prefix } from "./logFunctions";
 
 export const loadEnvFromWorkspace = async (
   baseDir: string,
-  env?: string
+  env?: string,
+  logEnvFileName: boolean = false
 ): Promise<Record<string, string> | undefined> => {
   const folders = workspace.workspaceFolders;
   if (!folders || folders.length === 0) {
@@ -30,7 +32,13 @@ export const loadEnvFromWorkspace = async (
         }
       }
 
-      window.showInformationMessage(`Loaded env from ${candidate}`);
+      if (logEnvFileName) {
+        const projectName = basename(baseDir);
+
+        window.showInformationMessage(
+          `${prefix}Loaded env from ${candidate} in ${projectName}`
+        );
+      }
       return parsed;
     } catch (err) {
       // Try next candidate

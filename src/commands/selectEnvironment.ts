@@ -1,12 +1,13 @@
 import { window, workspace } from "vscode";
 import { existsSync, readdirSync } from "fs";
-import { relative } from "path";
+import { basename, dirname, relative } from "path";
 import {
   getSelectedEnvironment,
   setSelectedEnvironment,
 } from "../utils/envStore";
 import { DictionaryTreeDataProvider } from "../tab/dictionaryExplorer";
 import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
+import { prefix } from "../utils/logFunctions";
 
 const wellKnownEnvs = ["production", "development", "test"];
 
@@ -40,7 +41,9 @@ export const selectEnvironment = async (
   if (!projectDir) {
     const roots = findAllProjectRoots();
     if (!roots.length) {
-      window.showWarningMessage("No Intlayer projects found in workspace.");
+      window.showWarningMessage(
+        `${prefix}No Intlayer projects found in workspace.`
+      );
       return;
     }
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -68,7 +71,7 @@ export const selectEnvironment = async (
   }
 
   if (!projectDir) {
-    window.showErrorMessage("No project directory selected.");
+    window.showErrorMessage(`${prefix}No project directory selected.`);
     return;
   }
 
@@ -89,8 +92,10 @@ export const selectEnvironment = async (
   }
 
   await setSelectedEnvironment(projectDir, pickedEnv.label);
+
+  const projectName = basename(projectDir);
   window.showInformationMessage(
-    `Environment set to "${pickedEnv.label}" for ${projectDir}`
+    `${prefix}Environment set to "${pickedEnv.label}" for ${projectName}`
   );
 
   if (treeDataProvider) {

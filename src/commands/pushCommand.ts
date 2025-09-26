@@ -1,65 +1,57 @@
 import { window } from "vscode";
 import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
-import { relative } from "path";
 import { findProjectRoot } from "../utils/findProjectRoot";
-import unmergedDictionariesRecord from "@intlayer/unmerged-dictionaries-entry";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
+import { selectLocalDictionaries } from "../utils/selectContentDeclaration";
+import { createRequire } from "module";
+import { join } from "path";
+import { loadContentDeclarations } from "@intlayer/chokidar";
+import { getConfiguration } from "@intlayer/config";
+import { type Dictionary } from "@intlayer/core";
 
 export const pushCommand = async () => {
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
-  window.showInformationMessage("Fetching dictionaries...");
-
   try {
-    if (!unmergedDictionariesRecord.length) {
-      window.showWarningMessage("No dictionaries available.");
-      return;
-    }
-
-    // Compute active file relative path to preselect if it is a content file
-    const activeEditor = window.activeTextEditor;
-    const activeRelativePath = activeEditor
-      ? relative(projectDir, activeEditor.document.uri.fsPath)
-      : undefined;
-
-    // Show a selection dialog with multiple choices
-    const quickPickItems = Object.keys(unmergedDictionariesRecord)
-      .map((path) => relative(projectDir, path))
-      .map((dict) => ({ label: dict, picked: dict === activeRelativePath }));
-
-    // Place the preselected item(s) at the top of the list
-    quickPickItems.sort((a, b) =>
-      a.picked === b.picked ? 0 : a.picked ? -1 : 1
-    );
-
-    const selectedDictionaries = await window.showQuickPick(quickPickItems, {
-      canPickMany: true,
-      placeHolder: "Select dictionaries to push",
-    });
+    const selectedDictionaries = await selectLocalDictionaries(projectDir);
 
     if (!selectedDictionaries || selectedDictionaries.length === 0) {
-      window.showWarningMessage("No dictionary selected.");
+      window.showWarningMessage(`${prefix}No dictionary selected.`);
       return;
     }
 
     const configOptions = await getConfigurationOptions(projectDir);
+    const configuration = getConfiguration(configOptions);
+    const projectRequire = createRequire(join(projectDir, "package.json"));
 
-    window.showInformationMessage("Pushing...");
+    const localDictionaries: Dictionary[] = await loadContentDeclarations(
+      selectedDictionaries,
+      configuration,
+      projectRequire
+    );
+
+    window.showInformationMessage(JSON.stringify(localDictionaries));
+    const dictionariesKeys = localDictionaries.map(
+      (dictionary) => dictionary.key
+    );
+
+    window.showInformationMessage(`${prefix}Pushing dictionaries...`);
 
     await push({
       configOptions,
-      dictionaries: selectedDictionaries.map((d) => d.label),
+      dictionaries: dictionariesKeys,
     });
 
-    window.showInformationMessage("Intlayer push completed successfully!");
+    window.showInformationMessage(`${prefix} push completed successfully!`);
   } catch (error) {
     window.showErrorMessage(
-      `Intlayer push failed: ${(error as Error).message}`
+      `${prefix} push failed: ${(error as Error).message}`
     );
   }
 };

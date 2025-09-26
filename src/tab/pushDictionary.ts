@@ -3,9 +3,10 @@ import { push } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config";
 import { getBuiltDictionariesPath } from "@intlayer/chokidar";
 import { readFile } from "fs/promises";
-import { Dictionary } from "intlayer";
+import { type Dictionary } from "@intlayer/core";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
 
 export const pushDictionary = async (element?: unknown) => {
   const node = element as {
@@ -17,14 +18,14 @@ export const pushDictionary = async (element?: unknown) => {
   // Push can only be made for merged dictionaries (dictionary nodes without filePath)
   if (!node || node.type !== "dictionary" || !node.projectDir || !node.key) {
     window.showWarningMessage(
-      "Push is only available for merged dictionaries."
+      `${prefix}Push is only available for merged dictionaries.`
     );
     return;
   }
 
   const projectDir = findProjectRoot();
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
@@ -38,7 +39,7 @@ export const pushDictionary = async (element?: unknown) => {
     );
 
     if (!dictionaryPath) {
-      window.showErrorMessage("Dictionary not found.");
+      window.showErrorMessage(`${prefix}Dictionary not found.`);
       return;
     }
 
@@ -46,13 +47,16 @@ export const pushDictionary = async (element?: unknown) => {
     const dictionary = JSON.parse(dictionaryString) as Dictionary;
 
     const displayName = dictionary.key;
-    window.showInformationMessage(`Pushing ${displayName}…`);
+
+    window.showInformationMessage(`${prefix}Pushing ${displayName}…`);
     await push({
       configOptions,
       dictionaries: [dictionary.key],
     });
-    window.showInformationMessage(`Pushed ${displayName}`);
+    window.showInformationMessage(`${prefix}Pushed ${displayName}`);
   } catch (error) {
-    window.showErrorMessage(`Push failed: ${(error as Error).message}`);
+    window.showErrorMessage(
+      `${prefix}Push failed: ${(error as Error).message}`
+    );
   }
 };

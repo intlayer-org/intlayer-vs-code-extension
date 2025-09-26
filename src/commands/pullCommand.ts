@@ -3,18 +3,19 @@ import { pull } from "@intlayer/cli";
 import { getIntlayerAPIProxy } from "@intlayer/api";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfiguration } from "@intlayer/config";
-import { Dictionary } from "intlayer";
+import { type Dictionary } from "@intlayer/core";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
 
 export const pullCommand = async () => {
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
-  window.showInformationMessage("Fetching dictionaries...");
+  window.showInformationMessage(`${prefix}Fetching dictionaries...`);
 
   try {
     const configOptions = await getConfigurationOptions(projectDir);
@@ -25,7 +26,7 @@ export const pullCommand = async () => {
     const dictionaries = dictionariesKeysResult.data as Dictionary[];
 
     if (!dictionaries.length) {
-      window.showWarningMessage("No dictionaries available.");
+      window.showWarningMessage(`${prefix}No dictionaries available.`);
       return;
     }
 
@@ -55,21 +56,21 @@ export const pullCommand = async () => {
     });
 
     if (!selectedDictionaries || selectedDictionaries.length === 0) {
-      window.showWarningMessage("No dictionary selected.");
+      window.showWarningMessage(`${prefix}No dictionary selected.`);
       return;
     }
 
-    window.showInformationMessage("Pulling...");
+    window.showInformationMessage(`${prefix}Pulling...`);
 
     await pull({
       configOptions,
       dictionaries: selectedDictionaries.map((d) => d.label),
     });
 
-    window.showInformationMessage("Intlayer pull completed successfully!");
+    window.showInformationMessage(`${prefix} pull completed successfully!`);
   } catch (error) {
     window.showErrorMessage(
-      `Intlayer pull failed: ${(error as Error).message}`
+      `${prefix} pull failed: ${(error as Error).message}`
     );
   }
 };

@@ -5,12 +5,13 @@ import { findProjectRoot } from "../utils/findProjectRoot";
 import { relative } from "path";
 import { getConfiguration } from "@intlayer/config";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
 
 export const fillCommand = async () => {
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
@@ -20,7 +21,7 @@ export const fillCommand = async () => {
     const dictionaries = listDictionaries(configuration);
 
     if (!dictionaries.length) {
-      window.showWarningMessage("No dictionaries available.");
+      window.showWarningMessage(`${prefix}No dictionaries available.`);
       return;
     }
 
@@ -46,14 +47,12 @@ export const fillCommand = async () => {
     });
 
     if (!selectedDictionaries || selectedDictionaries.length === 0) {
-      window.showWarningMessage("No dictionary selected.");
+      window.showWarningMessage(`${prefix}No dictionary selected.`);
       return;
     }
 
-    window.showInformationMessage("filling...");
-
     for (const { label: dictionary } of selectedDictionaries) {
-      window.showInformationMessage(`Filling ${dictionary}…`);
+      window.showInformationMessage(`${prefix}Filling ${dictionary}…`);
       // await each fill before moving on
 
       await fill({
@@ -62,10 +61,10 @@ export const fillCommand = async () => {
       });
     }
 
-    window.showInformationMessage("Intlayer fill completed successfully!");
+    window.showInformationMessage(`${prefix} fill completed successfully!`);
   } catch (error) {
     window.showErrorMessage(
-      `Intlayer fill failed: ${(error as Error).message}`
+      `${prefix} fill failed: ${(error as Error).message}`
     );
   }
 };

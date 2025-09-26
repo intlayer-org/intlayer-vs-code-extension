@@ -1,11 +1,13 @@
 import { commands, ExtensionContext, languages, window } from "vscode";
 import { generateDictionaryContent } from "./createDictionaryContent";
-import { buildCommand } from "./commands/buildCommand";
+import { buildCommand } from "./commands/buildAllCommand";
 import { pushCommand } from "./commands/pushCommand";
 import { pullCommand } from "./commands/pullCommand";
-import { fillCommand } from "./commands/fillCommand";
-import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
+import { fillCommand } from "./commands/fillAllCommand";
+import { selectEnvironment } from "./commands/selectEnvironment";
+import { createDictionaryFile } from "./commands/createDictionaryFile";
 import { testCommand } from "./commands/testCommand";
+import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { DictionaryTreeDataProvider } from "./tab/dictionaryExplorer";
 import { buildActiveDictionary } from "./editor/buildActiveDictionary";
 import { fillActiveDictionary } from "./editor/fillActiveDictionary";
@@ -13,9 +15,7 @@ import { SearchBarViewProvider } from "./tab/searchBarViewProvider";
 import { fillDictionary } from "./tab/fillDictionary";
 import { pushDictionary } from "./tab/pushDictionary";
 import { pullDictionary } from "./tab/pullDictionary";
-import { createDictionaryFile } from "./commands/createDictionaryFile";
 import { initializeEnvironmentStore } from "./utils/envStore";
-import { selectEnvironment } from "./commands/selectEnvironment";
 
 export const activate = (context: ExtensionContext) => {
   initializeEnvironmentStore(context);

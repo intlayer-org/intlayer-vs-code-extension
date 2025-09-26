@@ -2,12 +2,14 @@ import { window } from "vscode";
 import { fill } from "@intlayer/cli";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
+import { basename } from "path";
 
 export const fillActiveDictionary = async () => {
   const editor = window.activeTextEditor;
   if (!editor) {
     window.showErrorMessage(
-      "No active editor. Open a content declaration file."
+      `${prefix}No active editor. Open a content declaration file.`
     );
     return;
   }
@@ -16,7 +18,7 @@ export const fillActiveDictionary = async () => {
   const projectDir = findProjectRoot(filePath);
 
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
@@ -26,4 +28,9 @@ export const fillActiveDictionary = async () => {
     configOptions,
     file: filePath,
   });
+
+  const fileName = basename(filePath);
+  window.showInformationMessage(
+    `${prefix}Fill completed successfully for ${fileName}`
+  );
 };

@@ -14,6 +14,7 @@ import { getConfiguration } from "@intlayer/config";
 import { findAllProjectRoots } from "../utils/findProjectRoot";
 import { getSelectedEnvironment } from "../utils/envStore";
 import { hasClientId } from "../utils/hasClientId";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 type DictionaryEntry = {
   filePath?: string;
@@ -125,7 +126,11 @@ export class DictionaryTreeDataProvider
         }[] = [];
         for (const projectDir of roots) {
           try {
-            const config = getConfiguration({ baseDir: projectDir });
+            const configOptions = await getConfigurationOptions(
+              projectDir,
+              false
+            );
+            const config = getConfiguration(configOptions);
             const dir =
               (config.content.unmergedDictionariesDir as string | undefined) ??
               projectDir;

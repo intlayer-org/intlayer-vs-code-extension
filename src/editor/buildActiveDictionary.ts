@@ -4,14 +4,15 @@ import { buildDictionary, loadLocalDictionaries } from "@intlayer/chokidar";
 import { createTypes } from "@intlayer/chokidar";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { createRequire } from "module";
-import path from "path";
-import { logFunctions } from "../utils/logFunctions";
+import { basename, join } from "path";
+import { prefix } from "../utils/logFunctions";
+import { getConfigurationOptions } from "../utils/getConfiguration";
 
 export const buildActiveDictionary = async () => {
   const editor = window.activeTextEditor;
   if (!editor) {
     window.showErrorMessage(
-      "No active editor. Open a content declaration file."
+      `${prefix}No active editor. Open a content declaration file.`
     );
     return;
   }
@@ -20,17 +21,12 @@ export const buildActiveDictionary = async () => {
   const projectDir = findProjectRoot(filePath);
 
   if (!projectDir) {
-    window.showErrorMessage("Could not find intlayer project root.");
+    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
     return;
   }
 
-  const configOptions = {
-    baseDir: projectDir,
-    logFunctions,
-  };
-
-  const projectRequire = createRequire(path.join(projectDir, "package.json"));
-
+  const projectRequire = createRequire(join(projectDir, "package.json"));
+  const configOptions = await getConfigurationOptions(projectDir);
   const config = getConfiguration(configOptions);
 
   try {
@@ -50,13 +46,13 @@ export const buildActiveDictionary = async () => {
 
     await createTypes(updatedDictionariesPaths, config);
 
+    const fileName = basename(filePath);
     window.showInformationMessage(
-      "Intlayer: Current dictionary built successfully!"
+      `${prefix}Build completed successfully for ${fileName}`
     );
   } catch (error) {
-    console.error(error);
     window.showErrorMessage(
-      `Intlayer single-dictionary build failed: ${(error as Error).message}`
+      `${prefix} single-dictionary build failed: ${(error as Error).message}`
     );
   }
 };
