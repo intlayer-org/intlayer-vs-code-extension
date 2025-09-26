@@ -5,7 +5,7 @@ import {
   getSelectedEnvironment,
   setSelectedEnvironment,
 } from "../utils/envStore";
-import { DictionaryTreeDataProvider } from "../tab/dictionaryExplorer";
+import { DictionaryTreeDataProvider } from "../explorer/dictionaryExplorer";
 import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { prefix } from "../utils/logFunctions";
 

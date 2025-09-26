@@ -8,13 +8,13 @@ import { selectEnvironment } from "./commands/selectEnvironment";
 import { createDictionaryFile } from "./commands/createDictionaryFile";
 import { testCommand } from "./commands/testCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
-import { DictionaryTreeDataProvider } from "./tab/dictionaryExplorer";
+import { DictionaryTreeDataProvider } from "./explorer/dictionaryExplorer";
 import { buildActiveDictionary } from "./editor/buildActiveDictionary";
 import { fillActiveDictionary } from "./editor/fillActiveDictionary";
-import { SearchBarViewProvider } from "./tab/searchBarViewProvider";
-import { fillDictionary } from "./tab/fillDictionary";
-import { pushDictionary } from "./tab/pushDictionary";
-import { pullDictionary } from "./tab/pullDictionary";
+import { SearchBarViewProvider } from "./explorer/searchBarViewProvider";
+import { fillDictionary } from "./explorer/fillDictionary";
+import { pushDictionary } from "./explorer/pushDictionary";
+import { pullDictionary } from "./explorer/pullDictionary";
 import { initializeEnvironmentStore } from "./utils/envStore";
 
 export const activate = (context: ExtensionContext) => {
