@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "6.1.2",
+  "version": "6.1.4",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -71,17 +71,17 @@
         {
           "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
           "command": "extension.buildActiveDictionary",
-          "group": "navigation@99"
+          "group": "navigation@902"
         },
         {
           "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
           "command": "extension.fillActiveDictionary",
-          "group": "navigation@100"
+          "group": "navigation@903"
         },
         {
           "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx)$/) && !(resourceFilename =~ /\\.content\\\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
           "command": "extension.createDictionaryFile",
-          "group": "navigation@98"
+          "group": "navigation@901"
         }
       ],
       "view/title": [
@@ -99,32 +99,32 @@
         },
         {
           "command": "extension.buildDictionaries",
-          "when": "view == intlayer.dictionaries && viewItem.includes(intlayer.environment)",
+          "when": "view == intlayer.dictionaries && (viewItem == intlayer.environment || viewItem == intlayer.environment.cms)",
           "group": "inline@1"
         },
         {
           "command": "extension.fillDictionaries",
-          "when": "view === intlayer.dictionaries && (viewItem === intlayer.environment || viewItem === intlayer.environment.cms)",
+          "when": "view == intlayer.dictionaries && (viewItem == intlayer.environment || viewItem == intlayer.environment.cms)",
           "group": "inline@2"
         },
         {
           "command": "extension.testDictionaries",
-          "when": "view === intlayer.dictionaries && (viewItem === intlayer.environment || viewItem === intlayer.environment.cms)",
+          "when": "view == intlayer.dictionaries && (viewItem == intlayer.environment || viewItem == intlayer.environment.cms)",
           "group": "inline@3"
         },
         {
           "command": "intlayer.pullDictionary",
-          "when": "view === intlayer.dictionaries && viewItem === intlayer.environment.cms",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment.cms",
           "group": "inline@4"
         },
         {
           "command": "intlayer.pushDictionary",
-          "when": "view === intlayer.dictionaries && viewItem === intlayer.environment.cms",
+          "when": "view == intlayer.dictionaries && viewItem == intlayer.environment.cms",
           "group": "inline@5"
         },
         {
           "command": "intlayer.selectEnvironment",
-          "when": "view === intlayer.dictionaries && (viewItem === intlayer.environment || viewItem === intlayer.environment.cms)",
+          "when": "view == intlayer.dictionaries && (viewItem == intlayer.environment || viewItem == intlayer.environment.cms)",
           "group": "inline@6"
         }
       ]
@@ -263,12 +263,12 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/api": "^6.1.2",
-    "@intlayer/chokidar": "^6.1.2",
-    "@intlayer/cli": "^6.1.2",
-    "@intlayer/config": "^6.1.2",
+    "@intlayer/api": "^6.1.4",
+    "@intlayer/chokidar": "^6.1.4",
+    "@intlayer/cli": "^6.1.4",
+    "@intlayer/config": "^6.1.4",
     "dotenv": "^17.2.2",
     "fuse.js": "^7.1.0",
-    "intlayer": "^6.1.2"
+    "intlayer": "^6.1.4"
   }
 }

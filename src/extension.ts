@@ -5,7 +5,7 @@ import { pushCommand } from "./commands/pushCommand";
 import { pullCommand } from "./commands/pullCommand";
 import { fillCommand } from "./commands/fillAllCommand";
 import { selectEnvironment } from "./commands/selectEnvironment";
-import { createDictionaryFile } from "./commands/createDictionaryFile";
+import { createDictionaryFile } from "./editor/createDictionaryFile";
 import { testCommand } from "./commands/testCommand";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { DictionaryTreeDataProvider } from "./explorer/dictionaryExplorer";

@@ -7,7 +7,7 @@ import { getConfiguration } from "@intlayer/config";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 
-export const fillCommand = async () => {
+export const fillCommand = async (dictionariesPath?: string[]) => {
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
@@ -31,27 +31,36 @@ export const fillCommand = async () => {
       ? relative(projectDir, activeEditor.document.uri.fsPath)
       : undefined;
 
-    // Show a selection dialog with multiple choices
-    const quickPickItems = dictionaries
-      .map((path) => relative(projectDir, path))
-      .map((dict) => ({ label: dict, picked: dict === activeRelativePath }));
+    let selectedDictionariesPath = dictionariesPath;
 
-    // Place the preselected item(s) at the top of the list
-    quickPickItems.sort((a, b) =>
-      a.picked === b.picked ? 0 : a.picked ? -1 : 1
-    );
+    if (!selectedDictionariesPath) {
+      // Show a selection dialog with multiple choices
+      const quickPickItems = dictionaries
+        .map((path) => relative(projectDir, path))
+        .map((dictionaryPath) => ({
+          label: dictionaryPath,
+          picked: dictionaryPath === activeRelativePath,
+        }));
 
-    const selectedDictionaries = await window.showQuickPick(quickPickItems, {
-      canPickMany: true,
-      placeHolder: "Select dictionaries to fill",
-    });
+      // Place the preselected item(s) at the top of the list
+      quickPickItems.sort((a, b) =>
+        a.picked === b.picked ? 0 : a.picked ? -1 : 1
+      );
 
-    if (!selectedDictionaries || selectedDictionaries.length === 0) {
-      window.showWarningMessage(`${prefix}No dictionary selected.`);
-      return;
+      const selectedDictionaries = await window.showQuickPick(quickPickItems, {
+        canPickMany: true,
+        placeHolder: "Select dictionaries to fill",
+      });
+
+      if (!selectedDictionaries || selectedDictionaries.length === 0) {
+        window.showWarningMessage(`${prefix}No dictionary selected.`);
+        return;
+      }
+
+      selectedDictionariesPath = selectedDictionaries.map(({ label }) => label);
     }
 
-    for (const { label: dictionary } of selectedDictionaries) {
+    for (const dictionary of selectedDictionariesPath) {
       window.showInformationMessage(`${prefix}Filling ${dictionary}…`);
       // await each fill before moving on
 
