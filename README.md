@@ -1,13 +1,13 @@
 # Intlayer
 
-**Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
+**Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React and Vue projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
 ![Intlayer VS Code Extension](https://github.com/aymericzip/intlayer/blob/main/docs/assets/vs_code_extension_demo.gif?raw=true)
 
 ## Features
 
 - **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.
-- **Seamless Integration** – Works with **React, TypeScript, and JavaScript** projects using `react-intlayer` and `next-intlayer`.
+- **Seamless Integration** – Works with **React, Vue, TypeScript, and JavaScript** projects using `react-intlayer`, `next-intlayer`, `vue-intlayer`, and `nuxt-intlayer`.
 - **Enhanced Developer Experience** – Eliminates the need to manually search for content files.
 - **Works with Localized Content** – Supports multi-language projects powered by Intlayer.
 - **Dictionary Commands** – Build, push, pull, fill, test content dictionaries with ease.

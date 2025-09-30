@@ -4,6 +4,14 @@ All notable changes to the "intlayer" extension will be documented in this file.
 
 ## [Unreleased]
 
+## 2025-09-29
+
+- Changed: bump version to 6.1.4
+- Added: extend Go to Definition support to Vue (`vue-intlayer`/`nuxt-intlayer`)
+- Changed: update VS Code engine compatibility to ^1.96.0
+- Changed: update @intlayer packages to 6.1.4
+- Docs: refresh README to include Vue/Nuxt support and commands overview
+
 ## 2025-09-24
 
 - Changed: bump version to 6.0.2
