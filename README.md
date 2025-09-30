@@ -2,19 +2,36 @@
 
 **Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React and Vue projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
-![Intlayer VS Code Extension](https://github.com/aymericzip/intlayer/blob/main/docs/assets/vs_code_extension_demo.gif?raw=true)
-
 ## Features
 
+[Fill dictionaries](https://github.com/aymericzip/intlayer-vs-code-extension/blob/main/assets/vscode_extention_fill_active_dictionary.gif?raw=true)
+
 - **Instant Navigation** – Quickly jump to the correct content file when clicking on a `useIntlayer` key.
-- **Seamless Integration** – Works with **React, Vue, TypeScript, and JavaScript** projects using `react-intlayer`, `next-intlayer`, `vue-intlayer`, and `nuxt-intlayer`.
-- **Enhanced Developer Experience** – Eliminates the need to manually search for content files.
-- **Works with Localized Content** – Supports multi-language projects powered by Intlayer.
-- **Dictionary Commands** – Build, push, pull, fill, test content dictionaries with ease.
-- **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
 - **Fill Dictionaries** – Fill dictionaries with content from your project.
+
+[List commands](https://github.com/aymericzip/intlayer-vs-code-extension/blob/main/assets/vscode_extention_list_commands.gif?raw=true)
+
+- **Easy access to Intlayer Commands** – Build, push, pull, fill, test content dictionaries with ease.
+
+[Create content file](https://github.com/aymericzip/intlayer-vs-code-extension/blob/main/assets/vscode_extention_create_content_file.gif?raw=true)
+
+- **Content Declaration Generator** – Create dictionary content files in various formats (`.ts`, `.esm`, `.cjs`, `.json`).
+
+[Test dictionaties](https://github.com/aymericzip/intlayer-vs-code-extension/blob/main/assets/vscode_extention_test_missing_dictionary.gif?raw=true)
+
 - **Test Dictionaries** – Test dictionaries for missing translations.
+
+[Rebuild dictionary](https://github.com/aymericzip/intlayer-vs-code-extension/blob/main/assets/vscode_extention_rebuild_dictionary.gif?raw=true)
+
+- **Keep your dictionaries up to date** – Keep your dictionaries up to date with the latest content from your project.
+
+[Intlayer Tab (Activity Bar)](https://github.com/aymericzip/intlayer-vs-code-extension/blob/main/assets/vscode_extention_search_dictionary.gif?raw=true)
+
 - **Intlayer Tab (Activity Bar)** – Browse and search dictionaries from a dedicated side tab with toolbar and context actions (Build, Pull, Push, Fill, Refresh, Test, Create File).
+
+## Documentation
+
+Check out the [documentation](https://intlayer.org/docs/vs-code-extension) for more information on how to use Intlayer with VS Code.
 
 ### Intlayer Tab (Activity Bar)
 
@@ -28,10 +45,6 @@ Open the Intlayer tab by clicking the Intlayer icon in the VS Code Activity Bar.
     - On a dictionary: Pull or Push
     - On a file: Fill Dictionary
   - When you switch editors, the tree will reveal the matching file if it belongs to a dictionary.
-
-## Documentation
-
-Check out the [documentation](https://intlayer.org/docs/vs-code-extension) for more information on how to use Intlayer with VS Code.
 
 ## Usage
 
