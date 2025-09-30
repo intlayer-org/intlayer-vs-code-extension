@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "6.1.4",
+  "version": "6.1.5",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -242,7 +242,7 @@
   ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && cp src/tab/searchInput.html out/tab/",
+    "compile": "tsc -p ./ && cp src/explorer/searchInput.html out/explorer/",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
