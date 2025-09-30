@@ -87,7 +87,7 @@
           "group": "navigation@903"
         },
         {
-          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx)$/) && !(resourceFilename =~ /\\.content\\\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx)$/) && !(resourceFilename =~ /.*\\.content\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
           "command": "extension.createDictionaryFile",
           "group": "navigation@901"
         }
