@@ -2,6 +2,14 @@
 
 **Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React and Vue projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
+## Overview
+
+[**Intlayer**](https://marketplace.visualstudio.com/items?itemName=Intlayer.intlayer-vs-code-extension) is the official Visual Studio Code extension for **Intlayer**, designed to improve the developer experience when working with localized content in your projects.
+
+![Intlayer VS Code Extension](https://github.com/aymericzip/intlayer/blob/main/docs/assets/vs_code_extension_demo.gif)
+
+Extension link: [https://marketplace.visualstudio.com/items?itemName=Intlayer.intlayer-vs-code-extension](https://marketplace.visualstudio.com/items?itemName=Intlayer.intlayer-vs-code-extension)
+
 ## Features
 
 ![Fill dictionaries](https://github.com/aymericzip/intlayer-vs-code-extension/blob/master/assets/vscode_extention_fill_active_dictionary.gif?raw=true)
@@ -29,120 +37,63 @@
 
 - **Intlayer Tab (Activity Bar)** – Browse and search dictionaries from a dedicated side tab with toolbar and context actions (Build, Pull, Push, Fill, Refresh, Test, Create File).
 
-## Documentation
-
-Check out the [documentation](https://intlayer.org/docs/vs-code-extension) for more information on how to use Intlayer with VS Code.
-
-### Intlayer Tab (Activity Bar)
-
-Open the Intlayer tab by clicking the Intlayer icon in the VS Code Activity Bar. It contains two views:
-
-- **Search**: A live search bar to quickly filter dictionaries and their content. Typing updates the results instantly.
-- **Dictionaries**: A tree view of your environments/projects, dictionary keys, and the files contributing entries. You can:
-  - Click a file to open it in the editor.
-  - Use the toolbar to run actions: Build, Pull, Push, Fill, Refresh, Test, and Create Dictionary File.
-  - Use the context menu for item‑specific actions:
-    - On a dictionary: Pull or Push
-    - On a file: Fill Dictionary
-  - When you switch editors, the tree will reveal the matching file if it belongs to a dictionary.
-
 ## Usage
 
-1. Open a project using **intlayer**, **react-intlayer**, **next-intlayer**, **vue-intlayer**, **nuxt-intlayer**, etc.
-2. Find any call to `useIntlayer()`, for example:
+### Quick Navigation
+
+1. Open a project using **react-intlayer**.
+2. Locate a call to `useIntlayer()`, such as:
 
    ```tsx
    const content = useIntlayer("app");
    ```
 
-3. **Command-click** (`⌘+Click` on macOS) or **Ctrl+Click** (on Windows/Linux) on `"app"`.
-4. VS Code will **automatically open** the corresponding content file, e.g., `examples/vite-app/src/app.content.tsx`.
+3. **Command-click** (`⌘+Click` on macOS) or **Ctrl+Click** (on Windows/Linux) on the key (e.g., `"app"`).
+4. VS Code will automatically open the corresponding dictionary file, e.g., `src/app.content.ts`.
 
-## Commands
+### Intlayer Tab (Activity Bar)
 
-Intlayer includes several commands to help you manage content dictionaries efficiently. You can access them via the **Command Palette (`Cmd + Shift + P` on macOS / `Ctrl + Shift + P` on Windows/Linux)**.
+Use the side tab to browse and manage dictionaries:
 
-### Dictionary Management
+- Open the Intlayer icon in the Activity Bar.
+- In **Search**, type to filter dictionaries and entries in real time.
+- In **Dictionaries**, browse environments, dictionaries, and files. Use the toolbar for Build, Pull, Push, Fill, Refresh, Test, and Create Dictionary File. Right‑click for context actions (Pull/Push on dictionaries, Fill on files). The current editor file auto‑reveals in the tree when applicable.
 
-- **Build Dictionaries** (`extension.buildDictionaries`)  
-  Builds all dictionary content files based on the current project structure.
+### Accessing the commands
 
-- **Build Current Dictionary** (`extension.buildActiveDictionary`)  
-  Builds the dictionary for the currently active `.content.*` file.
+You can access the commands from the **Command Palette**.
 
-- **Push Dictionaries** (`extension.pushDictionaries`)  
-  Uploads the latest dictionary content to your content repository.
-
-- **Pull Dictionaries** (`extension.pullDictionaries`)  
-  Syncs the latest dictionary content from your content repository to your local environment.
-
-- **Fill Dictionaries** (`extension.fillDictionaries`)  
-  Fills the dictionaries with content from your project.
-
-- **Fill Current Dictionary** (`extension.fillActiveDictionary`)  
-  Fills content for the currently active `.content.*` file.
-
-- **Test Dictionaries** (`extension.testDictionaries`)  
-  Test dictionaries for missing translations.
-
-- **Refresh Dictionaries** (`intlayer.refreshDictionaries`)  
-  Refreshes the Intlayer views.
-
-- **Pull Dictionary (Context)** (`intlayer.pullDictionary`)  
-  Context menu action on a dictionary item in the side view.
-
-- **Push Dictionary (Context)** (`intlayer.pushDictionary`)  
-  Context menu action on a dictionary item in the side view.
-
-- **Fill Dictionary (Context)** (`intlayer.fillDictionary`)  
-  Context menu action on a file item in the side view.
-
-- **Select Environment** (`intlayer.selectEnvironment`)  
-  Choose the active environment for actions.
-
-### Content Declaration Generator
-
-Easily generate structured dictionary files in different formats:
-
-If you're currently working on a component, it will generate the `.content.{ts,tsx,js,jsx,mjs,cjs,json}` file for you.
-
-Example of component:
-
-```tsx fileName="src/components/MyComponent/index.tsx"
-const MyComponent = () => {
-  const { myTranslatedContent } = useIntlayer("my-component");
-
-  return <span>{myTranslatedContent}</span>;
-};
+```sh
+Cmd + Shift + P (macOS) / Ctrl + Shift + P (Windows/Linux)
 ```
 
-Generated file in TypeScript format:
+- **Build Dictionaries**
+- **Push Dictionaries**
+- **Pull Dictionaries**
+- **Fill Dictionaries**
+- **Test Dictionaries**
+- **Create Dictionary File**
 
-```tsx fileName="src/components/MyComponent/index.content.ts"
-import { t, type Dictionary } from "intlayer";
+### Loading Environment Variables
 
-const componentContent = {
-  key: "my-component",
-  content: {
-    myTranslatedContent: t({
-      en: "Hello World",
-      es: "Hola Mundo",
-      fr: "Bonjour le monde",
-    }),
-  },
-};
+Intlayer recommand to store your AI API keys, as well as Intlayer client ID and secret in environment variables.
 
-export default componentContent;
-```
+The extension can load environment variables from your workspace to run Intlayer commands with the correct context.
 
-Available formats and related commands:
+- **Load order (by priority)**: `.env.<env>.local` → `.env.<env>` → `.env.local` → `.env`
+- **Non-destructive**: existing `process.env` values are not overridden.
+- **Scope**: files are resolved from the configured base directory (defaults to the workspace root).
 
-- **TypeScript (`.ts`)** — `extension.createDictionaryFile.ts`
-- **ES Module (`.esm`)** — `extension.createDictionaryFile.esm`
-- **CommonJS (`.cjs`)** — `extension.createDictionaryFile.cjs`
-- **JSON (`.json`)** — `extension.createDictionaryFile.json`
+#### Selecting the active environment
 
-Generic command: **Create Content File** — `extension.createDictionaryFile`.
+- **Command Palette**: open the palette and run `Intlayer: Select Environment`, then choose the environment (e.g., `development`, `staging`, `production`). The extension will attempt to load the first available file in the priority list above and show a notification like “Loaded env from .env.<env>.local”.
+- **Settings**: go to `Settings → Extensions → Intlayer`, and set:
+  - **Environment**: the environment name used to resolve `.env.<env>*` files.
+  - (Optional) **Env File**: an explicit path to a `.env` file. When provided, it takes precedence over the inferred list.
+
+#### Monorepos and custom directories
+
+If your `.env` files live outside the workspace root, set the **Base Directory** in `Settings → Extensions → Intlayer`. The loader will look for `.env` files relative to that directory.
 
 ## Development & Contribution
 
