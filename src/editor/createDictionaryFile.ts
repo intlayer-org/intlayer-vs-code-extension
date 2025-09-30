@@ -1,21 +1,7 @@
 import { window } from "vscode";
 import { generateDictionaryContent } from "../createDictionaryContent";
 import { extname } from "path";
-import { getFormatFromExtension } from "@intlayer/chokidar";
-
-// TODO: replace by import from @intlayer/chokidar in next intlayer version (6.1.5)
-type Format = "ts" | "cjs" | "esm" | "json";
-type Extension =
-  | ".ts"
-  | ".tsx"
-  | ".js"
-  | ".jsx"
-  | ".cjs"
-  | ".cjsx"
-  | ".mjs"
-  | ".mjsx"
-  | ".json"
-  | ".json5";
+import { getFormatFromExtension, Extension, Format } from "@intlayer/chokidar";
 
 export const createDictionaryFile = async () => {
   const filePath = window.activeTextEditor?.document.uri.fsPath;

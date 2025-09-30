@@ -271,12 +271,12 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/api": "^6.1.4",
-    "@intlayer/chokidar": "^6.1.4",
-    "@intlayer/cli": "^6.1.4",
-    "@intlayer/config": "^6.1.4",
+    "@intlayer/api": "^6.1.5",
+    "@intlayer/chokidar": "^6.1.5",
+    "@intlayer/cli": "^6.1.5",
+    "@intlayer/config": "^6.1.5",
     "dotenv": "^17.2.2",
     "fuse.js": "^7.1.0",
-    "intlayer": "^6.1.4"
+    "intlayer": "^6.1.5"
   }
 }
