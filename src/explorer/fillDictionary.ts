@@ -1,9 +1,9 @@
-import { window } from "vscode";
+import { dirname } from "node:path";
 import { fill } from "@intlayer/cli";
+import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
-import { dirname } from "path";
 
 export const fillDictionary = async (element?: unknown) => {
   const node = element as {
@@ -29,7 +29,9 @@ export const fillDictionary = async (element?: unknown) => {
   try {
     const configOptions = await getConfigurationOptions(projectDir);
 
-    window.showInformationMessage(`${prefix}Filling ${dirname(node.filePath)}…`);
+    window.showInformationMessage(
+      `${prefix}Filling ${dirname(node.filePath)}…`
+    );
     await fill({
       configOptions,
       file: node.filePath,

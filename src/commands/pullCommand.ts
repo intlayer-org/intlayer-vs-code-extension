@@ -1,9 +1,9 @@
-import { window } from "vscode";
-import { pull } from "@intlayer/cli";
 import { getIntlayerAPIProxy } from "@intlayer/api";
-import { findProjectRoot } from "../utils/findProjectRoot";
+import { pull } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config";
-import { type Dictionary } from "@intlayer/core";
+import type { Dictionary } from "@intlayer/types";
+import { window } from "vscode";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 

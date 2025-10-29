@@ -1,8 +1,8 @@
-import { getConfiguration } from "@intlayer/config";
-import { join, relative } from "path";
-import { QuickPickItem, window } from "vscode";
-import { getConfigurationOptions } from "./getConfiguration";
+import { join, relative } from "node:path";
 import { listDictionaries } from "@intlayer/chokidar";
+import { getConfiguration } from "@intlayer/config";
+import { type QuickPickItem, window } from "vscode";
+import { getConfigurationOptions } from "./getConfiguration";
 
 export const selectLocalDictionaries = async (projectDir: string) => {
   const configOptions = await getConfigurationOptions(projectDir);
@@ -14,7 +14,7 @@ export const selectLocalDictionaries = async (projectDir: string) => {
     ? relative(projectDir, activeEditor.document.uri.fsPath)
     : undefined;
 
-  const files: string[] = listDictionaries(configuration);
+  const files: string[] = await listDictionaries(configuration);
 
   // Show a selection dialog with multiple choices
   const quickPickItems: QuickPickItem[] = files

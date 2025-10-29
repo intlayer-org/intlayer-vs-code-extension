@@ -1,15 +1,16 @@
+import { existsSync, writeFileSync } from "node:fs";
+import { basename, dirname, extname, join } from "node:path";
 import { getConfiguration } from "@intlayer/config";
-import { existsSync, writeFileSync } from "fs";
-import { basename, dirname, join, extname } from "path";
 import {
-  window,
-  workspace,
   Position,
   Range,
   Selection,
   TextEditorRevealType,
+  window,
+  workspace,
 } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
+import { getConfigurationOptions } from "./utils/getConfiguration";
 
 /**
  * Attempt to detect an exported React component name in the file text.
@@ -45,7 +46,7 @@ const detectExportedComponentName = (fileText: string): string | null => {
   }
 
   // 3) Otherwise, look for capitalized named exports
-  let match;
+  let match: string;
   while ((match = namedExportRegex.exec(fileText)) !== null) {
     if (/^[A-Z]/.test(match[1])) {
       return match[1];
@@ -78,13 +79,17 @@ export const generateDictionaryContent = async (
 
   const projectDir = findProjectRoot();
 
+  if (!projectDir) {
+    window.showErrorMessage(`Could not find intlayer project root.`);
+    return;
+  }
+
   const currentFilePath = editor.document.uri.fsPath;
   const currentFileName = basename(currentFilePath); // e.g. 'MyComponent.tsx'
   const currentDir = dirname(currentFilePath);
 
-  const configuration = getConfiguration({
-    baseDir: projectDir,
-  });
+  const configOptions = await getConfigurationOptions(projectDir);
+  const configuration = getConfiguration(configOptions);
 
   // Grab the entire file text to parse for an exported component name
   const fileText = editor.document.getText();

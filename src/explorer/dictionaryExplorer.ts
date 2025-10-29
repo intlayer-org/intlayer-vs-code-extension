@@ -1,20 +1,20 @@
-import { existsSync, readdirSync, readFileSync } from "fs";
-import { basename, extname, join, relative } from "path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { basename, extname, join, relative } from "node:path";
+import { getConfiguration } from "@intlayer/config";
 import {
-  Event,
+  type Event,
   EventEmitter,
-  TreeDataProvider,
+  type TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
   Uri,
   window,
   workspace,
 } from "vscode";
-import { getConfiguration } from "@intlayer/config";
-import { findAllProjectRoots } from "../utils/findProjectRoot";
 import { getSelectedEnvironment } from "../utils/envStore";
-import { hasClientId } from "../utils/hasClientId";
+import { findAllProjectRoots } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { hasClientId } from "../utils/hasClientId";
 
 type DictionaryEntry = {
   filePath?: string;
@@ -238,7 +238,9 @@ export class DictionaryTreeDataProvider
           }));
         } catch (error) {
           window.showWarningMessage(
-            `Failed to read dictionary ${element.key}: ${(error as Error).message}`
+            `Failed to read dictionary ${element.key}: ${
+              (error as Error).message
+            }`
           );
           return [];
         }

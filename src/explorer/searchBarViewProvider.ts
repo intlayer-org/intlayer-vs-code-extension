@@ -1,12 +1,12 @@
-import {
-  WebviewViewProvider,
-  WebviewView,
-  WebviewViewResolveContext,
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import type {
   CancellationToken,
+  WebviewView,
+  WebviewViewProvider,
+  WebviewViewResolveContext,
 } from "vscode";
-import { DictionaryTreeDataProvider } from "./dictionaryExplorer";
-import { readFileSync } from "fs";
-import { join } from "path";
+import type { DictionaryTreeDataProvider } from "./dictionaryExplorer";
 
 export class SearchBarViewProvider implements WebviewViewProvider {
   constructor(private readonly treeDataProvider: DictionaryTreeDataProvider) {}

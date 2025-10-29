@@ -1,11 +1,11 @@
+import { readdirSync } from "node:fs";
+import { basename, relative } from "node:path";
 import { window, workspace } from "vscode";
-import { existsSync, readdirSync } from "fs";
-import { basename, dirname, relative } from "path";
+import type { DictionaryTreeDataProvider } from "../explorer/dictionaryExplorer";
 import {
   getSelectedEnvironment,
   setSelectedEnvironment,
 } from "../utils/envStore";
-import { DictionaryTreeDataProvider } from "../explorer/dictionaryExplorer";
 import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { prefix } from "../utils/logFunctions";
 
@@ -57,7 +57,7 @@ export const selectEnvironment = async (
         ? relative(workspaceRoot, absPath)
         : absPath;
       return {
-        label: workspaceRoot ? (relPath ?? ".") : absPath,
+        label: workspaceRoot ? relPath ?? "." : absPath,
         description: absPath,
       } as const;
     });
@@ -67,7 +67,7 @@ export const selectEnvironment = async (
     if (!picked) {
       return;
     }
-    projectDir = (picked as any).description ?? picked.label;
+    projectDir = picked.description ?? picked.label;
   }
 
   if (!projectDir) {

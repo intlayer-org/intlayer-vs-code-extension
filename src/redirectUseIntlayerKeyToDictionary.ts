@@ -1,20 +1,20 @@
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { getConfiguration } from "@intlayer/config";
-import { type Dictionary } from "@intlayer/core";
-import { existsSync, readFileSync } from "fs";
-import { dirname, join } from "path";
+import type { Dictionary } from "@intlayer/types";
 import {
-  DefinitionLink,
-  DefinitionProvider,
-  Location,
+  type DefinitionLink,
+  type DefinitionProvider,
   Position,
   Range,
   Uri,
   window,
 } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
+import { getConfigurationOptions } from "./utils/getConfiguration";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
-  provideDefinition(document, position) {
+  provideDefinition: async (document, position) => {
     const range = document.getWordRangeAtPosition(position, /["'][^"']+["']/);
     if (!range) {
       return null;
@@ -41,7 +41,8 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       return;
     }
 
-    const config = getConfiguration({ baseDir: projectDir });
+    const configOptions = await getConfigurationOptions(projectDir);
+    const config = getConfiguration(configOptions);
 
     const dictionaryPath = join(
       config.content.unmergedDictionariesDir,

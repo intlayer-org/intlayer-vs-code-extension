@@ -1,14 +1,12 @@
-import { window } from "vscode";
+import { loadContentDeclarations } from "@intlayer/chokidar";
 import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
+import { getConfiguration } from "@intlayer/config";
+import type { Dictionary } from "@intlayer/types";
+import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 import { selectLocalDictionaries } from "../utils/selectContentDeclaration";
-import { createRequire } from "module";
-import { join } from "path";
-import { loadContentDeclarations } from "@intlayer/chokidar";
-import { getConfiguration } from "@intlayer/config";
-import { type Dictionary } from "@intlayer/core";
 
 export const pushCommand = async () => {
   const projectDir = findProjectRoot();
@@ -28,12 +26,10 @@ export const pushCommand = async () => {
 
     const configOptions = await getConfigurationOptions(projectDir);
     const configuration = getConfiguration(configOptions);
-    const projectRequire = createRequire(join(projectDir, "package.json"));
 
     const localDictionaries: Dictionary[] = await loadContentDeclarations(
       selectedDictionaries,
-      configuration,
-      projectRequire
+      configuration
     );
 
     window.showInformationMessage(JSON.stringify(localDictionaries));

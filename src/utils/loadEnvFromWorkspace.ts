@@ -1,6 +1,6 @@
-import { window, workspace, Uri } from "vscode";
+import { basename, join } from "node:path";
 import { parse } from "dotenv";
-import { basename, join } from "path";
+import { Uri, window, workspace } from "vscode";
 import { prefix } from "./logFunctions";
 
 export const loadEnvFromWorkspace = async (
@@ -40,10 +40,7 @@ export const loadEnvFromWorkspace = async (
         );
       }
       return parsed;
-    } catch (err) {
-      // Try next candidate
-      continue;
-    }
+    } catch (_error) {}
   }
 
   return undefined;

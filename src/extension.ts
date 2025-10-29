@@ -1,20 +1,22 @@
-import { commands, ExtensionContext, languages, window } from "vscode";
-import { generateDictionaryContent } from "./createDictionaryContent";
+import "module-alias/register";
+
+import { commands, type ExtensionContext, languages, window } from "vscode";
 import { buildCommand } from "./commands/buildAllCommand";
-import { pushCommand } from "./commands/pushCommand";
-import { pullCommand } from "./commands/pullCommand";
 import { fillCommand } from "./commands/fillAllCommand";
+import { pullCommand } from "./commands/pullCommand";
+import { pushCommand } from "./commands/pushCommand";
 import { selectEnvironment } from "./commands/selectEnvironment";
-import { createDictionaryFile } from "./editor/createDictionaryFile";
 import { testCommand } from "./commands/testCommand";
-import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
-import { DictionaryTreeDataProvider } from "./explorer/dictionaryExplorer";
+import { generateDictionaryContent } from "./createDictionaryContent";
 import { buildActiveDictionary } from "./editor/buildActiveDictionary";
+import { createDictionaryFile } from "./editor/createDictionaryFile";
 import { fillActiveDictionary } from "./editor/fillActiveDictionary";
-import { SearchBarViewProvider } from "./explorer/searchBarViewProvider";
+import { DictionaryTreeDataProvider } from "./explorer/dictionaryExplorer";
 import { fillDictionary } from "./explorer/fillDictionary";
-import { pushDictionary } from "./explorer/pushDictionary";
 import { pullDictionary } from "./explorer/pullDictionary";
+import { pushDictionary } from "./explorer/pushDictionary";
+import { SearchBarViewProvider } from "./explorer/searchBarViewProvider";
+import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { initializeEnvironmentStore } from "./utils/envStore";
 
 export const activate = (context: ExtensionContext) => {
@@ -99,7 +101,7 @@ export const activate = (context: ExtensionContext) => {
             focus: false,
             expand: true,
           });
-        } catch (err) {
+        } catch (_error) {
           // best effort
         } finally {
           pendingRevealNode = undefined;
@@ -138,7 +140,7 @@ export const activate = (context: ExtensionContext) => {
           });
           pendingRevealNode = undefined;
         }
-      } catch (err) {
+      } catch (_error) {
         // best effort
       }
     }

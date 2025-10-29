@@ -1,5 +1,5 @@
-import { window } from "vscode";
 import { pull } from "@intlayer/cli";
+import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";

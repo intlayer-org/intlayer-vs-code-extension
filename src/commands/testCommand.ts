@@ -1,28 +1,23 @@
-import { window, workspace } from "vscode";
-import { listMissingTranslations } from "@intlayer/cli";
 import { listDictionaries, loadDictionaries } from "@intlayer/chokidar";
-import { findProjectRoot } from "../utils/findProjectRoot";
+import { listMissingTranslations } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config";
-import { createRequire } from "module";
-import { join } from "path";
-import type { Dictionary } from "@intlayer/core";
+import type { Dictionary } from "@intlayer/types";
+import { window, workspace } from "vscode";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 
 const groupDictionariesByKey = (
   dictionaries: Dictionary[]
 ): Record<string, Dictionary[]> =>
-  dictionaries.reduce(
-    (acc, dictionary) => {
-      const key = dictionary.key;
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(dictionary);
-      return acc;
-    },
-    {} as Record<string, Dictionary[]>
-  );
+  dictionaries.reduce((acc, dictionary) => {
+    const key = dictionary.key;
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(dictionary);
+    return acc;
+  }, {} as Record<string, Dictionary[]>);
 
 // Helper to pretty-print details into a temporary editor document
 const writeMissingReport = async (
@@ -32,10 +27,16 @@ const writeMissingReport = async (
   lines.push("## Intlayer — Missing Translations Report");
   lines.push("");
   lines.push(
-    `- Missing locales (any): ${result.missingLocales.length ? result.missingLocales.join(", ") : "—"}`
+    `- Missing locales (any): ${
+      result.missingLocales.length ? result.missingLocales.join(", ") : "—"
+    }`
   );
   lines.push(
-    `- Missing required locales: ${result.missingRequiredLocales.length ? result.missingRequiredLocales.join(", ") : "—"}`
+    `- Missing required locales: ${
+      result.missingRequiredLocales.length
+        ? result.missingRequiredLocales.join(", ")
+        : "—"
+    }`
   );
   lines.push("");
 
@@ -73,13 +74,11 @@ export const testCommand = async () => {
   try {
     const configOptions = await getConfigurationOptions(projectDir);
     const configuration = getConfiguration(configOptions);
-    const dictionariesPath = listDictionaries(configuration);
-    const projectRequire = createRequire(join(projectDir, "package.json"));
+    const dictionariesPath = await listDictionaries(configuration);
 
     const dictionaries = await loadDictionaries(
       dictionariesPath,
-      configuration,
-      projectRequire
+      configuration
     );
 
     if (!dictionaries.localDictionaries.length) {

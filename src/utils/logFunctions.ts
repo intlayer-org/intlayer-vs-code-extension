@@ -9,10 +9,30 @@ const stripANSIColors = (text: string): string =>
 
 export const prefix = "Intlayer: ";
 
+const formatMessage = (...message: Parameters<typeof console.log>): string =>
+  stripANSIColors(
+    (Array.isArray(message) ? message : [message]).flat().join(" ")
+  );
+
 export const logFunctions = {
-  info: (message: string) =>
-    window.showInformationMessage(stripANSIColors(message)),
-  error: (message: string) => window.showErrorMessage(stripANSIColors(message)),
-  warn: (message: string) =>
-    window.showWarningMessage(stripANSIColors(message)),
+  log: (...message: Parameters<typeof console.log>) => {
+    console.log(message);
+
+    window.showInformationMessage(formatMessage(message));
+  },
+  info: (...message: Parameters<typeof console.log>) => {
+    console.log(message);
+
+    window.showInformationMessage(formatMessage(message));
+  },
+  error: (...message: Parameters<typeof console.log>) => {
+    console.log(message);
+
+    window.showErrorMessage(formatMessage(message));
+  },
+  warn: (...message: Parameters<typeof console.log>) => {
+    console.log(message);
+
+    window.showWarningMessage(formatMessage(message));
+  },
 };

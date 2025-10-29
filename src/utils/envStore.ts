@@ -1,4 +1,4 @@
-import { ExtensionContext, Memento } from "vscode";
+import type { ExtensionContext, Memento } from "vscode";
 
 type ProjectEnvMap = Record<string, string>;
 

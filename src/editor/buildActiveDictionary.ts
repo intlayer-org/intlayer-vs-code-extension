@@ -1,15 +1,18 @@
-import { window } from "vscode";
+import { basename } from "node:path";
+import {
+  buildDictionary,
+  createTypes,
+  loadLocalDictionaries,
+} from "@intlayer/chokidar";
 import { getConfiguration } from "@intlayer/config";
-import { buildDictionary, loadLocalDictionaries } from "@intlayer/chokidar";
-import { createTypes } from "@intlayer/chokidar";
+import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
-import { createRequire } from "module";
-import { basename, join } from "path";
-import { prefix } from "../utils/logFunctions";
 import { getConfigurationOptions } from "../utils/getConfiguration";
+import { prefix } from "../utils/logFunctions";
 
 export const buildActiveDictionary = async () => {
   const editor = window.activeTextEditor;
+
   if (!editor) {
     window.showErrorMessage(
       `${prefix}No active editor. Open a content declaration file.`
@@ -25,16 +28,11 @@ export const buildActiveDictionary = async () => {
     return;
   }
 
-  const projectRequire = createRequire(join(projectDir, "package.json"));
   const configOptions = await getConfigurationOptions(projectDir);
   const config = getConfiguration(configOptions);
 
   try {
-    const localeDictionaries = await loadLocalDictionaries(
-      filePath,
-      config,
-      projectRequire
-    );
+    const localeDictionaries = await loadLocalDictionaries(filePath, config);
     const dictionariesOutput = await buildDictionary(
       localeDictionaries,
       config
@@ -42,7 +40,7 @@ export const buildActiveDictionary = async () => {
 
     const updatedDictionariesPaths = Object.values(
       dictionariesOutput?.mergedDictionaries ?? {}
-    ).map((dictionary: any) => dictionary.dictionaryPath);
+    ).map((dictionary) => dictionary.dictionaryPath);
 
     await createTypes(updatedDictionariesPaths, config);
 

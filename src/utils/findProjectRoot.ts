@@ -1,6 +1,6 @@
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { window, workspace } from "vscode";
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
-import { dirname, join } from "path";
 
 const getActiveFilePath = () => {
   const activeFile = window.activeTextEditor?.document.uri.fsPath;

@@ -1,9 +1,9 @@
-import { window } from "vscode";
-import { fill } from "@intlayer/cli";
+import { relative } from "node:path";
 import { listDictionaries } from "@intlayer/chokidar";
-import { findProjectRoot } from "../utils/findProjectRoot";
-import { relative } from "path";
+import { fill } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config";
+import { window } from "vscode";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 
@@ -18,7 +18,8 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
   try {
     const configOptions = await getConfigurationOptions(projectDir);
     const configuration = getConfiguration(configOptions);
-    const dictionaries = listDictionaries(configuration);
+
+    const dictionaries = await listDictionaries(configuration);
 
     if (!dictionaries.length) {
       window.showWarningMessage(`${prefix}No dictionaries available.`);
@@ -62,7 +63,6 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
 
     for (const dictionary of selectedDictionariesPath) {
       window.showInformationMessage(`${prefix}Filling ${dictionary}…`);
-      // await each fill before moving on
 
       await fill({
         configOptions,

@@ -1,7 +1,11 @@
+import { extname } from "node:path";
+import {
+  type Extension,
+  type Format,
+  getFormatFromExtension,
+} from "@intlayer/chokidar";
 import { window } from "vscode";
 import { generateDictionaryContent } from "../createDictionaryContent";
-import { extname } from "path";
-import { getFormatFromExtension, Extension, Format } from "@intlayer/chokidar";
 
 export const createDictionaryFile = async () => {
   const filePath = window.activeTextEditor?.document.uri.fsPath;

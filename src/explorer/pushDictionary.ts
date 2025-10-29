@@ -1,9 +1,9 @@
-import { window } from "vscode";
+import { readFile } from "node:fs/promises";
+import { getBuiltDictionariesPath } from "@intlayer/chokidar";
 import { push } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config";
-import { getBuiltDictionariesPath } from "@intlayer/chokidar";
-import { readFile } from "fs/promises";
-import { type Dictionary } from "@intlayer/core";
+import type { Dictionary } from "@intlayer/types";
+import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
@@ -32,7 +32,7 @@ export const pushDictionary = async (element?: unknown) => {
   try {
     const configOptions = await getConfigurationOptions(projectDir);
     const configuration = getConfiguration(configOptions);
-    const builtDictionariesPath = getBuiltDictionariesPath(configuration);
+    const builtDictionariesPath = await getBuiltDictionariesPath(configuration);
 
     const dictionaryPath = builtDictionariesPath.find((p) =>
       p.endsWith(`${node.key}.json`)
