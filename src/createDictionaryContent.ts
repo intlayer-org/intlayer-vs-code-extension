@@ -1,5 +1,7 @@
+import { execSync } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join } from "node:path";
+import { getContentDeclarationFileTemplate } from "@intlayer/chokidar";
 import { getConfiguration } from "@intlayer/config";
 import {
   Position,
@@ -9,6 +11,7 @@ import {
   window,
   workspace,
 } from "vscode";
+import { detectFormatCommand } from "./detectFormatCommand";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getConfigurationOptions } from "./utils/getConfiguration";
 
@@ -46,10 +49,9 @@ const detectExportedComponentName = (fileText: string): string | null => {
   }
 
   // 3) Otherwise, look for capitalized named exports
-  let match: string;
-  while ((match = namedExportRegex.exec(fileText)) !== null) {
-    if (/^[A-Z]/.test(match[1])) {
-      return match[1];
+  for (const [, exportName] of fileText.matchAll(namedExportRegex)) {
+    if (/^[A-Z]/.test(exportName)) {
+      return exportName;
     }
   }
 
@@ -60,9 +62,18 @@ const detectExportedComponentName = (fileText: string): string | null => {
 const getContentPosition = (content: string): Position => {
   const lines = content.split("\n");
   for (let i = 0; i < lines.length; i++) {
-    const column = lines[i].indexOf("content: {}");
-    if (column !== -1) {
-      return new Position(i, column + "content: {".length);
+    // Match content key in various styles: content: { ... }, "content": { ... }, 'content': { ... }
+    const patterns = [
+      /content\s*:\s*\{/,
+      /"content"\s*:\s*\{/,
+      /'content'\s*:\s*\{/,
+    ];
+    for (const pattern of patterns) {
+      const match = lines[i].match(pattern);
+      console.log(match);
+      if (match && match.index !== undefined) {
+        return new Position(i, match.index + match[0].length);
+      }
     }
   }
   return new Position(0, 0);
@@ -129,28 +140,29 @@ export const generateDictionaryContent = async (
     );
   const targetPath = join(currentDir, targetFileName);
 
-  // 4) Build the variable name and dictionary key
-  let variableName: string;
+  // 4) Build the dictionary key
   let dictionaryKey: string;
 
   // If can't parse or is empty, use fallback
   if (!baseName) {
-    variableName = "content";
     dictionaryKey = "";
+  } else if (baseName.toLowerCase() === "index") {
+    dictionaryKey = "index";
   } else {
-    // If the file is "index"
-    if (baseName.toLowerCase() === "index") {
-      variableName = "indexContent";
-      dictionaryKey = "index";
-    } else {
-      // Normal case
-      variableName = toLowerCamelCase(baseName) + "Content";
-      dictionaryKey = toKebabCase(baseName);
-    }
+    dictionaryKey = toKebabCase(baseName);
   }
 
-  // 5) Create the actual content
-  const fileData = createDictionaryContent(format, variableName, dictionaryKey);
+  // 5) Create the actual content using shared template logic
+  const fileData = await getContentDeclarationFileTemplate(
+    dictionaryKey,
+    format,
+    // Filter out undefined values
+    Object.fromEntries(
+      Object.entries(configuration.dictionary ?? {}).filter(
+        ([, value]) => value !== undefined
+      )
+    )
+  );
 
   // 6) Write the file if not existing already (or ask to overwrite)
   if (existsSync(targetPath)) {
@@ -165,6 +177,24 @@ export const generateDictionaryContent = async (
   }
 
   writeFileSync(targetPath, fileData, "utf8");
+
+  try {
+    if (configOptions.require) {
+      const formatCommand = detectFormatCommand(
+        configuration,
+        configOptions.require
+      );
+
+      if (formatCommand) {
+        execSync(formatCommand.replace("{{file}}", targetPath), {
+          stdio: "inherit",
+          cwd: configuration.content.baseDir,
+        });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
 
   window.showInformationMessage(`Dictionary created: ${targetFileName}`);
 
@@ -232,79 +262,4 @@ const toKebabCase = (str: string): string => {
     .toLowerCase();
 };
 
-const getTSDictionaryContent = (
-  variableName: string,
-  dictionaryKey: string
-): string => `import { type Dictionary } from 'intlayer';
-
-const ${variableName} = {
-  key: '${dictionaryKey}',
-  content: {},
-} satisfies Dictionary;
-
-export default ${variableName};
-`;
-
-const getESMDictionaryContent = (
-  variableName: string,
-  dictionaryKey: string
-): string => `import { } from 'intlayer';
-
-/** @type {import('intlayer').Dictionary} */
-const ${variableName} = {
-  key: '${dictionaryKey}',
-  content: {},
-};
-
-export default ${variableName};
-`;
-
-const getCommonDictionaryContent = (
-  variableName: string,
-  dictionaryKey: string
-): string => `const { } = require('intlayer');
-
-/** @type {import('intlayer').Dictionary} */
-const ${variableName} = {
-  key: '${dictionaryKey}',
-  content: {},
-};
-
-export default ${variableName};
-`;
-
-const getJSONDictionaryContent = (dictionaryKey: string): string => `{
-  "$schema": "https://intlayer.org/schema.json",
-  "key": "${dictionaryKey}",
-  "content": {}
-}
-`;
-
-/**
- * Returns the file content for the dictionary file, e.g.:
- *
- *   const myNewComponentContent = {
- *     key: 'my-new-component',
- *     content: {},
- *   } satisfies Dictionary;
- *
- *   export default myNewComponentContent;
- */
-const createDictionaryContent = (
-  extension: "ts" | "esm" | "cjs" | "json",
-  variableName: string,
-  dictionaryKey: string
-): string => {
-  switch (extension) {
-    case "ts":
-      return getTSDictionaryContent(variableName, dictionaryKey);
-    case "esm":
-      return getESMDictionaryContent(variableName, dictionaryKey);
-    case "cjs":
-      return getCommonDictionaryContent(variableName, dictionaryKey);
-    case "json":
-      return getJSONDictionaryContent(dictionaryKey);
-    default:
-      return "";
-  }
-};
+// Local template helpers removed in favor of getContentDeclarationFileTemplate from @intlayer/chokidar
