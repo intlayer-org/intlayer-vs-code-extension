@@ -1,42 +1,68 @@
-import { join } from "node:path";
 import { createRequire } from "node:module";
+import { join } from "node:path";
 import { getAlias, getConfiguration } from "@intlayer/config";
 import { window } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
-import { prefix } from "./utils/logFunctions";
 import { getConfigurationOptionsSync } from "./utils/getConfiguration";
+import { prefix } from "./utils/logFunctions";
 
-const editor = window.activeTextEditor;
-if (!editor) {
-  window.showErrorMessage(
-    `${prefix}No active editor. Open a content declaration file.`
-  );
-  throw new Error("No active editor");
-}
+const loadConfig = () => {
+	const editor = window.activeTextEditor;
 
-const filePath = editor.document.uri.fsPath;
+	if (!editor) {
+		return {};
+	}
 
-const projectDir = findProjectRoot(filePath);
+	const filePath = editor.document.uri.fsPath;
 
-if (!projectDir) {
-  window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
-  throw new Error("Could not find intlayer project root");
-}
+	const projectDir = findProjectRoot(filePath);
 
-const configOptions = getConfigurationOptionsSync(projectDir);
+	if (!projectDir) {
+		return {};
+	}
 
-// This config do not resolve the env vars, so we need to build it once without first to extract the location of the @intlayer/config/built alias
-// And then we return the JSON object
-const configuration = getConfiguration(configOptions);
+	try {
+		const configOptions = getConfigurationOptionsSync(projectDir);
 
-const configDirPath = getAlias({
-  configuration,
-  format: "cjs",
-  formatter: (path) => join(projectDir, path),
-});
+		// This config do not resolve the env vars, so we need to build it once without first to extract the location of the @intlayer/config/built alias
+		// And then we return the JSON object
+		const configuration = getConfiguration(configOptions);
 
-const projectRequire = createRequire(join(projectDir, "package.json"));
+		const configDirPath = getAlias({
+			configuration,
+			format: "cjs",
+			formatter: (path) => join(projectDir, path),
+		});
 
-const configJSON = projectRequire(configDirPath["@intlayer/config/built"]);
+		const projectRequire = createRequire(join(projectDir, "package.json"));
+
+		return projectRequire(configDirPath["@intlayer/config/built"]);
+	} catch (error) {
+		console.error(`${prefix} Error loading configuration:`, error);
+		return {};
+	}
+};
+
+const configJSON = new Proxy(
+	{},
+	{
+		get: (_target, prop) => {
+			const config = loadConfig();
+			return config[prop];
+		},
+		getOwnPropertyDescriptor: (_target, prop) => {
+			const config = loadConfig();
+			return Object.getOwnPropertyDescriptor(config, prop);
+		},
+		has: (_target, prop) => {
+			const config = loadConfig();
+			return prop in config;
+		},
+		ownKeys: (_target) => {
+			const config = loadConfig();
+			return Reflect.ownKeys(config);
+		},
+	},
+);
 
 export default configJSON;
