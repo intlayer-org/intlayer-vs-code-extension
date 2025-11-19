@@ -1,23 +1,8 @@
-import { listDictionaries, loadDictionaries } from "@intlayer/chokidar";
 import { listMissingTranslations } from "@intlayer/cli";
-import { getConfiguration } from "@intlayer/config";
-import type { Dictionary } from "@intlayer/types";
 import { window, workspace } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
-
-const groupDictionariesByKey = (
-  dictionaries: Dictionary[]
-): Record<string, Dictionary[]> =>
-  dictionaries.reduce((acc, dictionary) => {
-    const key = dictionary.key;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(dictionary);
-    return acc;
-  }, {} as Record<string, Dictionary[]>);
 
 // Helper to pretty-print details into a temporary editor document
 const writeMissingReport = async (
@@ -73,24 +58,8 @@ export const testCommand = async () => {
 
   try {
     const configOptions = await getConfigurationOptions(projectDir);
-    const configuration = getConfiguration(configOptions);
-    const dictionariesPath = await listDictionaries(configuration);
 
-    const dictionaries = await loadDictionaries(
-      dictionariesPath,
-      configuration
-    );
-
-    if (!dictionaries.localDictionaries.length) {
-      window.showWarningMessage(`${prefix}No dictionaries available.`);
-      return;
-    }
-
-    const dictionaryRecords = groupDictionariesByKey(
-      dictionaries.localDictionaries
-    );
-
-    const result = listMissingTranslations(dictionaryRecords, configOptions);
+    const result = listMissingTranslations(configOptions);
 
     const hasIssues =
       result.missingTranslations.length > 0 || result.missingLocales.length > 0;
