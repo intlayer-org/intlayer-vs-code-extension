@@ -108,14 +108,14 @@ export const generateDictionaryContent = async (
   // Attempt to detect a React component name if it’s exported
   const detectedExportName = detectExportedComponentName(fileText);
 
-  // 1) Derive base name (without extension) from something like 'MyComponent.tsx' => 'MyComponent'
+  // Derive base name (without extension) from something like 'MyComponent.tsx' => 'MyComponent'
   //    or from 'index.jsx' => 'index'
   const { baseName: fileBaseName } = parseFileName(currentFileName);
 
   // If we found a name from an exported component, use that instead
   const baseName = detectedExportName ?? fileBaseName;
 
-  // 2) Determine if it’s TS or JS-based to pick the correct extension for the content file
+  // Determine if it’s TS or JS-based to pick the correct extension for the content file
   let contentFileExtension = ".ts";
   switch (format) {
     case "json":
@@ -129,7 +129,7 @@ export const generateDictionaryContent = async (
       break;
   }
 
-  // 3) Build the target dictionary file name
+  // Build the target dictionary file name
   //    e.g. MyComponent => myComponent.content.ts
   //         index => index.content.ts
 
@@ -145,7 +145,7 @@ export const generateDictionaryContent = async (
     ).replace(".ts", contentFileExtension);
   const targetPath = join(currentDir, targetFileName);
 
-  // 4) Build the dictionary key
+  // Build the dictionary key
   let dictionaryKey: string;
 
   // If can't parse or is empty, use fallback
@@ -157,7 +157,7 @@ export const generateDictionaryContent = async (
     dictionaryKey = toKebabCase(baseName);
   }
 
-  // 5) Create the actual content using shared template logic
+  // Create the actual content using shared template logic
   const fileData = await getContentDeclarationFileTemplate(
     dictionaryKey,
     format,
@@ -169,7 +169,7 @@ export const generateDictionaryContent = async (
     )
   );
 
-  // 6) Write the file if not existing already (or ask to overwrite)
+  // Write the file if not existing already (or ask to overwrite)
   if (existsSync(targetPath)) {
     const overwrite = await window.showWarningMessage(
       `${basename(targetPath)} already exists. Overwrite?`,
