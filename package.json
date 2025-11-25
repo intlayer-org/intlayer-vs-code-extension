@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "7.1.7",
+  "version": "7.3.0",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -90,9 +90,14 @@
           "group": "navigation@903"
         },
         {
-          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx)$/) && !(resourceFilename =~ /.*\\.content\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue)$/) && !(resourceFilename =~ /.*\\.content\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
           "command": "extension.createDictionaryFile",
           "group": "navigation@901"
+        },
+        {
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
+          "command": "intlayer.transform",
+          "group": "navigation@900"
         }
       ],
       "view/title": [
@@ -172,6 +177,11 @@
         "icon": "$(cloud-upload)"
       },
       {
+        "command": "intlayer.transform",
+        "title": "Intlayer: Extract Content to Dictionary",
+        "icon": "$(file-code)"
+      },
+      {
         "command": "extension.createDictionaryFile.ts",
         "title": "Intlayer: Create Content File (TypeScript)",
         "icon": "$(symbol-parameter)"
@@ -246,10 +256,13 @@
     "onCommand:extension.fillDictionaries",
     "onCommand:extension.testDictionaries",
     "onCommand:intlayer.selectEnvironment",
+    "onCommand:intlayer.transform",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
-    "onLanguage:typescriptreact"
+    "onLanguage:typescriptreact",
+    "onLanguage:vue",
+    "onLanguage:svelte"
   ],
   "scripts": {
     "pretest": "npm run compile && npm run lint",
@@ -274,14 +287,16 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/api": "^7.1.7",
-    "@intlayer/chokidar": "^7.1.7",
-    "@intlayer/cli": "^7.1.7",
-    "@intlayer/config": "^7.1.7",
-    "@intlayer/types": "^7.1.7",
+    "@intlayer/api": "^7.3.0",
+    "@intlayer/chokidar": "^7.3.0",
+    "@intlayer/cli": "^7.3.0",
+    "@intlayer/config": "^7.3.0",
+    "@intlayer/types": "^7.3.0",
+    "@intlayer/svelte-transformer": "^7.3.0",
+    "@intlayer/vue-transformer": "^7.3.0",
     "dotenv": "^17.2.2",
     "fuse.js": "^7.1.0",
-    "intlayer": "^7.1.7",
+    "intlayer": "^7.3.0",
     "module-alias": "^2.2.3"
   }
 }

@@ -7,6 +7,7 @@ import { pullCommand } from "./commands/pullCommand";
 import { pushCommand } from "./commands/pushCommand";
 import { selectEnvironment } from "./commands/selectEnvironment";
 import { testCommand } from "./commands/testCommand";
+import { transformCommand } from "./commands/transformCommand";
 import { generateDictionaryContent } from "./createDictionaryContent";
 import { buildActiveDictionary } from "./editor/buildActiveDictionary";
 import { createDictionaryFile } from "./editor/createDictionaryFile";
@@ -63,7 +64,8 @@ export const activate = (context: ExtensionContext) => {
     commands.registerCommand("extension.pushDictionaries", pushCommand),
     commands.registerCommand("extension.pullDictionaries", pullCommand),
     commands.registerCommand("extension.fillDictionaries", fillCommand),
-    commands.registerCommand("extension.testDictionaries", testCommand)
+    commands.registerCommand("extension.testDictionaries", testCommand),
+    commands.registerCommand("intlayer.transform", transformCommand)
   );
 
   // Restore native tree for dictionaries and keep a TreeView handle for reveal
