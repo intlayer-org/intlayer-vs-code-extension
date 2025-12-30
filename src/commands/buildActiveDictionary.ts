@@ -33,11 +33,11 @@ export const buildDictionaryList = async (filePaths?: string[]) => {
         config
       );
 
-      const updatedDictionariesPaths = Object.values(
+      const updatedDictionaries = Object.values(
         dictionariesOutput?.mergedDictionaries ?? {}
-      ).map((dictionary) => dictionary.dictionaryPath);
+      ).map((dictionary) => dictionary.dictionary);
 
-      await createTypes(updatedDictionariesPaths, config);
+      await createTypes(updatedDictionaries, config);
 
       const fileName = basename(filePath);
       window.showInformationMessage(
