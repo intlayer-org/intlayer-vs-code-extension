@@ -1,7 +1,10 @@
 import { execSync } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join } from "node:path";
-import { getContentDeclarationFileTemplate, detectExportedComponentName } from "@intlayer/chokidar";
+import {
+  getContentDeclarationFileTemplate,
+  detectExportedComponentName,
+} from "@intlayer/chokidar";
 import { getConfiguration } from "@intlayer/config";
 import {
   Position,
@@ -14,8 +17,6 @@ import {
 import { detectFormatCommand } from "./detectFormatCommand";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getConfigurationOptions } from "./utils/getConfiguration";
-
-
 
 const getContentPosition = (content: string): Position => {
   const lines = content.split("\n");
@@ -38,7 +39,7 @@ const getContentPosition = (content: string): Position => {
 };
 
 export const generateDictionaryContent = async (
-  format: "ts" | "esm" | "cjs" | "json"
+  format: "ts" | "esm" | "cjs" | "json" | "jsonc" | "json5"
 ) => {
   const editor = window.activeTextEditor;
   if (!editor) {
@@ -118,6 +119,7 @@ export const generateDictionaryContent = async (
   // Create the actual content using shared template logic
   const fileData = await getContentDeclarationFileTemplate(
     dictionaryKey,
+    // @ts-ignore JSONC JSON5 will be implemented in the next version
     format,
     // Filter out undefined values
     Object.fromEntries(

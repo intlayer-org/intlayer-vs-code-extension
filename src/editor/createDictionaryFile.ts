@@ -23,6 +23,8 @@ export const createDictionaryFile = async () => {
           { label: "ESM (.js)", value: "esm" },
           { label: "CommonJS (.js)", value: "cjs" },
           { label: "JSON (.json)", value: "json" },
+          { label: "JSONC (.jsonc)", value: "jsonc" },
+          { label: "JSON5 (.json5)", value: "json5" },
         ],
         { placeHolder: "Select content file format" }
       )

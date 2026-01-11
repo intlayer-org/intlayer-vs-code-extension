@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "7.5.9",
+  "version": "7.5.11",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -80,12 +80,12 @@
     "menus": {
       "editor/title": [
         {
-          "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
+          "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|json5)$/",
           "command": "extension.buildActiveDictionary",
           "group": "navigation@902"
         },
         {
-          "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json)$/",
+          "when": "resourceFilename =~ /.*\\.content\\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|json5)$/",
           "command": "extension.fillActiveDictionary",
           "group": "navigation@903"
         },
@@ -287,16 +287,18 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@intlayer/api": "^7.5.9",
-    "@intlayer/chokidar": "^7.5.9",
-    "@intlayer/cli": "^7.5.9",
-    "@intlayer/config": "^7.5.9",
-    "@intlayer/types": "^7.5.9",
-    "@intlayer/svelte-transformer": "^7.5.9",
-    "@intlayer/vue-transformer": "^7.5.9",
+    "@intlayer/api": "^7.5.11",
+    "@intlayer/chokidar": "^7.5.11",
+    "@intlayer/cli": "^7.5.11",
+    "@intlayer/config": "^7.5.11",
+    "@intlayer/svelte-transformer": "^7.5.11",
+    "@intlayer/types": "^7.5.11",
+    "@intlayer/vue-transformer": "^7.5.11",
     "dotenv": "^17.2.2",
     "fuse.js": "^7.1.0",
-    "intlayer": "^7.5.9",
-    "module-alias": "^2.2.3"
+    "intlayer": "^7.5.11",
+    "json5": "^2.2.3",
+    "module-alias": "^2.2.3",
+    "ts-morph": "^27.0.2"
   }
 }

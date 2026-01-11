@@ -19,22 +19,38 @@ import { pushDictionary } from "./explorer/pushDictionary";
 import { SearchBarViewProvider } from "./explorer/searchBarViewProvider";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { initializeEnvironmentStore } from "./utils/envStore";
+import { intlayerHoverProvider } from "./providers/intlayerHoverProvider";
+import { intlayerDefinitionProvider } from "./providers/intlayerDefinitionProvider";
 
 export const activate = (context: ExtensionContext) => {
   initializeEnvironmentStore(context);
-  // Register the definition provider
+
+  const selector = [
+    { language: "javascript", scheme: "file" },
+    { language: "javascriptreact", scheme: "file" },
+    { language: "typescript", scheme: "file" },
+    { language: "typescriptreact", scheme: "file" },
+    { language: "vue", scheme: "file" },
+  ];
+
+  // String keys (useIntlayer(->'my-key'<-)
   context.subscriptions.push(
     languages.registerDefinitionProvider(
-      [
-        { language: "javascript", scheme: "file" },
-        { language: "javascriptreact", scheme: "file" },
-        { language: "typescript", scheme: "file" },
-        { language: "typescriptreact", scheme: "file" },
-        { language: "vue", scheme: "file" },
-      ],
+      selector,
       redirectUseIntlayerKeyToDictionary
-    ),
+    )
+  );
 
+  context.subscriptions.push(
+    languages.registerDefinitionProvider(selector, intlayerDefinitionProvider)
+  );
+
+  context.subscriptions.push(
+    languages.registerHoverProvider(selector, intlayerHoverProvider)
+  );
+
+  // Register the definition provider
+  context.subscriptions.push(
     commands.registerCommand(
       "extension.createDictionaryFile.ts",
       async () => await generateDictionaryContent("ts")
@@ -50,6 +66,14 @@ export const activate = (context: ExtensionContext) => {
     commands.registerCommand(
       "extension.createDictionaryFile.json",
       async () => await generateDictionaryContent("json")
+    ),
+    commands.registerCommand(
+      "extension.createDictionaryFile.json5",
+      async () => await generateDictionaryContent("json5")
+    ),
+    commands.registerCommand(
+      "extension.createDictionaryFile.jsonc",
+      async () => await generateDictionaryContent("jsonc")
     ),
 
     commands.registerCommand("extension.buildDictionaries", buildCommand),
