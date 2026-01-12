@@ -50,7 +50,7 @@ export const intlayerHoverProvider: HoverProvider = {
 
     // Scan dictionaries to find the first valid node to determine the type
     for (const dict of dictionaries) {
-      if (dict.location === "distant") {
+      if (dict.location === "remote") {
         continue;
       }
 
@@ -97,7 +97,7 @@ export const intlayerHoverProvider: HoverProvider = {
 
     // --- BUILD CONTENT BODY ---
     for (const dict of dictionaries) {
-      if (dict.location === "distant") {
+      if (dict.location === "remote") {
         const url = `${config.editor.cmsURL}/dictionary/${dictionaryKey}`;
         const md = new MarkdownString();
         md.isTrusted = true;

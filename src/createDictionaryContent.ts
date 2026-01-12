@@ -4,6 +4,7 @@ import { basename, dirname, extname, join } from "node:path";
 import {
   getContentDeclarationFileTemplate,
   detectExportedComponentName,
+  detectFormatCommand,
 } from "@intlayer/chokidar";
 import { getConfiguration } from "@intlayer/config";
 import {
@@ -14,7 +15,6 @@ import {
   window,
   workspace,
 } from "vscode";
-import { detectFormatCommand } from "./detectFormatCommand";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getConfigurationOptions } from "./utils/getConfiguration";
 

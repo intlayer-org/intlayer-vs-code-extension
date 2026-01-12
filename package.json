@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "7.5.11",
+  "version": "7.5.13",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -286,16 +286,16 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@intlayer/api": "^7.5.12",
-    "@intlayer/chokidar": "^7.5.12",
-    "@intlayer/cli": "^7.5.12",
-    "@intlayer/config": "^7.5.12",
-    "@intlayer/svelte-transformer": "^7.5.12",
-    "@intlayer/types": "^7.5.12",
-    "@intlayer/vue-transformer": "^7.5.12",
+    "@intlayer/api": "^7.5.13",
+    "@intlayer/chokidar": "^7.5.13",
+    "@intlayer/cli": "^7.5.13",
+    "@intlayer/config": "^7.5.13",
+    "@intlayer/svelte-transformer": "^7.5.13",
+    "@intlayer/types": "^7.5.13",
+    "@intlayer/vue-transformer": "^7.5.13",
     "dotenv": "^17.2.3",
     "fuse.js": "^7.1.0",
-    "intlayer": "^7.5.12",
+    "intlayer": "^7.5.13",
     "json5": "^2.2.3",
     "ts-morph": "^27.0.2"
   }

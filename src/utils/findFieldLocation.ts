@@ -82,11 +82,6 @@ export const findFieldLocation = async (
 
     // Traverse the Object Literal
     let currentNode = rootObject;
-
-    // Stop early if we find the node, but handle partial matches for deep keys
-    // Example: keyPath = ['content', 'title', 'value'] -> Source only has ['content', 'title']
-    // We want to land on 'title'.
-
     let lastFoundNode: Node | null = null;
 
     for (const key of keyPath) {
@@ -103,7 +98,6 @@ export const findFieldLocation = async (
           ) {
             currentNode = args[0];
           } else {
-            // Cannot traverse deeper
             break;
           }
         } else {
@@ -114,9 +108,6 @@ export const findFieldLocation = async (
       if (currentNode.getKind() === SyntaxKind.ObjectLiteralExpression) {
         const prop = (currentNode as any).getProperty(key);
         if (!prop) {
-          // Property not found, stop here.
-          // If we found previous nodes, we might want to return the last known good one?
-          // For now, let's break.
           break;
         }
 
@@ -133,8 +124,8 @@ export const findFieldLocation = async (
         const nameNode = (lastFoundNode as any).getNameNode();
         return {
           line: nameNode.getStartLineNumber() - 1,
-          character:
-            nameNode.getStartLinePos() - nameNode.getStartLineNumberPos(),
+          // FIX: Calculate column by subtracting line start position from node start position
+          character: nameNode.getStart() - nameNode.getStartLinePos(),
         };
       }
     }
@@ -150,8 +141,6 @@ const findLocationInJson = (
   content: string,
   keyPath: string[]
 ): { line: number; character: number } | null => {
-  // ... (Keep your existing JSON logic here)
-  // Simplified for brevity in this answer, ensure it's included.
   let currentIndex = 0;
   let resultLine = 0;
   let resultChar = 0;
