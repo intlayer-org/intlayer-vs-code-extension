@@ -90,7 +90,6 @@ export const activate = (context: ExtensionContext) => {
     commands.registerCommand("intlayer.transform", transformCommand)
   );
 
-  // Restore native tree for dictionaries and keep a TreeView handle for reveal
   const treeDataProvider = new DictionaryTreeDataProvider();
   const treeView = window.createTreeView("intlayer.dictionaries", {
     treeDataProvider,
@@ -137,7 +136,7 @@ export const activate = (context: ExtensionContext) => {
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       "intlayer.searchBar",
-      new SearchBarViewProvider(treeDataProvider)
+      new SearchBarViewProvider(context.extensionUri, treeDataProvider)
     )
   );
 

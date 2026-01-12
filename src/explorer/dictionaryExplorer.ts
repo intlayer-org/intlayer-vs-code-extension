@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, extname, join, relative } from "node:path";
+import { listProjects } from "@intlayer/chokidar";
 import { getConfiguration } from "@intlayer/config";
 import {
   type Event,
@@ -12,7 +13,6 @@ import {
   workspace,
 } from "vscode";
 import { getSelectedEnvironment } from "../utils/envStore";
-import { findAllProjectRoots } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { hasClientId } from "../utils/hasClientId";
 
@@ -113,8 +113,24 @@ export class DictionaryTreeDataProvider
   async getChildren(element?: IntlayerTreeNode): Promise<IntlayerTreeNode[]> {
     try {
       if (!element) {
-        const roots = findAllProjectRoots();
-        if (!roots.length) {
+        // Retrieve all project roots by scanning workspace folders for Intlayer configs
+        const workspaceFolders = workspace.workspaceFolders ?? [];
+        const foundRoots: string[] = [];
+
+        for (const folder of workspaceFolders) {
+          try {
+            const { projectsPath } = await listProjects({
+              baseDir: folder.uri.fsPath,
+            });
+            foundRoots.push(...projectsPath);
+          } catch {
+            // Ignore folders where scan fails
+          }
+        }
+
+        const uniqueRoots = Array.from(new Set(foundRoots));
+
+        if (!uniqueRoots.length) {
           return [];
         }
 
@@ -124,7 +140,8 @@ export class DictionaryTreeDataProvider
           files: string[];
           label: string;
         }[] = [];
-        for (const projectDir of roots) {
+
+        for (const projectDir of uniqueRoots) {
           try {
             const configOptions = await getConfigurationOptions(
               projectDir,
@@ -141,6 +158,11 @@ export class DictionaryTreeDataProvider
                   .sort()
               : [];
 
+            // FILTER: Skip project if it has no .content (empty dictionary files)
+            if (files.length === 0) {
+              continue;
+            }
+
             // derive label from package.json name or fallback to directory name
             let label = basename(projectDir);
             try {
@@ -154,7 +176,7 @@ export class DictionaryTreeDataProvider
 
             envs.push({ projectDir, dir, files, label });
           } catch {
-            // best effort per env
+            // If configuration loading fails, skip this project
           }
         }
         this.cachedEnvironments = envs;

@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { Uri, workspace } from "vscode";
 import type {
   CancellationToken,
   WebviewView,
@@ -9,24 +8,45 @@ import type {
 import type { DictionaryTreeDataProvider } from "./dictionaryExplorer";
 
 export class SearchBarViewProvider implements WebviewViewProvider {
-  constructor(private readonly treeDataProvider: DictionaryTreeDataProvider) {}
+  // 1. Accept extensionUri in constructor
+  constructor(
+    private readonly extensionUri: Uri,
+    private readonly treeDataProvider: DictionaryTreeDataProvider
+  ) {}
 
   resolveWebviewView(
     webviewView: WebviewView,
     _context: WebviewViewResolveContext,
     _token: CancellationToken
   ) {
-    const searchHTMLInput = readFileSync(
-      join(__dirname, "searchInput.html"),
-      "utf8"
-    ).replace(
-      "{{searchQuery}}",
-      this.treeDataProvider.getSearchQuery().replace(/"/g, "&quot;")
-    );
-
     const webview = webviewView.webview;
     webview.options = { enableScripts: true };
-    webview.html = searchHTMLInput;
+
+    // 2. Resolve path relative to extension root
+    // Note: Ensure your build script copies this file to the matching path in dist/
+    // or adjust this path to where your assets live (e.g., "resources/searchInput.html")
+    const searchInputUri = Uri.joinPath(
+      this.extensionUri,
+      "src",
+      "explorer",
+      "searchInput.html"
+    );
+
+    // 3. Read file asynchronously using VS Code FS
+    workspace.fs.readFile(searchInputUri).then(
+      (uint8Array) => {
+        const htmlContent = new TextDecoder("utf-8").decode(uint8Array);
+
+        webview.html = htmlContent.replace(
+          "{{searchQuery}}",
+          this.treeDataProvider.getSearchQuery().replace(/"/g, "&quot;")
+        );
+      },
+      (error) => {
+        console.error("Failed to load searchInput.html", error);
+        webview.html = `<p style="color:red">Error loading search bar: ${error.message}</p>`;
+      }
+    );
 
     webview.onDidReceiveMessage((msg) => {
       if (msg?.type === "query") {
