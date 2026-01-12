@@ -92,7 +92,7 @@ export const intlayerHoverProvider: HoverProvider = {
     header.appendMarkdown(`### Intlayer: \`${dictionaryKey}\``);
     header.appendMarkdown(`\n\n**Path**: \`${cleanPath.join(".") || "root"}\``);
     // Type is now added to the header section
-    header.appendMarkdown(`\n**Type**: \`${displayType}\``);
+    header.appendMarkdown(`\n\n**Type**: \`${displayType}\``);
     hoverTexts.push(header);
 
     // --- BUILD CONTENT BODY ---

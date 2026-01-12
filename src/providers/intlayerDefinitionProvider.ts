@@ -16,8 +16,10 @@ import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 
 export const intlayerDefinitionProvider: DefinitionProvider = {
   provideDefinition: async (document, position) => {
-    // 1. Resolve Path
+    // Pass 'false' to allowRemoteLookup.
+    // This prevents the provider from triggering "Go to Definition" recursively.
     const origin = await resolveIntlayerPath(document, position);
+
     if (!origin) {
       return null;
     }
@@ -25,10 +27,8 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
     const { dictionaryKey, fieldPath } = origin;
 
     // ---------------------------------------------------------
-    // CHANGE: Strip accessor for definition lookup
+    // Strip accessor for definition lookup
     // ---------------------------------------------------------
-    // The JSON dictionary does not contain 'value' or 'raw' keys.
-    // We must remove them to find the correct node location.
     const cleanPath = [...fieldPath];
     const lastKey = cleanPath[cleanPath.length - 1];
     if (lastKey === "value" || lastKey === "raw") {
