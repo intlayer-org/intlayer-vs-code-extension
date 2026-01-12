@@ -43,9 +43,6 @@
   },
   "publisher": "intlayer",
   "main": "./dist/extension.js",
-  "_moduleAliases": {
-    "@intlayer/config/built": "./dist/config-built.js"
-  },
   "files": [
     "dist",
     "README.md",
@@ -272,33 +269,34 @@
     "vscode:login": "vsce login intlayer",
     "test": "vscode-test",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && cp src/explorer/searchInput.html dist/explorer/",
-    "watch": "tsc -watch -p ./"
+    "compile": "tsdown && mv dist/extension.cjs dist/extension.js",
+    "watch": "tsdown --watch",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
+    "@types/node": "25.0.6",
     "@types/vscode": "^1.96.0",
-    "@typescript-eslint/eslint-plugin": "^8.25.0",
-    "@typescript-eslint/parser": "^8.25.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "eslint": "^9.21.0",
-    "typescript": "^5.7.3"
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
+    "@vscode/test-cli": "^0.0.12",
+    "tsdown": "0.19.0",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@intlayer/api": "^7.5.11",
-    "@intlayer/chokidar": "^7.5.11",
-    "@intlayer/cli": "^7.5.11",
-    "@intlayer/config": "^7.5.11",
-    "@intlayer/svelte-transformer": "^7.5.11",
-    "@intlayer/types": "^7.5.11",
-    "@intlayer/vue-transformer": "^7.5.11",
-    "dotenv": "^17.2.2",
+    "@intlayer/api": "^7.5.12",
+    "@intlayer/chokidar": "^7.5.12",
+    "@intlayer/cli": "^7.5.12",
+    "@intlayer/config": "^7.5.12",
+    "@intlayer/svelte-transformer": "^7.5.12",
+    "@intlayer/types": "^7.5.12",
+    "@intlayer/vue-transformer": "^7.5.12",
+    "dotenv": "^17.2.3",
     "fuse.js": "^7.1.0",
-    "intlayer": "^7.5.11",
+    "intlayer": "^7.5.12",
     "json5": "^2.2.3",
-    "module-alias": "^2.2.3",
     "ts-morph": "^27.0.2"
   }
 }

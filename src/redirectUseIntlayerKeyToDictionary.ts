@@ -1,7 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { getConfiguration } from "@intlayer/config";
-import type { Dictionary } from "@intlayer/types";
 import {
   type DefinitionLink,
   type DefinitionProvider,
@@ -11,12 +8,20 @@ import {
   window,
 } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
-import { getConfigurationOptions } from "./utils/getConfiguration";
+import { getCachedConfig, getCachedDictionary } from "./utils/intlayerCache";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
   provideDefinition: async (document, position) => {
+    // 1. Fast Regex Check
     const range = document.getWordRangeAtPosition(position, /["'][^"']+["']/);
     if (!range) {
+      return null;
+    }
+
+    const lineText = document.lineAt(position.line).text;
+    if (
+      !(lineText.includes("useIntlayer") || lineText.includes("getIntlayer"))
+    ) {
       return null;
     }
 
@@ -26,13 +31,6 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       range.end.translate(0, -1)
     );
 
-    const lineText = document.lineAt(position.line).text;
-    if (
-      !(lineText.includes("useIntlayer") || lineText.includes("getIntlayer"))
-    ) {
-      return null;
-    }
-
     const fileDir = dirname(document.uri.fsPath);
     const projectDir = findProjectRoot(fileDir);
 
@@ -41,24 +39,22 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       return;
     }
 
-    const configOptions = await getConfigurationOptions(projectDir);
-    const config = getConfiguration(configOptions);
+    // 2. Get Config (OPTIMIZED: Uses Cache)
+    const config = await getCachedConfig(projectDir);
 
     const dictionaryPath = join(
       config.content.unmergedDictionariesDir,
       `${word}.json`
     );
 
-    if (!existsSync(dictionaryPath)) {
-      console.warn("Dictionary not found", { dictionaryPath });
+    // 3. Get Dictionary (OPTIMIZED: Shared Cache)
+    const dictionaries = await getCachedDictionary(dictionaryPath);
+
+    if (!dictionaries) {
       return null;
     }
 
-    const dictionaryFileContent = readFileSync(dictionaryPath, "utf8");
-
-    const dictionaryies = JSON.parse(dictionaryFileContent) as Dictionary[];
-
-    const links: DefinitionLink[] = dictionaryies
+    const links: DefinitionLink[] = dictionaries
       .filter((dictionary) => Boolean(dictionary.filePath))
       .map((dictionary) => {
         if (!dictionary.filePath) {
@@ -66,11 +62,11 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
         }
         return {
           originSelectionRange,
-          targetUri: Uri.file(join(projectDir, dictionary.filePath)),
+          targetUri: Uri.file(join(projectDir, dictionary.filePath!)), // Non-null assertion safe due to filter
           targetRange: new Range(new Position(0, 0), new Position(0, 0)),
         } as DefinitionLink;
       })
-      .filter((link) => typeof link !== "undefined") as DefinitionLink[];
+      .filter((link): link is DefinitionLink => !!link);
 
     return links.length ? links : null;
   },

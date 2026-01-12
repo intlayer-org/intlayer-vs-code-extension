@@ -1,5 +1,3 @@
-import "module-alias/register";
-
 import { commands, type ExtensionContext, languages, window } from "vscode";
 import { buildCommand } from "./commands/buildAllCommand";
 import { fillCommand } from "./commands/fillAllCommand";
@@ -143,32 +141,41 @@ export const activate = (context: ExtensionContext) => {
     )
   );
 
+  let debounceTimer: NodeJS.Timeout;
+
   // Reveal currently active editor if it matches an unmerged dictionary file path
   const activeEditorDisposable = window.onDidChangeActiveTextEditor(
     async (ed) => {
-      try {
-        if (!ed) {
-          return;
-        }
-        const node = await treeDataProvider.findFileNodeByAbsolutePath(
-          ed.document.uri.fsPath
-        );
-        if (!node) {
-          return;
-        }
-        // Store the intended selection and only reveal if the view is already visible
-        pendingRevealNode = node;
-        if (treeView.visible) {
-          await treeView.reveal(node, {
-            select: true,
-            focus: false,
-            expand: true,
-          });
-          pendingRevealNode = undefined;
-        }
-      } catch (_error) {
-        // best effort
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
       }
+
+      // Debounce: Wait 500ms before querying file system / tree
+      debounceTimer = setTimeout(async () => {
+        try {
+          if (!ed) {
+            return;
+          }
+          const node = await treeDataProvider.findFileNodeByAbsolutePath(
+            ed.document.uri.fsPath
+          );
+          if (!node) {
+            return;
+          }
+          // Store the intended selection and only reveal if the view is already visible
+          pendingRevealNode = node;
+          if (treeView.visible) {
+            await treeView.reveal(node, {
+              select: true,
+              focus: false,
+              expand: true,
+            });
+            pendingRevealNode = undefined;
+          }
+        } catch {
+          // best effort
+        }
+      }, 500);
     }
   );
 

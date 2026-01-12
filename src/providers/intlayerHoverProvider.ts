@@ -1,21 +1,18 @@
-import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { getConfiguration } from "@intlayer/config";
 import { Hover, type HoverProvider, MarkdownString, Uri } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
-import { getConfigurationOptions } from "../utils/getConfiguration";
 import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
+import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 
 export const intlayerHoverProvider: HoverProvider = {
   provideHover: async (document, position) => {
+    // 1. Resolve Path (Fast AST check)
     const origin = await resolveIntlayerPath(document, position);
     if (!origin) {
       return null;
     }
 
     const { dictionaryKey, fieldPath, moduleSource } = origin;
-
-    // 1. Clean Path logic
     const cleanPath = [...fieldPath];
     const lastKey = cleanPath[cleanPath.length - 1];
 
@@ -26,24 +23,27 @@ export const intlayerHoverProvider: HoverProvider = {
       cleanPath.pop();
     }
 
-    // 2. Load Config
+    // 2. Find Root
     const fileDir = dirname(document.uri.fsPath);
     const projectDir = findProjectRoot(fileDir);
     if (!projectDir) {
       return null;
     }
 
-    const config = getConfiguration(await getConfigurationOptions(projectDir));
+    // 3. Get Config (OPTIMIZED: Uses Cache)
+    const config = await getCachedConfig(projectDir);
+
     const dictionaryJsonPath = join(
       config.content.unmergedDictionariesDir,
       `${dictionaryKey}.json`
     );
 
-    if (!existsSync(dictionaryJsonPath)) {
+    // 4. Get Dictionary (OPTIMIZED: Async & Cached)
+    const dictionaries = await getCachedDictionary(dictionaryJsonPath);
+
+    if (!dictionaries) {
       return null;
     }
-
-    const dictionaries = JSON.parse(readFileSync(dictionaryJsonPath, "utf8"));
 
     // --- DETERMINE TYPE (Pre-calculation) ---
     let displayType = "unknown";
@@ -134,13 +134,10 @@ export const intlayerHoverProvider: HoverProvider = {
           for (const [locale, val] of Object.entries(targetNode.translation)) {
             md.appendMarkdown(`| **${locale}** | ${val} |\n`);
           }
-          // Type logic removed from here
         } else if (typeof targetNode === "object") {
           md.appendCodeblock(JSON.stringify(targetNode, null, 2), "json");
-          // Type logic removed from here
         } else {
           md.appendMarkdown(`**Value**: ${targetNode}`);
-          // Type logic removed from here
         }
         hoverTexts.push(md);
       }
