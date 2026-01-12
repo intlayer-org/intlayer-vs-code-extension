@@ -22,13 +22,12 @@ export class SearchBarViewProvider implements WebviewViewProvider {
     const webview = webviewView.webview;
     webview.options = { enableScripts: true };
 
-    // 2. Resolve path relative to extension root
+    // Resolve path relative to extension root
     // Note: Ensure your build script copies this file to the matching path in dist/
     // or adjust this path to where your assets live (e.g., "resources/searchInput.html")
     const searchInputUri = Uri.joinPath(
       this.extensionUri,
-      "src",
-      "explorer",
+      "dist",
       "searchInput.html"
     );
 

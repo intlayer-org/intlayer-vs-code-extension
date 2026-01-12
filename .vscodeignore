@@ -11,6 +11,8 @@ vsc-extension-quickstart.md
 .env
 assets/**
 node_modules/**
+!node_modules/esbuild/**
+!node_modules/@esbuild/**
 
 src/**
 !dist/**
