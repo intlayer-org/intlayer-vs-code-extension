@@ -1,25 +1,29 @@
 import { mkdir, copyFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { resolve } from "node:path"; // Ensure this is imported
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: {
     extension: "./src/extension.ts",
   },
-  format: "cjs", // VS Code extensions typically run as CommonJS
-  target: "node20", // Aligns with recent VS Code Node.js versions
-  clean: true, // Clean dist folder before build
+  format: "cjs",
+  target: "node20",
+  clean: true,
   platform: "node",
   minify: true,
+
+  // Force bundling of all dependencies so it works in VS Code
+  noExternal: [/(.*)/],
+
   sourcemap: true,
-  // usage of dts is optional for the final extension bundle, usually not needed for runtime
   dts: false,
-  // Ensure 'vscode' is treated as an external module provided by the host
-  external: ["vscode"],
-  // Resolve path aliases (from tsconfig) at build time
+  external: ["vscode", "esbuild", "fsevents"],
+
   alias: {
-    "@intlayer/config/built": "./dist/config-built.js",
+    // ⚠️ FIX: Wrap this in resolve() to make it an absolute path
+    "@intlayer/config/built": resolve("src/config-built.ts"),
   },
+
   plugins: [
     {
       name: "copy-assets",
