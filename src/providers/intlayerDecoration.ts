@@ -120,21 +120,53 @@ const updateDecorations = async (editor: TextEditor) => {
     const dictionaryContent = dictionaries[0].content;
 
     // Iterate through variables destructured from useIntlayer
-    for (const { variableName, path: initialPath } of variables) {
+    for (const {
+      variableName,
+      path: initialPath,
+      declarationNode,
+    } of variables) {
       // Find usages of these variables
       const identifiers = sourceFile.getDescendantsOfKind(
         SyntaxKind.Identifier
       );
-      const references = identifiers.filter(
-        (id) => id.getText() === variableName && !isDeclarationIdentifier(id)
-      );
+
+      // Strict Filter: Match name AND ensure it references the correct declaration (Scope Check)
+      const references = identifiers.filter((id) => {
+        // Fast Name Check
+        if (id.getText() !== variableName) {
+          return false;
+        }
+
+        // Ignore Declaration Sites
+        if (isDeclarationIdentifier(id)) {
+          return false;
+        }
+
+        // Strict Scope Check using Symbols
+        // Ensure this identifier refers to the variable we found in useIntlayer
+        if (declarationNode) {
+          const idSymbol = id.getSymbol();
+          const declSymbol = declarationNode.getSymbol();
+
+          if (!idSymbol || !declSymbol) {
+            return false;
+          }
+
+          // Compare symbols to verify they refer to the same binding
+          // FIXED: Use .compilerSymbol instead of .getCompilerSymbol()
+          return (
+            idSymbol === declSymbol ||
+            idSymbol.compilerSymbol === declSymbol.compilerSymbol
+          );
+        }
+
+        return true;
+      });
 
       for (const ref of references) {
         const { fullPath, rangeNode } = resolvePropertyAccess(ref);
 
-        // --- CHANGED: Handle .value / .raw Accessors ---
-        // If the path ends in .value or .raw, we remove it because it is an
-        // accessor on the Intlayer node, not a key in the dictionary JSON.
+        // --- Handle .value / .raw Accessors ---
         const lastKey = fullPath[fullPath.length - 1];
         if (lastKey === "value" || lastKey === "raw") {
           fullPath.pop();
@@ -301,7 +333,12 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
     dictionaryKey = firstArg.getLiteralText();
   }
 
-  const variables: { variableName: string; path: string[] }[] = [];
+  // variables now includes declarationNode for scope checking
+  const variables: {
+    variableName: string;
+    path: string[];
+    declarationNode?: Node;
+  }[] = [];
   const varDecl = callExpr.getParentIfKind(SyntaxKind.VariableDeclaration);
 
   if (varDecl) {
@@ -318,12 +355,14 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
         variables.push({
           variableName,
           path: [dictionaryField],
+          declarationNode: nameNode, // Capture the BindingElement identifier
         });
       }
     } else if (Node.isIdentifier(pattern)) {
       variables.push({
         variableName: pattern.getText(),
         path: [],
+        declarationNode: pattern, // Capture the Variable declaration identifier
       });
     }
   }
