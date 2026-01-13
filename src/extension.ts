@@ -19,6 +19,9 @@ import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDi
 import { initializeEnvironmentStore } from "./utils/envStore";
 import { intlayerHoverProvider } from "./providers/intlayerHoverProvider";
 import { intlayerDefinitionProvider } from "./providers/intlayerDefinitionProvider";
+import { intlayerDecorationProvider } from "./providers/intlayerDecoration";
+import { intlayerContentDefinitionProvider } from "./providers/intlayerContentDefinitionProvider";
+import { intlayerUnusedDecorationProvider } from "./providers/intlayerUnusedDecoration";
 
 export const activate = (context: ExtensionContext) => {
   initializeEnvironmentStore(context);
@@ -46,6 +49,23 @@ export const activate = (context: ExtensionContext) => {
   context.subscriptions.push(
     languages.registerHoverProvider(selector, intlayerHoverProvider)
   );
+
+  // Returns an array of disposables (listeners)
+  const decorationDisposables = intlayerDecorationProvider();
+  context.subscriptions.push(...decorationDisposables);
+
+  // Register Reverse Lookup (Content -> Component)
+  // Allows Cmd+Click on content keys
+  context.subscriptions.push(
+    languages.registerDefinitionProvider(
+      selector, // <--- FIXED: Now uses the full selector (including .tsx/.jsx)
+      intlayerContentDefinitionProvider
+    )
+  );
+
+  // Register Unused Key Decoration (Strikethrough)
+  const unusedDecorations = intlayerUnusedDecorationProvider();
+  context.subscriptions.push(...unusedDecorations);
 
   // Register the definition provider
   context.subscriptions.push(

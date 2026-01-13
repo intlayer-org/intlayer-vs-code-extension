@@ -3,6 +3,7 @@ import { Hover, type HoverProvider, MarkdownString, Uri } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
+import { isValidElement } from "@intlayer/core";
 
 export const intlayerHoverProvider: HoverProvider = {
   provideHover: async (document, position) => {
@@ -62,10 +63,17 @@ export const intlayerHoverProvider: HoverProvider = {
           targetNode.translation
         ) {
           const translationValues = Object.values(targetNode.translation);
-          const primitiveType =
-            translationValues.length > 0
-              ? typeof translationValues[0]
-              : "unknown";
+          let primitiveType = "unknown";
+
+          // Check the first value to determine the type (String, Number, or ReactNode)
+          if (translationValues.length > 0) {
+            const firstValue = translationValues[0];
+            if (isValidElement(firstValue)) {
+              primitiveType = "ReactNode";
+            } else {
+              primitiveType = typeof firstValue;
+            }
+          }
 
           // Core 'intlayer' package returns content directly
           if (moduleSource === "intlayer") {
@@ -76,7 +84,12 @@ export const intlayerHoverProvider: HoverProvider = {
             displayType = isAccessor ? primitiveType : "IntlayerNode";
           }
         } else if (typeof targetNode === "object") {
-          displayType = "Object";
+          // If the node itself is a React Node (e.g. flat content)
+          if (isValidElement(targetNode)) {
+            displayType = "ReactNode";
+          } else {
+            displayType = "Object";
+          }
         } else {
           displayType = typeof targetNode;
         }
@@ -132,10 +145,16 @@ export const intlayerHoverProvider: HoverProvider = {
         ) {
           md.appendMarkdown(`| Locale | Translation |\n| :--- | :--- |\n`);
           for (const [locale, val] of Object.entries(targetNode.translation)) {
-            md.appendMarkdown(`| **${locale}** | ${val} |\n`);
+            // If the value is a React Node object, show "ReactNode" instead of [object Object]
+            const valStr = isValidElement(val) ? "`<ReactNode />`" : val;
+            md.appendMarkdown(`| **${locale}** | ${valStr} |\n`);
           }
         } else if (typeof targetNode === "object") {
-          md.appendCodeblock(JSON.stringify(targetNode, null, 2), "json");
+          if (isValidElement(targetNode)) {
+            md.appendMarkdown("**Value**: `<ReactNode />`");
+          } else {
+            md.appendCodeblock(JSON.stringify(targetNode, null, 2), "json");
+          }
         } else {
           md.appendMarkdown(`**Value**: ${targetNode}`);
         }

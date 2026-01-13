@@ -3,6 +3,8 @@ import { parse } from "dotenv";
 import { Uri, window, workspace } from "vscode";
 import { prefix } from "./logFunctions";
 
+let hasLogged = false;
+
 export const loadEnvFromWorkspace = async (
   baseDir: string,
   env?: string,
@@ -35,9 +37,13 @@ export const loadEnvFromWorkspace = async (
       if (logEnvFileName) {
         const projectName = basename(baseDir);
 
-        window.showInformationMessage(
-          `${prefix}Loaded env from ${candidate} in ${projectName}`
-        );
+        if (!hasLogged) {
+          window.showInformationMessage(
+            `${prefix}Loaded env from ${candidate} in ${projectName}`
+          );
+
+          hasLogged = true;
+        }
       }
       return parsed;
     } catch (_error) {}
