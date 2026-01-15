@@ -7,6 +7,12 @@ import {
   type DecorationOptions,
   Disposable,
 } from "vscode";
+import {
+  Project,
+  SyntaxKind,
+  Node,
+  type ObjectLiteralExpression,
+} from "ts-morph";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import {
   findUsagesOfDictionary,
@@ -15,13 +21,20 @@ import {
 
 const DEBOUNCE_DELAY = 1000;
 
+// Reusable project for AST parsing
+const project = new Project({
+  useInMemoryFileSystem: true,
+  skipLoadingLibFiles: true,
+  compilerOptions: { allowJs: true, jsx: 1 },
+});
+
 // --- Caching Strategy ---
 // We cache usages for a short period to prevent heavy FS scanning on every keystroke
 const usageCache = new Map<
   string,
   { timestamp: number; data: UsageLocation[] }
 >();
-const CACHE_TTL = 5 * 60 * 1000; // 5min
+const CACHE_TTL = 5 * 1000; // 5 sec
 
 // 1. Strikethrough for the KEY itself
 const strikeDecorationType = window.createTextEditorDecorationType({
@@ -71,6 +84,43 @@ export const intlayerUnusedDecorationProvider = (): Disposable[] => {
       }
     }),
   ];
+};
+
+const getKeysFromObject = (
+  obj: ObjectLiteralExpression,
+  prefix = ""
+): { key: string; node: Node }[] => {
+  const keys: { key: string; node: Node }[] = [];
+  for (const prop of obj.getProperties()) {
+    if (Node.isPropertyAssignment(prop)) {
+      const nameNode = prop.getNameNode();
+      const name = nameNode.getText().replace(/['"]/g, "");
+      const fullKey = prefix ? `${prefix}.${name}` : name;
+
+      const initializer = prop.getInitializer();
+
+      // If it's a translation (t() call), it's a leaf key.
+      if (Node.isCallExpression(initializer)) {
+        const expr = initializer.getExpression();
+        if (expr.getText() === "t") {
+          keys.push({ key: fullKey, node: nameNode });
+          continue;
+        }
+      }
+
+      // If it's an object literal, it's a nested group of keys.
+      if (Node.isObjectLiteralExpression(initializer)) {
+        // We add the group itself as a key (because it can be destructured)
+        keys.push({ key: fullKey, node: nameNode });
+        // And we recurse
+        keys.push(...getKeysFromObject(initializer, fullKey));
+      } else {
+        // It's a leaf key (string, number, etc.)
+        keys.push({ key: fullKey, node: nameNode });
+      }
+    }
+  }
+  return keys;
 };
 
 const updateUnusedDecorations = async (editor: TextEditor) => {
@@ -153,42 +203,38 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
   }
 
   // B. Check Content Keys
-  const contentRegex = /content\s*:\s*({[\s\S]*?})/;
-  const contentMatch = contentRegex.exec(text);
+  const sourceFile = project.createSourceFile("temp_unused.tsx", text, {
+    overwrite: true,
+  });
 
-  if (contentMatch) {
-    const contentBlock = contentMatch[1];
-    const contentStartIndex =
-      contentMatch.index + text.substring(contentMatch.index).indexOf("{");
+  const dictionaryObj = sourceFile
+    .getDescendantsOfKind(SyntaxKind.ObjectLiteralExpression)
+    .find((obj) => obj.getProperty("key") && obj.getProperty("content"));
 
-    // Matches keys like:  title:  or "title":
-    const propRegex = /([a-zA-Z0-9_]+|["'][a-zA-Z0-9_]+["'])\s*:/g;
+  if (dictionaryObj) {
+    const contentProp = dictionaryObj.getProperty("content");
+    if (Node.isPropertyAssignment(contentProp)) {
+      const contentValue = contentProp.getInitializer();
+      if (Node.isObjectLiteralExpression(contentValue)) {
+        const allKeys = getKeysFromObject(contentValue);
 
-    // Using matchAll to prevent assignment-in-loop lint error
-    const matches = contentBlock.matchAll(propRegex);
+        for (const { key: rawKey, node } of allKeys) {
+          // Skip usage check if dictionary itself is unused (already marked whole dict)
+          if (!isDictionaryUsed) {
+            continue;
+          }
 
-    for (const match of matches) {
-      if (match.index === undefined) {
-        continue;
-      }
+          // If key is NOT used and we don't have a wildcard usage
+          if (!usedKeys.has(rawKey) && !usedKeys.has("__ALL__")) {
+            const startPos = document.positionAt(node.getStart());
+            const endPos = document.positionAt(node.getEnd());
 
-      const rawKey = match[1].replace(/['"]/g, ""); // strip quotes
-
-      // Skip usage check if dictionary itself is unused (already marked whole dict)
-      if (!isDictionaryUsed) {
-        continue;
-      }
-
-      // If key is NOT used and we don't have a wildcard usage
-      if (!usedKeys.has(rawKey) && !usedKeys.has("__ALL__")) {
-        const absIndex = contentStartIndex + match.index;
-        const startPos = document.positionAt(absIndex);
-        const endPos = document.positionAt(absIndex + rawKey.length); // Only strike the key name
-
-        addUnused(
-          new Range(startPos, endPos),
-          `Property '${rawKey}' is unused`
-        );
+            addUnused(
+              new Range(startPos, endPos),
+              `Property '${rawKey}' is unused`
+            );
+          }
+        }
       }
     }
   }

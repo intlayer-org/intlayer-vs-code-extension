@@ -148,7 +148,19 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
 
     // Helper to add location
     const addLocation = (key: string, node: Node) => {
-      keysUsed.add(key);
+      // --- Clean Key ---
+      // remove .value or .raw at the end if present
+      const cleanKey = key.replace(/\.(value|raw)$/, "");
+
+      // Add the full key
+      keysUsed.add(cleanKey);
+
+      // Add all parent prefixes (e.g., "a.b.c" -> "a", "a.b")
+      const parts = cleanKey.split(".");
+      for (let i = 1; i < parts.length; i++) {
+        keysUsed.add(parts.slice(0, i).join("."));
+      }
+
       const nStart = sourceFile.getLineAndColumnAtPos(node.getStart());
       const nEnd = sourceFile.getLineAndColumnAtPos(node.getEnd());
       const r = new Range(
@@ -157,9 +169,73 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
         nEnd.line - 1,
         nEnd.column - 1
       );
-      const list = keyLocations.get(key) || [];
+      const list = keyLocations.get(cleanKey) || [];
       list.push(r);
-      keyLocations.set(key, list);
+      keyLocations.set(cleanKey, list);
+    };
+
+    const traceUsages = (varName: string, prefix = "") => {
+      const scope = sourceFile;
+      const refs = scope
+        .getDescendantsOfKind(SyntaxKind.Identifier)
+        .filter((id) => {
+          // Check name
+          if (id.getText() !== varName) return false;
+
+          // Avoid declaration itself
+          const parent = id.getParent();
+          if (
+            Node.isVariableDeclaration(parent) ||
+            Node.isBindingElement(parent)
+          ) {
+            return parent.getNameNode() === id ? false : true;
+          }
+
+          return true;
+        });
+
+      for (const ref of refs) {
+        let current: Node = ref;
+        let path: string[] = [];
+
+        while (true) {
+          const parent = current.getParent();
+          if (
+            Node.isPropertyAccessExpression(parent) &&
+            parent.getExpression() === current
+          ) {
+            path.push(parent.getName());
+            current = parent;
+          } else if (
+            Node.isElementAccessExpression(parent) &&
+            parent.getExpression() === current
+          ) {
+            const arg = parent.getArgumentExpression();
+            if (
+              arg &&
+              (Node.isStringLiteral(arg) ||
+                Node.isNoSubstitutionTemplateLiteral(arg))
+            ) {
+              path.push(arg.getLiteralText());
+              current = parent;
+            } else {
+              // Non-literal access, mark as ALL used for this branch
+              keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+
+        if (path.length > 0) {
+          const fullKey = prefix ? `${prefix}.${path.join(".")}` : path.join(".");
+          addLocation(fullKey, current);
+        } else {
+          // Used without property access (e.g. passed to function)
+          keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
+        }
+      }
     };
 
     // 3. Trace Variable
@@ -173,7 +249,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
 
     const nameNode = varDecl.getNameNode();
 
-    // Pattern A: Destructuring -> const { title } = useIntlayer('app')
+    // Pattern A: Destructuring -> const { textArea } = useIntlayer('app')
     if (Node.isObjectBindingPattern(nameNode)) {
       for (const element of nameNode.getElements()) {
         const propName = element.getPropertyNameNode();
@@ -181,50 +257,19 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
           ? propName.getText()
           : element.getNameNode().getText();
 
-        // The location is the property name in the destructuring
+        const varName = element.getNameNode().getText();
+
+        // Mark the key as used (destructuring site)
         addLocation(key, propName || element.getNameNode());
+
+        // Trace usages of the destructured variable
+        traceUsages(varName, key);
       }
     }
     // Pattern B: Variable -> const content = useIntlayer('app')
     else if (Node.isIdentifier(nameNode)) {
       const varName = nameNode.getText();
-      const scope = varDecl.getSourceFile();
-
-      const refs = scope
-        .getDescendantsOfKind(SyntaxKind.Identifier)
-        .filter((id) => id.getText() === varName && id !== nameNode);
-
-      for (const ref of refs) {
-        const parent = ref.getParent();
-
-        // 1. content.title
-        if (
-          Node.isPropertyAccessExpression(parent) &&
-          parent.getExpression() === ref
-        ) {
-          const key = parent.getName();
-          addLocation(key, parent.getNameNode());
-        }
-        // 2. content['title']
-        else if (
-          Node.isElementAccessExpression(parent) &&
-          parent.getExpression() === ref
-        ) {
-          const arg = parent.getArgumentExpression();
-          if (
-            arg &&
-            (Node.isStringLiteral(arg) ||
-              Node.isNoSubstitutionTemplateLiteral(arg))
-          ) {
-            const key = arg.getLiteralText();
-            addLocation(key, arg);
-          }
-        }
-        // 3. Spread / Unknown
-        else {
-          keysUsed.add("__ALL__");
-        }
-      }
+      traceUsages(varName);
     }
 
     results.push({ range: declarationRange, keysUsed, keyLocations });
