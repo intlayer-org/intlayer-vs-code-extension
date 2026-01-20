@@ -1,4 +1,4 @@
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import {
   type TextEditor,
   window,
@@ -18,6 +18,7 @@ import {
   findUsagesOfDictionary,
   type UsageLocation,
 } from "../utils/findUsages";
+import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 
 const DEBOUNCE_DELAY = 1000;
 
@@ -29,7 +30,6 @@ const project = new Project({
 });
 
 // --- Caching Strategy ---
-// We cache usages for a short period to prevent heavy FS scanning on every keystroke
 const usageCache = new Map<
   string,
   { timestamp: number; data: UsageLocation[] }
@@ -42,7 +42,7 @@ const strikeDecorationType = window.createTextEditorDecorationType({
   opacity: "0.6",
 });
 
-// 2. Text Label at the END of the line
+// 2. Text Label: Unused
 const unusedTextDecorationType = window.createTextEditorDecorationType({
   after: {
     contentText: " (unused)",
@@ -88,7 +88,7 @@ export const intlayerUnusedDecorationProvider = (): Disposable[] => {
 
 const getKeysFromObject = (
   obj: ObjectLiteralExpression,
-  prefix = ""
+  prefix = "",
 ): { key: string; node: Node }[] => {
   const keys: { key: string; node: Node }[] = [];
   for (const prop of obj.getProperties()) {
@@ -110,12 +110,9 @@ const getKeysFromObject = (
 
       // If it's an object literal, it's a nested group of keys.
       if (Node.isObjectLiteralExpression(initializer)) {
-        // We add the group itself as a key (because it can be destructured)
         keys.push({ key: fullKey, node: nameNode });
-        // And we recurse
         keys.push(...getKeysFromObject(initializer, fullKey));
       } else {
-        // It's a leaf key (string, number, etc.)
         keys.push({ key: fullKey, node: nameNode });
       }
     }
@@ -142,8 +139,67 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     return;
   }
   const dictionaryKey = keyMatch[2];
+  const keyIndex = text.indexOf(keyMatch[0]);
 
-  // --- Cache Lookup ---
+  // Check for Duplicate Definitions (Local or Remote)
+  let isDuplicated = false;
+  let duplicateDecoration: DecorationOptions | null = null;
+
+  try {
+    const config = await getCachedConfig(projectDir);
+    const dictionaryJsonPath = join(
+      config.content.unmergedDictionariesDir,
+      `${dictionaryKey}.json`,
+    );
+    const existingDictionaries = await getCachedDictionary(dictionaryJsonPath);
+
+    if (existingDictionaries && existingDictionaries.length > 0) {
+      const currentAbsPath = document.uri.fsPath;
+      let localDuplicates = 0;
+      let remoteDuplicates = 0;
+
+      for (const dict of existingDictionaries) {
+        if (dict.location === "remote") {
+          remoteDuplicates++;
+        } else if (dict.location === "local" && dict.filePath) {
+          // Check if the file path is different from the current one
+          const dictAbsPath = join(projectDir, dict.filePath);
+          if (dictAbsPath !== currentAbsPath) {
+            localDuplicates++;
+          }
+        }
+      }
+
+      const totalOther = localDuplicates + remoteDuplicates;
+
+      if (totalOther > 0) {
+        isDuplicated = true;
+        let label = `(used by ${totalOther} more`;
+
+        if (localDuplicates > 0) {
+          label += ` - ${localDuplicates} local`;
+        }
+        if (remoteDuplicates > 0) {
+          label += ` - ${remoteDuplicates} remote`;
+        }
+        label += ")";
+
+        if (keyIndex !== -1) {
+          const line = document.lineAt(document.positionAt(keyIndex).line);
+          duplicateDecoration = {
+            range: new Range(line.range.end, line.range.end),
+            renderOptions: {
+              after: { contentText: label },
+            },
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error checking for duplicates:", error);
+  }
+
+  // --- Cache Lookup for Usages (Code usage) ---
   const cacheKey = `${projectDir}:${dictionaryKey}`;
   const now = Date.now();
   let usages: UsageLocation[] | undefined;
@@ -161,10 +217,8 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     }
   }
 
-  // Collect used keys
-  const usedKeys = new Set<string>();
   const isDictionaryUsed = usages && usages.length > 0;
-
+  const usedKeys = new Set<string>();
   if (isDictionaryUsed && usages) {
     for (const u of usages) {
       u.keysUsed.forEach((k) => {
@@ -174,35 +228,40 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
   }
 
   const strikeDecorations: DecorationOptions[] = [];
-  const textDecorations: DecorationOptions[] = [];
+  const unusedTextDecorations: DecorationOptions[] = [];
+  const duplicateDecorations: DecorationOptions[] = [];
 
-  // Helper to push both decorations
+  // Add the duplicate decoration if found
+  if (duplicateDecoration) {
+    duplicateDecorations.push(duplicateDecoration);
+  }
+
+  // Helper to push both strike and text decorations
   const addUnused = (range: Range, hover: string) => {
-    // 1. Strikethrough the key range
     strikeDecorations.push({ range, hoverMessage: hover });
-
-    // 2. Add text at end of line
     const line = document.lineAt(range.start.line);
-    textDecorations.push({
-      range: new Range(line.range.end, line.range.end), // Zero-width range at end of line
+    unusedTextDecorations.push({
+      range: new Range(line.range.end, line.range.end),
     });
   };
 
   // A. Check Main Dictionary Usage
-  if (!isDictionaryUsed) {
-    const keyIndex = text.indexOf(keyMatch[0]);
+  // ONLY mark as unused if it is NOT duplicated.
+  // If it is duplicated, we already showed the warning above, so we skip the "(unused)" text.
+  if (!isDictionaryUsed && !isDuplicated) {
     if (keyIndex !== -1) {
-      // Find position of the 'key' property definition
       const startPos = document.positionAt(keyIndex);
       const endPos = document.positionAt(keyIndex + keyMatch[0].length);
       addUnused(
         new Range(startPos, endPos),
-        "This dictionary is never used in the project"
+        "This dictionary is never used in the project",
       );
     }
   }
 
-  // B. Check Content Keys
+  // B. Check Content Keys (Properties)
+  // We perform this even if the dictionary itself is duplicated,
+  // because specific properties might still be unused in the code.
   const sourceFile = project.createSourceFile("temp_unused.tsx", text, {
     overwrite: true,
   });
@@ -219,7 +278,7 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
         const allKeys = getKeysFromObject(contentValue);
 
         for (const { key: rawKey, node } of allKeys) {
-          // Skip usage check if dictionary itself is unused (already marked whole dict)
+          // Skip usage check if dictionary itself is completely unused
           if (!isDictionaryUsed) {
             continue;
           }
@@ -231,7 +290,7 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
 
             addUnused(
               new Range(startPos, endPos),
-              `Property '${rawKey}' is unused`
+              `Property '${rawKey}' is unused`,
             );
           }
         }
@@ -239,6 +298,8 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     }
   }
 
+  // Apply all decorations
   editor.setDecorations(strikeDecorationType, strikeDecorations);
-  editor.setDecorations(unusedTextDecorationType, textDecorations);
+  editor.setDecorations(unusedTextDecorationType, unusedTextDecorations);
+  editor.setDecorations(unusedTextDecorationType, duplicateDecorations);
 };
