@@ -148,7 +148,7 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
   try {
     const config = await getCachedConfig(projectDir);
     const dictionaryJsonPath = join(
-      config.content.unmergedDictionariesDir,
+      config.system.unmergedDictionariesDir,
       `${dictionaryKey}.json`,
     );
     const existingDictionaries = await getCachedDictionary(dictionaryJsonPath);
@@ -161,7 +161,13 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
       for (const dict of existingDictionaries) {
         if (dict.location === "remote") {
           remoteDuplicates++;
-        } else if (dict.location === "local" && dict.filePath) {
+        }
+
+        // Count "local" and "local&remote" as local duplicates
+        if (
+          (dict.location === "local" || dict.location === "local&remote") &&
+          dict.filePath
+        ) {
           // Check if the file path is different from the current one
           const dictAbsPath = join(projectDir, dict.filePath);
           if (dictAbsPath !== currentAbsPath) {

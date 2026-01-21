@@ -35,8 +35,8 @@ export const intlayerHoverProvider: HoverProvider = {
     const config = await getCachedConfig(projectDir);
 
     const dictionaryJsonPath = join(
-      config.content.unmergedDictionariesDir,
-      `${dictionaryKey}.json`
+      config.system.unmergedDictionariesDir,
+      `${dictionaryKey}.json`,
     );
 
     // 4. Get Dictionary (OPTIMIZED: Async & Cached)
@@ -115,7 +115,7 @@ export const intlayerHoverProvider: HoverProvider = {
         const md = new MarkdownString();
         md.isTrusted = true;
         md.appendMarkdown(
-          `\n---\n### Remote Dictionary\n[Open Dashboard](${url})`
+          `\n---\n### Remote Dictionary\n[Open Dashboard](${url})`,
         );
         hoverTexts.push(md);
         continue;
@@ -131,7 +131,7 @@ export const intlayerHoverProvider: HoverProvider = {
         if (dict.filePath) {
           const fileUri = Uri.file(join(projectDir, dict.filePath));
           md.appendMarkdown(
-            `**File Location:**\n[${dict.filePath}](${fileUri})`
+            `**File Location:**\n[${dict.filePath}](${fileUri})`,
           );
         } else {
           md.appendMarkdown(`### Local Content`);

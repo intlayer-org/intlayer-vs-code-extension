@@ -30,7 +30,7 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
     // Calculate the selection range for the visual highlight
     const originSelectionRange = new Range(
       range.start.translate(0, 1),
-      range.end.translate(0, -1)
+      range.end.translate(0, -1),
     );
 
     const fileDir = dirname(document.uri.fsPath);
@@ -44,8 +44,8 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
     const config = await getCachedConfig(projectDir);
 
     const dictionaryPath = join(
-      config.content.unmergedDictionariesDir,
-      `${word}.json`
+      config.system.unmergedDictionariesDir,
+      `${word}.json`,
     );
 
     // 3. Get Dictionary (Cached)
@@ -73,7 +73,7 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       const targetRange = location
         ? new Range(
             new Position(location.line, location.character),
-            new Position(location.line, location.character)
+            new Position(location.line, location.character),
           )
         : new Range(new Position(0, 0), new Position(0, 0));
 

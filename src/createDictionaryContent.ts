@@ -39,7 +39,7 @@ const getContentPosition = (content: string): Position => {
 };
 
 export const generateDictionaryContent = async (
-  format: "ts" | "esm" | "cjs" | "json" | "jsonc" | "json5"
+  format: "ts" | "esm" | "cjs" | "json" | "jsonc" | "json5",
 ) => {
   const editor = window.activeTextEditor;
   if (!editor) {
@@ -93,7 +93,7 @@ export const generateDictionaryContent = async (
   //         index => index.content.ts
 
   const pickedFileExtension = configuration.content.fileExtensions.find(
-    (extension) => extension.includes(contentFileExtension)
+    (extension) => extension.includes(contentFileExtension),
   );
   const targetFileName =
     toLowerCamelCase(fileBaseName) +
@@ -119,14 +119,13 @@ export const generateDictionaryContent = async (
   // Create the actual content using shared template logic
   const fileData = await getContentDeclarationFileTemplate(
     dictionaryKey,
-    // @ts-ignore JSONC JSON5 will be implemented in the next version
     format,
     // Filter out undefined values
     Object.fromEntries(
       Object.entries(configuration.dictionary ?? {}).filter(
-        ([, value]) => value !== undefined
-      )
-    )
+        ([, value]) => value !== undefined,
+      ),
+    ),
   );
 
   // Write the file if not existing already (or ask to overwrite)
@@ -134,7 +133,7 @@ export const generateDictionaryContent = async (
     const overwrite = await window.showWarningMessage(
       `${basename(targetPath)} already exists. Overwrite?`,
       "Yes",
-      "No"
+      "No",
     );
     if (overwrite !== "Yes") {
       return;
@@ -147,7 +146,7 @@ export const generateDictionaryContent = async (
     if (configOptions.require) {
       const formatCommand = detectFormatCommand(
         configuration,
-        configOptions.require
+        configOptions.require,
       );
 
       if (formatCommand) {
@@ -171,7 +170,7 @@ export const generateDictionaryContent = async (
   newEditor.selection = new Selection(position, position);
   newEditor.revealRange(
     new Range(position, position),
-    TextEditorRevealType.InCenter
+    TextEditorRevealType.InCenter,
   );
 };
 

@@ -44,9 +44,7 @@ type FileNode = {
 
 export type IntlayerTreeNode = EnvironmentNode | DictionaryNode | FileNode;
 
-export class DictionaryTreeDataProvider
-  implements TreeDataProvider<IntlayerTreeNode>
-{
+export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTreeNode> {
   private readonly changeEmitter = new EventEmitter<IntlayerTreeNode | void>();
   readonly onDidChangeTreeData: Event<IntlayerTreeNode | void> =
     this.changeEmitter.event;
@@ -74,7 +72,7 @@ export class DictionaryTreeDataProvider
    * Find a file node by its project-relative path across all dictionaries.
    */
   async findFileNodeByAbsolutePath(
-    absolutePath: string
+    absolutePath: string,
   ): Promise<IntlayerTreeNode | undefined> {
     if (!this.cachedEnvironments) {
       await this.getChildren();
@@ -145,11 +143,11 @@ export class DictionaryTreeDataProvider
           try {
             const configOptions = await getConfigurationOptions(
               projectDir,
-              false
+              false,
             );
             const config = getConfiguration(configOptions);
             const dir =
-              (config.content.unmergedDictionariesDir as string | undefined) ??
+              (config.system.unmergedDictionariesDir as string | undefined) ??
               projectDir;
 
             const files = existsSync(dir)
@@ -167,7 +165,7 @@ export class DictionaryTreeDataProvider
             let label = basename(projectDir);
             try {
               const pkg = JSON.parse(
-                readFileSync(join(projectDir, "package.json"), "utf8")
+                readFileSync(join(projectDir, "package.json"), "utf8"),
               );
               if (pkg?.name && typeof pkg.name === "string") {
                 label = pkg.name;
@@ -194,7 +192,7 @@ export class DictionaryTreeDataProvider
       if (element.type === "environment") {
         // List dictionaries for this environment
         const env = (this.cachedEnvironments ?? []).find(
-          (e) => e.projectDir === element.projectDir
+          (e) => e.projectDir === element.projectDir,
         );
         if (!env) {
           return [];
@@ -246,7 +244,7 @@ export class DictionaryTreeDataProvider
             filePaths = filePaths
               .filter((p) => p.toLowerCase().includes(lowered))
               .concat(
-                filePaths.filter((p) => !p.toLowerCase().includes(lowered))
+                filePaths.filter((p) => !p.toLowerCase().includes(lowered)),
               );
           }
 
@@ -262,7 +260,7 @@ export class DictionaryTreeDataProvider
           window.showWarningMessage(
             `Failed to read dictionary ${element.key}: ${
               (error as Error).message
-            }`
+            }`,
           );
           return [];
         }
@@ -271,7 +269,7 @@ export class DictionaryTreeDataProvider
       return [];
     } catch (error) {
       window.showErrorMessage(
-        `Failed to load Intlayer dictionaries: ${(error as Error).message}`
+        `Failed to load Intlayer dictionaries: ${(error as Error).message}`,
       );
       return [];
     }
@@ -286,14 +284,14 @@ export class DictionaryTreeDataProvider
         projectDir: element.projectDir,
         envLabel:
           (this.cachedEnvironments ?? []).find(
-            (e) => e.projectDir === element.projectDir
+            (e) => e.projectDir === element.projectDir,
           )?.label ?? basename(element.projectDir),
       } as DictionaryNode;
     }
     if (element.type === "dictionary") {
       const dict = element as DictionaryNode;
       const env = (this.cachedEnvironments ?? []).find(
-        (e) => e.projectDir === dict.projectDir
+        (e) => e.projectDir === dict.projectDir,
       );
       if (!env) {
         return undefined;
@@ -313,7 +311,7 @@ export class DictionaryTreeDataProvider
       const selectedEnv = getSelectedEnvironment(element.projectDir);
       const item = new TreeItem(
         selectedEnv ? `${element.label} [${selectedEnv}]` : element.label,
-        TreeItemCollapsibleState.Collapsed
+        TreeItemCollapsibleState.Collapsed,
       );
 
       // Set context value based on whether the project has clientId
@@ -333,7 +331,7 @@ export class DictionaryTreeDataProvider
     if (element.type === "dictionary") {
       const item = new TreeItem(
         element.key,
-        TreeItemCollapsibleState.Collapsed
+        TreeItemCollapsibleState.Collapsed,
       );
       item.contextValue = "intlayer.dictionary";
       item.id = `dict:${element.jsonPath}`;

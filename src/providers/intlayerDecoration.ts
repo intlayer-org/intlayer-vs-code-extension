@@ -12,11 +12,11 @@ import { findProjectRoot } from "../utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 import { DefaultValues } from "@intlayer/config";
 
-// --- Configuration ---
+// Configuration
 const DEBOUNCE_DELAY = 500;
 const TRUNCATE_LENGTH = 60;
 
-// Decoration Style: Appears at the end of the line
+// Decoration Style: Appears at the end of the line (Translation Preview)
 const translationDecorationType = window.createTextEditorDecorationType({
   after: {
     margin: "0 0 0 2ch", // Space between code and text
@@ -88,27 +88,28 @@ const updateDecorations = async (editor: TextEditor) => {
     document.getText(),
     {
       overwrite: true,
-    }
+    },
   );
 
-  const decorations: DecorationOptions[] = [];
+  const translationDecorations: DecorationOptions[] = [];
+  const duplicateDecorations: DecorationOptions[] = [];
   const processedLines = new Set<number>(); // Prevent duplicate decorations on the same line
 
   // Find all `useIntlayer` calls
   const callExpressions = sourceFile.getDescendantsOfKind(
-    SyntaxKind.CallExpression
+    SyntaxKind.CallExpression,
   );
 
   for (const callExpr of callExpressions) {
     const { dictionaryKey, variables } = analyzeUseIntlayerCall(callExpr);
 
-    if (!dictionaryKey || variables.length === 0) {
+    if (!dictionaryKey) {
       continue;
     }
 
     const dictionaryJsonPath = join(
-      config.content.unmergedDictionariesDir,
-      `${dictionaryKey}.json`
+      config.system.unmergedDictionariesDir,
+      `${dictionaryKey}.json`,
     );
     const dictionaries = await getCachedDictionary(dictionaryJsonPath);
 
@@ -116,7 +117,58 @@ const updateDecorations = async (editor: TextEditor) => {
       continue;
     }
 
-    // Use the first valid local dictionary found
+    // Logic: Check for Multiple Declarations
+    // --- Logic: Check for Multiple Declarations ---
+    if (dictionaries.length > 1) {
+      let localCount = 0;
+      let remoteCount = 0;
+
+      dictionaries.forEach((d) => {
+        if (d.location === "local") {
+          localCount++;
+        }
+        if (d.location === "local&remote") {
+          localCount++;
+        }
+
+        if (d.location === "remote") {
+          remoteCount++;
+        }
+      });
+
+      // Start label
+      let label = `(${dictionaries.length} declarations - ${localCount} local`;
+
+      // Only add remote count if it exists
+      if (remoteCount > 0) {
+        label += ` / ${remoteCount} remote`;
+      }
+
+      // Close parenthesis
+      label += `)`;
+
+      // Place decoration at the end of the `useIntlayer(...)` call
+      const endOffset = callExpr.getEnd();
+      const position = document.positionAt(endOffset);
+      const range = new Range(position, position);
+
+      duplicateDecorations.push({
+        range,
+        renderOptions: {
+          after: {
+            contentText: label,
+          },
+        },
+      });
+    }
+
+    //-------------------------------------------------
+
+    if (variables.length === 0) {
+      continue;
+    }
+
+    // Use the first valid local dictionary found for content preview
     const dictionaryContent = dictionaries[0].content;
 
     // Iterate through variables destructured from useIntlayer
@@ -127,7 +179,7 @@ const updateDecorations = async (editor: TextEditor) => {
     } of variables) {
       // Find usages of these variables
       const identifiers = sourceFile.getDescendantsOfKind(
-        SyntaxKind.Identifier
+        SyntaxKind.Identifier,
       );
 
       // Strict Filter: Match name AND ensure it references the correct declaration (Scope Check)
@@ -143,7 +195,6 @@ const updateDecorations = async (editor: TextEditor) => {
         }
 
         // Strict Scope Check using Symbols
-        // Ensure this identifier refers to the variable we found in useIntlayer
         if (declarationNode) {
           const idSymbol = id.getSymbol();
           const declSymbol = declarationNode.getSymbol();
@@ -153,7 +204,6 @@ const updateDecorations = async (editor: TextEditor) => {
           }
 
           // Compare symbols to verify they refer to the same binding
-          // FIXED: Use .compilerSymbol instead of .getCompilerSymbol()
           return (
             idSymbol === declSymbol ||
             idSymbol.compilerSymbol === declSymbol.compilerSymbol
@@ -166,12 +216,12 @@ const updateDecorations = async (editor: TextEditor) => {
       for (const ref of references) {
         const { fullPath, rangeNode } = resolvePropertyAccess(ref);
 
-        // --- Handle .value / .raw Accessors ---
+        // Handle .value / .raw Accessors
         const lastKey = fullPath[fullPath.length - 1];
         if (lastKey === "value" || lastKey === "raw") {
           fullPath.pop();
         }
-        // -----------------------------------------------
+        //--------------------------------------------
 
         const contentPath = [...initialPath, ...fullPath];
 
@@ -179,7 +229,7 @@ const updateDecorations = async (editor: TextEditor) => {
         const rawValue = getValueFromPath(
           dictionaryContent,
           contentPath,
-          defaultLocale
+          defaultLocale,
         );
 
         if (rawValue) {
@@ -204,7 +254,7 @@ const updateDecorations = async (editor: TextEditor) => {
           const line = document.lineAt(lineIndex);
           const range = new Range(line.range.end, line.range.end);
 
-          decorations.push({
+          translationDecorations.push({
             range,
             renderOptions: {
               after: {
@@ -220,10 +270,11 @@ const updateDecorations = async (editor: TextEditor) => {
     }
   }
 
-  editor.setDecorations(translationDecorationType, decorations);
+  editor.setDecorations(translationDecorationType, translationDecorations);
+  editor.setDecorations(translationDecorationType, duplicateDecorations);
 };
 
-// --- Content Parsing Helpers ---
+// Content Parsing Helpers
 
 /**
  * Extracts a human-readable string from a dictionary value.
@@ -305,8 +356,6 @@ const extractTextFromReactNode = (node: any): string => {
 
   return "";
 };
-
-// --- AST Helpers ---
 
 const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
   const expr = callExpr.getExpression();
@@ -409,7 +458,7 @@ const resolvePropertyAccess = (startNode: Node) => {
 const getValueFromPath = (
   content: any,
   path: string[],
-  locale: string
+  locale: string,
 ): any => {
   let current = content;
 

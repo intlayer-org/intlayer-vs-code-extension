@@ -284,20 +284,20 @@
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "@intlayer/api": "^7.5.14",
-    "@intlayer/core": "^7.5.14",
-    "@intlayer/chokidar": "^7.5.14",
-    "@intlayer/cli": "^7.5.14",
-    "@intlayer/config": "^7.5.14",
-    "@intlayer/svelte-transformer": "^7.5.14",
-    "@intlayer/types": "^7.5.14",
-    "@intlayer/vue-transformer": "^7.5.14",
+    "@intlayer/api": "^8.0.0-canary.1",
+    "@intlayer/core": "^8.0.0-canary.1",
+    "@intlayer/chokidar": "^8.0.0-canary.1",
+    "@intlayer/cli": "^8.0.0-canary.1",
+    "@intlayer/config": "^8.0.0-canary.1",
+    "@intlayer/svelte-transformer": "^8.0.0-canary.1",
+    "@intlayer/types": "^8.0.0-canary.1",
+    "@intlayer/vue-transformer": "^8.0.0-canary.1",
     "dotenv": "^17.2.3",
     "fuse.js": "^7.1.0",
     "ts-morph": "^27.0.2"
   },
   "dependencies": {
-    "intlayer": "^7.5.14",
+    "intlayer": "^8.0.0-canary.1",
     "esbuild": "0.27.2"
   }
 }

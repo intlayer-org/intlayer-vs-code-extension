@@ -1,16 +1,14 @@
-// src/config-built.ts
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { getAlias, getConfiguration } from "@intlayer/config";
-import { window, workspace } from "vscode";
+import { window } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getConfigurationOptionsSync } from "./utils/getConfiguration";
 import { prefix } from "./utils/logFunctions";
 
-// 1. Cache the result globally
+// Cache the result globally
 let cachedConfig: any = null;
 let lastProjectDir: string | null = null;
-let lastConfigTime: number = 0;
 
 const loadConfig = () => {
   const editor = window.activeTextEditor;
@@ -38,7 +36,6 @@ const loadConfig = () => {
     const configOptions = getConfigurationOptionsSync(projectDir);
     const configuration = getConfiguration(configOptions);
 
-    // ... rest of your loading logic ...
     const configDirPath = getAlias({
       configuration,
       format: "cjs",
@@ -58,7 +55,6 @@ const loadConfig = () => {
   }
 };
 
-// 3. REMOVE THE PROXY if possible.
 // If you must keep the proxy for API compatibility, ensure loadConfig is extremely fast (via the cache above).
 const configJSON = new Proxy(
   {},
@@ -68,7 +64,7 @@ const configJSON = new Proxy(
       const config = loadConfig();
       return config?.[prop];
     },
-  }
+  },
 );
 
 export default configJSON;

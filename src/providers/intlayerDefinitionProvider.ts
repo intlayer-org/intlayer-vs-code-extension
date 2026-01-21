@@ -47,8 +47,8 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
 
     // 3. Load Unmerged Dictionary
     const dictionaryJsonPath = join(
-      config.content.unmergedDictionariesDir,
-      `${dictionaryKey}.json`
+      config.system.unmergedDictionariesDir,
+      `${dictionaryKey}.json`,
     );
 
     if (!existsSync(dictionaryJsonPath)) {
@@ -85,7 +85,7 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
       const targetRange = location
         ? new Range(
             new Position(location.line, location.character),
-            new Position(location.line, location.character)
+            new Position(location.line, location.character),
           )
         : new Range(new Position(0, 0), new Position(0, 0));
 
