@@ -5,13 +5,14 @@ import { window } from "vscode";
  */
 const stripANSIColors = (text: string): string =>
   // Remove ANSI escape sequences (colors, formatting, etc.)
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: Breaks when changing it
   text.replace(/\x1b\[[0-9;]*m/g, "");
 
 export const prefix = "Intlayer: ";
 
 const formatMessage = (...message: Parameters<typeof console.log>): string =>
   stripANSIColors(
-    (Array.isArray(message) ? message : [message]).flat().join(" ")
+    (Array.isArray(message) ? message : [message]).flat().join(" "),
   );
 
 export const logFunctions = {
