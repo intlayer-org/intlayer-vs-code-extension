@@ -1,4 +1,4 @@
-import { dirname, join } from "node:path";
+import { dirname, join, extname } from "node:path";
 import {
   type TextEditor,
   window,
@@ -11,6 +11,8 @@ import { Project, SyntaxKind, Node, type CallExpression } from "ts-morph";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 import { DefaultValues } from "@intlayer/config";
+import { getValueFromPath } from "../utils/intlayerValueResolver";
+import { extractScriptContent } from "../utils/extractScript";
 
 // Configuration
 const DEBOUNCE_DELAY = 500;
@@ -19,18 +21,32 @@ const TRUNCATE_LENGTH = 60;
 // Decoration Style: Appears at the end of the line (Translation Preview)
 const translationDecorationType = window.createTextEditorDecorationType({
   after: {
-    margin: "0 0 0 2ch", // Space between code and text
+    margin: "0 0 0 1ch",
     color: "rgba(128, 128, 128, 0.3)",
     fontStyle: "italic",
   },
   rangeBehavior: 1, // ClosedOpen
 });
 
+// Decoration Style for Multiple Declarations warning
+const duplicateDecorationType = window.createTextEditorDecorationType({
+  after: {
+    margin: "0 0 0 2ch",
+    color: "rgba(255, 165, 0, 0.6)", // Orange-ish
+    fontStyle: "italic",
+  },
+  rangeBehavior: 1,
+});
+
 // Reusable project for AST parsing
 const project = new Project({
   useInMemoryFileSystem: true,
   skipLoadingLibFiles: true,
-  compilerOptions: { allowJs: true, jsx: 1 },
+  compilerOptions: {
+    allowJs: true,
+    jsx: 1, // JsxEmit.Preserve
+    target: 99, // ESNext
+  },
 });
 
 export const intlayerDecorationProvider = (): Disposable[] => {
@@ -55,6 +71,7 @@ export const intlayerDecorationProvider = (): Disposable[] => {
   return [
     window.onDidChangeActiveTextEditor((editor) => {
       activeEditor = editor;
+
       if (editor) {
         triggerUpdate();
       }
@@ -67,8 +84,29 @@ export const intlayerDecorationProvider = (): Disposable[] => {
   ];
 };
 
+const allowedExtensions = [
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".json",
+  ".jsonc",
+  ".json5",
+  ".vue",
+  ".svelte",
+];
+
 const updateDecorations = async (editor: TextEditor) => {
   const document = editor.document;
+
+  const extension = extname(document.uri.fsPath).toLowerCase();
+
+  if (!allowedExtensions.includes(extension)) {
+    return;
+  }
+
   const filePath = document.uri.fsPath;
   const fileDir = dirname(filePath);
   const projectDir = findProjectRoot(fileDir);
@@ -82,14 +120,16 @@ const updateDecorations = async (editor: TextEditor) => {
     config.internationalization?.defaultLocale ||
     DefaultValues.Internationalization.DEFAULT_LOCALE;
 
-  // Parse File AST
-  const sourceFile = project.createSourceFile(
-    "temp_decoration.tsx",
-    document.getText(),
-    {
-      overwrite: true,
-    },
-  );
+  const scriptContent = extractScriptContent(document.getText(), extension);
+  const fileName = `temp_decoration${extension}${extension === ".vue" || extension === ".svelte" ? ".tsx" : ""}`;
+
+  // Ensure fresh file in the project
+  const existingFile = project.getSourceFile(fileName);
+  if (existingFile) {
+    project.removeSourceFile(existingFile);
+  }
+
+  const sourceFile = project.createSourceFile(fileName, scriptContent);
 
   const translationDecorations: DecorationOptions[] = [];
   const duplicateDecorations: DecorationOptions[] = [];
@@ -118,36 +158,25 @@ const updateDecorations = async (editor: TextEditor) => {
     }
 
     // Logic: Check for Multiple Declarations
-    // --- Logic: Check for Multiple Declarations ---
     if (dictionaries.length > 1) {
       let localCount = 0;
       let remoteCount = 0;
 
       dictionaries.forEach((d) => {
-        if (d.location === "local") {
+        if (d.location === "local" || d.location === "local&remote") {
           localCount++;
         }
-        if (d.location === "local&remote") {
-          localCount++;
-        }
-
         if (d.location === "remote") {
           remoteCount++;
         }
       });
 
-      // Start label
       let label = `(${dictionaries.length} declarations - ${localCount} local`;
-
-      // Only add remote count if it exists
       if (remoteCount > 0) {
         label += ` / ${remoteCount} remote`;
       }
-
-      // Close parenthesis
       label += `)`;
 
-      // Place decoration at the end of the `useIntlayer(...)` call
       const endOffset = callExpr.getEnd();
       const position = document.positionAt(endOffset);
       const range = new Range(position, position);
@@ -162,52 +191,32 @@ const updateDecorations = async (editor: TextEditor) => {
       });
     }
 
-    //-------------------------------------------------
-
     if (variables.length === 0) {
       continue;
     }
 
-    // Use the first valid local dictionary found for content preview
     const dictionaryContent = dictionaries[0].content;
 
-    // Iterate through variables destructured from useIntlayer
     for (const {
       variableName,
       path: initialPath,
       declarationNode,
     } of variables) {
-      // Find usages of these variables
       const identifiers = sourceFile.getDescendantsOfKind(
         SyntaxKind.Identifier,
       );
 
-      // Strict Filter: Match name AND ensure it references the correct declaration (Scope Check)
       const references = identifiers.filter((id) => {
-        // Fast Name Check
-        if (id.getText() !== variableName) {
+        const idText = id.getText();
+        // Support both direct variable access and Svelte's '$' store prefix
+        if (idText !== variableName && idText !== "$" + variableName) {
           return false;
         }
-
-        // Ignore Declaration Sites
         if (isDeclarationIdentifier(id)) {
           return false;
         }
-
-        // Strict Scope Check using Symbols
-        if (declarationNode) {
-          const idSymbol = id.getSymbol();
-          const declSymbol = declarationNode.getSymbol();
-
-          if (!idSymbol || !declSymbol) {
-            return false;
-          }
-
-          // Compare symbols to verify they refer to the same binding
-          return (
-            idSymbol === declSymbol ||
-            idSymbol.compilerSymbol === declSymbol.compilerSymbol
-          );
+        if (isPropertyAccessName(id)) {
+          return false;
         }
 
         return true;
@@ -215,17 +224,8 @@ const updateDecorations = async (editor: TextEditor) => {
 
       for (const ref of references) {
         const { fullPath, rangeNode } = resolvePropertyAccess(ref);
-
-        // Handle .value / .raw Accessors
-        const lastKey = fullPath[fullPath.length - 1];
-        if (lastKey === "value" || lastKey === "raw") {
-          fullPath.pop();
-        }
-        //--------------------------------------------
-
         const contentPath = [...initialPath, ...fullPath];
 
-        // Retrieve Content
         const rawValue = getValueFromPath(
           dictionaryContent,
           contentPath,
@@ -233,45 +233,36 @@ const updateDecorations = async (editor: TextEditor) => {
         );
 
         if (rawValue) {
-          // Parse content (handles Strings, Numbers, and React Nodes)
           const displayText = parseContentValue(rawValue);
 
           if (!displayText) {
             continue;
           }
 
-          // Decoration Logic: End of Line
           const nodeEndPos = rangeNode.getEnd();
           const position = document.positionAt(nodeEndPos);
           const lineIndex = position.line;
 
-          // Avoid cluttering if we already have a decoration on this line
-          if (processedLines.has(lineIndex)) {
-            continue;
-          }
-
-          // Create a range at the very end of the line
           const line = document.lineAt(lineIndex);
           const range = new Range(line.range.end, line.range.end);
 
           translationDecorations.push({
             range,
+            hoverMessage: displayText,
             renderOptions: {
               after: {
-                // Using simple spaces for indentation
                 contentText: `    ${displayText}`,
+                color: "rgba(128, 128, 128, 0.3)",
               },
             },
           });
-
-          processedLines.add(lineIndex);
         }
       }
     }
   }
 
   editor.setDecorations(translationDecorationType, translationDecorations);
-  editor.setDecorations(translationDecorationType, duplicateDecorations);
+  editor.setDecorations(duplicateDecorationType, duplicateDecorations);
 };
 
 // Content Parsing Helpers
@@ -314,6 +305,7 @@ const parseContentValue = (value: any): string | null => {
   text = text.replace(/\s+/g, " ").trim();
 
   // Truncate
+
   if (text.length > TRUNCATE_LENGTH) {
     return `${text.substring(0, TRUNCATE_LENGTH)}...`;
   }
@@ -359,22 +351,26 @@ const extractTextFromReactNode = (node: any): string => {
 
 const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
   const expr = callExpr.getExpression();
+
   if (!Node.isIdentifier(expr)) {
     return { dictionaryKey: null, variables: [] };
   }
 
   const funcName = expr.getText();
+
   if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
     return { dictionaryKey: null, variables: [] };
   }
 
   const args = callExpr.getArguments();
+
   if (args.length === 0) {
     return { dictionaryKey: null, variables: [] };
   }
 
   let dictionaryKey: string | null = null;
   const firstArg = args[0];
+
   if (
     Node.isStringLiteral(firstArg) ||
     Node.isNoSubstitutionTemplateLiteral(firstArg)
@@ -388,10 +384,12 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
     path: string[];
     declarationNode?: Node;
   }[] = [];
+
   const varDecl = callExpr.getParentIfKind(SyntaxKind.VariableDeclaration);
 
   if (varDecl) {
     const pattern = varDecl.getNameNode();
+
     if (Node.isObjectBindingPattern(pattern)) {
       for (const element of pattern.getElements()) {
         const propNameNode = element.getPropertyNameNode();
@@ -421,6 +419,7 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
 
 const isDeclarationIdentifier = (node: Node) => {
   const parent = node.getParent();
+
   if (
     Node.isBindingElement(parent) ||
     Node.isVariableDeclaration(parent) ||
@@ -428,7 +427,21 @@ const isDeclarationIdentifier = (node: Node) => {
   ) {
     return true;
   }
+
   if (Node.isPropertyAssignment(parent)) {
+    return (parent as any).getNameNode() === node;
+  }
+  return false;
+};
+
+const isPropertyAccessName = (node: Node) => {
+  const parent = node.getParent();
+
+  if (Node.isPropertyAccessExpression(parent)) {
+    return parent.getNameNode() === node;
+  }
+
+  if (parent && parent.getKindName() === "JsxMemberExpression") {
     return (parent as any).getNameNode() === node;
   }
   return false;
@@ -440,47 +453,21 @@ const resolvePropertyAccess = (startNode: Node) => {
 
   while (true) {
     const parent = current.getParent();
+
     if (Node.isPropertyAccessExpression(parent)) {
       if (parent.getExpression() === current) {
         path.push(parent.getName());
         current = parent;
-      } else {
-        break;
+        continue;
       }
-    } else {
-      break;
+    } else if (Node.isCallExpression(parent)) {
+      if (parent.getExpression() === current) {
+        current = parent;
+        continue;
+      }
     }
+    break;
   }
 
   return { fullPath: path, rangeNode: current };
-};
-
-const getValueFromPath = (
-  content: any,
-  path: string[],
-  locale: string,
-): any => {
-  let current = content;
-
-  for (const key of path) {
-    if (current && typeof current === "object" && key in current) {
-      current = current[key];
-    } else {
-      return null;
-    }
-  }
-
-  if (!current) {
-    return null;
-  }
-
-  if (
-    typeof current === "object" &&
-    current.nodeType === "translation" &&
-    current.translation
-  ) {
-    return current.translation[locale] || Object.values(current.translation)[0];
-  }
-
-  return current;
 };

@@ -11,7 +11,6 @@ import {
   type UsageLocation,
 } from "../utils/findUsages";
 
-// --- Caching Strategy ---
 const usageCache = new Map<
   string,
   { timestamp: number; data: UsageLocation[] }
@@ -83,7 +82,7 @@ export const intlayerContentDefinitionProvider: DefinitionProvider = {
 
 const getTargetKeyAndPathFromDocument = async (
   document: TextDocument,
-  position: Position
+  position: Position,
 ): Promise<{ dictionaryKey: string; clickedField: string } | null> => {
   const text = document.getText();
 

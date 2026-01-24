@@ -1,8 +1,9 @@
-import { join } from "node:path";
+import { join, extname } from "node:path";
 import { workspace, Uri, Range, RelativePattern } from "vscode";
 import { Project, SyntaxKind, Node, type SourceFile } from "ts-morph";
 import { getConfiguration } from "@intlayer/config";
 import { getConfigurationOptions } from "./getConfiguration";
+import { extractScriptContent } from "./extractScript";
 
 // Reuse project instance
 const project = new Project({
@@ -28,7 +29,7 @@ export const findUsagesOfDictionary = async (
   // Search across the project (excluding node_modules)
   const searchPattern = new RelativePattern(
     projectDir,
-    "**/*.{ts,tsx,js,jsx,mjs,cjs}"
+    "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}"
   );
 
   const relevantFiles = await workspace.findFiles(
@@ -48,9 +49,18 @@ export const findUsagesOfDictionary = async (
         continue;
       }
 
-      const sourceFile = project.createSourceFile(fileUri.fsPath, text, {
-        overwrite: true,
-      });
+      const extension = extname(fileUri.fsPath).toLowerCase();
+      const scriptContent = extractScriptContent(text, extension);
+      const fileName =
+        fileUri.fsPath +
+        (extension === ".vue" || extension === ".svelte" ? ".tsx" : "");
+
+      const existingFile = project.getSourceFile(fileName);
+      if (existingFile) {
+        project.removeSourceFile(existingFile);
+      }
+
+      const sourceFile = project.createSourceFile(fileName, scriptContent);
 
       const fileUsages = analyzeFileForUsages(sourceFile, dictionaryKey);
 
@@ -179,8 +189,11 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
       const refs = scope
         .getDescendantsOfKind(SyntaxKind.Identifier)
         .filter((id) => {
-          // Check name
-          if (id.getText() !== varName) return false;
+          const idText = id.getText();
+          // Support both direct variable access and Svelte's '$' store prefix
+          if (idText !== varName && idText !== "$" + varName) {
+            return false;
+          }
 
           // Avoid declaration itself
           const parent = id.getParent();

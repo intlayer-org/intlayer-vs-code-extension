@@ -3,11 +3,12 @@ import { Hover, type HoverProvider, MarkdownString, Uri } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
+import { getValueFromPath } from "../utils/intlayerValueResolver";
 import { isValidElement } from "@intlayer/core";
 
 export const intlayerHoverProvider: HoverProvider = {
   provideHover: async (document, position) => {
-    // 1. Resolve Path (Fast AST check)
+    // Resolve Path (Fast AST check)
     const origin = await resolveIntlayerPath(document, position);
     if (!origin) {
       return null;
@@ -18,20 +19,21 @@ export const intlayerHoverProvider: HoverProvider = {
     const lastKey = cleanPath[cleanPath.length - 1];
 
     // Check if accessing properties specific to frameworks
-    const isAccessor = lastKey === "value" || lastKey === "raw";
+    const isAccessor =
+      lastKey === "value" || lastKey === "raw" || lastKey === "use";
 
     if (isAccessor) {
       cleanPath.pop();
     }
 
-    // 2. Find Root
+    // Find Root
     const fileDir = dirname(document.uri.fsPath);
     const projectDir = findProjectRoot(fileDir);
     if (!projectDir) {
       return null;
     }
 
-    // 3. Get Config (OPTIMIZED: Uses Cache)
+    // Get Config (OPTIMIZED: Uses Cache)
     const config = await getCachedConfig(projectDir);
 
     const dictionaryJsonPath = join(
@@ -39,7 +41,7 @@ export const intlayerHoverProvider: HoverProvider = {
       `${dictionaryKey}.json`,
     );
 
-    // 4. Get Dictionary (OPTIMIZED: Async & Cached)
+    // Get Dictionary (OPTIMIZED: Async & Cached)
     const dictionaries = await getCachedDictionary(dictionaryJsonPath);
 
     if (!dictionaries) {
@@ -55,7 +57,11 @@ export const intlayerHoverProvider: HoverProvider = {
         continue;
       }
 
-      const targetNode = traverseContent(dict.content, cleanPath);
+      const targetNode = getValueFromPath(
+        dict.content,
+        cleanPath,
+        config.internationalization?.defaultLocale,
+      );
       if (targetNode) {
         if (
           typeof targetNode === "object" &&
@@ -121,7 +127,11 @@ export const intlayerHoverProvider: HoverProvider = {
         continue;
       }
 
-      const targetNode = traverseContent(dict.content, cleanPath);
+      const targetNode = getValueFromPath(
+        dict.content,
+        cleanPath,
+        config.internationalization?.defaultLocale,
+      );
 
       if (targetNode) {
         const md = new MarkdownString();
@@ -164,16 +174,4 @@ export const intlayerHoverProvider: HoverProvider = {
 
     return new Hover(hoverTexts);
   },
-};
-
-const traverseContent = (content: any, path: string[]) => {
-  let current = content;
-  for (const key of path) {
-    if (current && typeof current === "object" && key in current) {
-      current = current[key];
-    } else {
-      return null;
-    }
-  }
-  return current;
 };

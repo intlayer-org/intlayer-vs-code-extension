@@ -23,8 +23,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "Build start",
-          // Update this line to match both "Build complete" and "Rebuilt"
-          "endsPattern": "(Build complete|Rebuilt)"
+          "endsPattern": "(Build complete|Rebuilt|Copied assets)"
         }
       },
       "label": "npm: watch"

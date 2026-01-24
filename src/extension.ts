@@ -32,6 +32,10 @@ export const activate = (context: ExtensionContext) => {
     { language: "typescript", scheme: "file" },
     { language: "typescriptreact", scheme: "file" },
     { language: "vue", scheme: "file" },
+    { language: "svelte", scheme: "file" },
+    { language: "json", scheme: "file" },
+    { language: "jsonc", scheme: "file" },
+    { language: "json5", scheme: "file" },
   ];
 
   // String keys (useIntlayer(->'my-key'<-)

@@ -1,4 +1,5 @@
 import { type TextDocument, Position } from "vscode";
+import { extname } from "node:path";
 import {
   Project,
   Node,
@@ -8,6 +9,7 @@ import {
   BindingElement,
   Identifier,
 } from "ts-morph";
+import { extractScriptContent } from "./extractScript";
 
 // Initialize a lightweight in-memory project for fast AST parsing
 const project = new Project({
@@ -29,24 +31,41 @@ interface IntlayerOrigin {
 
 export const resolveIntlayerPath = async (
   document: TextDocument,
-  position: Position
+  position: Position,
 ): Promise<IntlayerOrigin | null> => {
   try {
     const fileContent = document.getText();
-    const filePath = "temp_lookup.tsx"; // Virtual path
+    const extension = extname(document.uri.fsPath).toLowerCase();
+    const scriptContent = extractScriptContent(fileContent, extension);
+    const filePath = `temp_lookup${extension}${extension === ".vue" || extension === ".svelte" ? ".tsx" : ""}`;
+
+    // Ensure fresh file in the project
+    const existingFile = project.getSourceFile(filePath);
+    if (existingFile) {
+      project.removeSourceFile(existingFile);
+    }
 
     // Create/Update the source file in the virtual project
-    const sourceFile = project.createSourceFile(filePath, fileContent, {
-      overwrite: true,
-    });
+    const sourceFile = project.createSourceFile(filePath, scriptContent);
 
     // Get the exact node at the cursor position
     const offset = document.offsetAt(position);
-    let node = sourceFile.getDescendantAtPos(offset);
+    const node = sourceFile.getDescendantAtPos(offset);
 
     // If we missed the node (e.g. whitespace), try slightly adjusting or bailing
     if (!node) {
       return null;
+    }
+
+    // Support hovering on JSX tags like <count />
+    if (Node.isIdentifier(node)) {
+      const parent = node.getParent();
+      if (
+        Node.isJsxOpeningElement(parent) ||
+        Node.isJsxSelfClosingElement(parent)
+      ) {
+        // We are on the tag name
+      }
     }
 
     // Handle case where we click inside a string or generic identifier
@@ -64,20 +83,67 @@ export const resolveIntlayerPath = async (
     }
 
     // 2. Trace the Root Identifier to its Definition
-    // We use getImplementations() or definitions.
-    // In a single-file context, getting the declaration via symbols is usually enough.
+    let declaration: Node | null = null;
     const symbol = rootIdentifier.getSymbol();
-    if (!symbol) {
-      return null;
+
+    if (symbol) {
+      const declarations = symbol.getDeclarations();
+      if (declarations && declarations.length > 0) {
+        declaration = declarations[0];
+      }
     }
 
-    const declarations = symbol.getDeclarations();
-    if (!declarations || declarations.length === 0) {
-      return null;
+    // Fallback: If symbols are missing (common in single-file virtual projects),
+    // search for the declaration manually in the same file.
+    if (!declaration) {
+      const rawVarName = rootIdentifier.getText().replace(/^\$/, ""); // Handle Svelte $
+      const varNames = [
+        rawVarName,
+        // Convert PascalCase/kebab-case to camelCase for Vue component matching
+        rawVarName.charAt(0).toLowerCase() + rawVarName.slice(1), // Pascal -> camel
+        rawVarName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()), // kebab -> camel
+      ];
+
+      const allDecls = sourceFile.getDescendantsOfKind(
+        SyntaxKind.VariableDeclaration,
+      );
+      for (const varDecl of allDecls) {
+        const nameNode = varDecl.getNameNode();
+        if (Node.isObjectBindingPattern(nameNode)) {
+          const element = nameNode
+            .getElements()
+            .find((el) => varNames.includes(el.getName()));
+          if (element) {
+            declaration = element;
+            break;
+          }
+        } else if (
+          Node.isIdentifier(nameNode) &&
+          varNames.includes(nameNode.getText())
+        ) {
+          declaration = varDecl;
+          break;
+        }
+      }
+
+      // Also check imports if it's a direct import (though less common for useIntlayer)
+      if (!declaration) {
+        const allImports = sourceFile.getImportDeclarations();
+        for (const imp of allImports) {
+          const named = imp
+            .getNamedImports()
+            .find((n) => varNames.includes(n.getName()));
+          if (named) {
+            declaration = named;
+            break;
+          }
+        }
+      }
     }
 
-    // We typically care about the first declaration (variable definition)
-    const declaration = declarations[0];
+    if (!declaration) {
+      return null;
+    }
 
     // 3. Analyze the Declaration to see if it comes from useIntlayer
     let dictionaryKey: string | null = null;
@@ -130,17 +196,17 @@ export const resolveIntlayerPath = async (
  * Returns the root identifier (the variable) and the path accessed on it.
  */
 const analyzePropertyChain = (
-  startNode: Node
+  startNode: Node,
 ): { rootIdentifier: Identifier | null; pathFromRoot: string[] } => {
   let current = startNode;
   const path: string[] = [];
 
   // Loop to traverse left-upwards until we hit the root object
   while (true) {
-    // 1. If we are on an identifier (e.g. 'description' or 'root')
-    if (Node.isIdentifier(current)) {
-      const parent = current.getParent();
+    const parent = current.getParent();
 
+    // If we are on an identifier (e.g. 'description' or 'root')
+    if (Node.isIdentifier(current)) {
       // Check if this identifier is the property name of a parent PropertyAccess
       // e.g. current='description' in 'edition.description'
       if (
@@ -159,8 +225,7 @@ const analyzePropertyChain = (
       break;
     }
 
-    // 2. If we are on a PropertyAccessExpression (e.g. 'edition.title' nested in 'edition.title.desc')
-    // This happens when we move left from step 1
+    // If we are on a PropertyAccessExpression (e.g. 'edition.title' nested in 'edition.title.desc')
     if (Node.isPropertyAccessExpression(current)) {
       // We take the name ('title')
       path.unshift(current.getName());
@@ -169,7 +234,21 @@ const analyzePropertyChain = (
       continue;
     }
 
-    // If we hit anything else (CallExpression, etc.), stop.
+    // Handle CallExpression (e.g. 'content().title' in SolidJS)
+    if (Node.isCallExpression(current)) {
+      current = current.getExpression();
+      continue;
+    }
+
+    // 4. Handle JSX Member Access (e.g. <content.title />)
+    if (current.getKindName() === "JsxMemberExpression") {
+      const jsxMember = current as any;
+      path.unshift(jsxMember.getNameNode().getText());
+      current = jsxMember.getExpression();
+      continue;
+    }
+
+    // If we hit anything else, stop.
     break;
   }
 
@@ -185,7 +264,7 @@ const analyzePropertyChain = (
  * Analyzes: const { title } = useIntlayer(...)
  */
 const analyzeBindingElement = (element: BindingElement) => {
-  // 1. Get the property name (the key in the dictionary)
+  // Get the property name (the key in the dictionary)
   // e.g. const { title: myTitle } = ... -> name is 'title'
   // e.g. const { title } = ... -> name is 'title'
 
@@ -198,7 +277,7 @@ const analyzeBindingElement = (element: BindingElement) => {
     path = [element.getName()];
   }
 
-  // 2. Walk up to the VariableDeclaration
+  // Walk up to the VariableDeclaration
   // BindingElement -> ObjectBindingPattern -> VariableDeclaration
   const pattern = element.getParent();
   if (!Node.isObjectBindingPattern(pattern)) {
@@ -269,7 +348,7 @@ const extractIntlayerInfo = (callExpr: CallExpression) => {
 
 const getModuleSource = (
   sourceFile: any,
-  functionName: string
+  functionName: string,
 ): string | null => {
   // Simple check for import declaration
   // import { useIntlayer } from 'next-intlayer'
