@@ -1,6 +1,6 @@
-import { Project, SyntaxKind, Node } from "ts-morph";
-import { readFileSync } from "node:fs";
-import { extname } from "node:path";
+import { promises as fs } from 'node:fs';
+import { extname } from 'node:path';
+import { type Node, Project, SyntaxKind } from 'ts-morph';
 
 // Keep project instance outside to reuse it (performance)
 const project = new Project({
@@ -14,11 +14,11 @@ export const findFieldLocation = async (
   keyPath: string[]
 ): Promise<{ line: number; character: number } | null> => {
   try {
-    const fileContent = readFileSync(filePath, "utf8");
+    const fileContent = await fs.readFile(filePath, 'utf8');
     const ext = extname(filePath);
 
     // JSON Handler
-    if ([".json", ".json5", ".jsonc"].includes(ext)) {
+    if (['.json', '.json5', '.jsonc'].includes(ext)) {
       return findLocationInJson(fileContent, keyPath);
     }
 
@@ -132,7 +132,7 @@ export const findFieldLocation = async (
 
     return null;
   } catch (error) {
-    console.error("Error finding field location:", error);
+    console.error('Error finding field location:', error);
     return null;
   }
 };
@@ -146,7 +146,7 @@ const findLocationInJson = (
   let resultChar = 0;
 
   for (const key of keyPath) {
-    const regex = new RegExp(`(["'])${key}\\1\\s*:`, "g");
+    const regex = new RegExp(`(["'])${key}\\1\\s*:`, 'g');
     regex.lastIndex = currentIndex;
     const match = regex.exec(content);
     if (!match) {
@@ -155,7 +155,7 @@ const findLocationInJson = (
     currentIndex = match.index + match[0].length;
 
     const contentUpToMatch = content.substring(0, match.index);
-    const lines = contentUpToMatch.split("\n");
+    const lines = contentUpToMatch.split('\n');
     resultLine = lines.length - 1;
     resultChar = lines[lines.length - 1].length;
   }

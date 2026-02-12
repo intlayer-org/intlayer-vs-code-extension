@@ -1,18 +1,18 @@
-import { dirname, join, extname } from "node:path";
+import { dirname, extname, join } from 'node:path';
+import { DefaultValues } from '@intlayer/config';
+import { type CallExpression, Node, Project, SyntaxKind } from 'ts-morph';
 import {
+  type DecorationOptions,
+  type Disposable,
+  Range,
   type TextEditor,
   window,
   workspace,
-  Range,
-  type DecorationOptions,
-  Disposable,
-} from "vscode";
-import { Project, SyntaxKind, Node, type CallExpression } from "ts-morph";
-import { findProjectRoot } from "../utils/findProjectRoot";
-import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
-import { DefaultValues } from "@intlayer/config";
-import { getValueFromPath } from "../utils/intlayerValueResolver";
-import { extractScriptContent } from "../utils/extractScript";
+} from 'vscode';
+import { extractScriptContent } from '../utils/extractScript';
+import { findProjectRoot } from '../utils/findProjectRoot';
+import { getCachedConfig, getCachedDictionary } from '../utils/intlayerCache';
+import { getValueFromPath } from '../utils/intlayerValueResolver';
 
 // Configuration
 const DEBOUNCE_DELAY = 500;
@@ -21,9 +21,9 @@ const TRUNCATE_LENGTH = 60;
 // Decoration Style: Appears at the end of the line (Translation Preview)
 const translationDecorationType = window.createTextEditorDecorationType({
   after: {
-    margin: "0 0 0 1ch",
-    color: "rgba(128, 128, 128, 0.3)",
-    fontStyle: "italic",
+    margin: '0 0 0 1ch',
+    color: 'rgba(128, 128, 128, 0.3)',
+    fontStyle: 'italic',
   },
   rangeBehavior: 1, // ClosedOpen
 });
@@ -31,9 +31,9 @@ const translationDecorationType = window.createTextEditorDecorationType({
 // Decoration Style for Multiple Declarations warning
 const duplicateDecorationType = window.createTextEditorDecorationType({
   after: {
-    margin: "0 0 0 2ch",
-    color: "rgba(255, 165, 0, 0.6)", // Orange-ish
-    fontStyle: "italic",
+    margin: '0 0 0 2ch',
+    color: 'rgba(255, 165, 0, 0.6)', // Orange-ish
+    fontStyle: 'italic',
   },
   rangeBehavior: 1,
 });
@@ -51,7 +51,7 @@ const project = new Project({
 
 export const intlayerDecorationProvider = (): Disposable[] => {
   let activeEditor = window.activeTextEditor;
-  let timeout: NodeJS.Timeout | undefined = undefined;
+  let timeout: NodeJS.Timeout | undefined;
 
   const triggerUpdate = () => {
     if (timeout) {
@@ -85,17 +85,17 @@ export const intlayerDecorationProvider = (): Disposable[] => {
 };
 
 const allowedExtensions = [
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".cjs",
-  ".json",
-  ".jsonc",
-  ".json5",
-  ".vue",
-  ".svelte",
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.json',
+  '.jsonc',
+  '.json5',
+  '.vue',
+  '.svelte',
 ];
 
 const updateDecorations = async (editor: TextEditor) => {
@@ -121,7 +121,7 @@ const updateDecorations = async (editor: TextEditor) => {
     DefaultValues.Internationalization.DEFAULT_LOCALE;
 
   const scriptContent = extractScriptContent(document.getText(), extension);
-  const fileName = `temp_decoration${extension}${extension === ".vue" || extension === ".svelte" ? ".tsx" : ""}`;
+  const fileName = `temp_decoration${extension}${extension === '.vue' || extension === '.svelte' ? '.tsx' : ''}`;
 
   // Ensure fresh file in the project
   const existingFile = project.getSourceFile(fileName);
@@ -137,8 +137,16 @@ const updateDecorations = async (editor: TextEditor) => {
 
   // Find all `useIntlayer` calls
   const callExpressions = sourceFile.getDescendantsOfKind(
-    SyntaxKind.CallExpression,
+    SyntaxKind.CallExpression
   );
+
+  const variablesMap = new Map<
+    string,
+    { dictionaryContent: any; defaultLocale: string; initialPath: string[] }
+  >();
+
+  // Local cache for dictionaries in this pass
+  const localDictionaryCache = new Map<string, any[]>();
 
   for (const callExpr of callExpressions) {
     const { dictionaryKey, variables } = analyzeUseIntlayerCall(callExpr);
@@ -147,11 +155,16 @@ const updateDecorations = async (editor: TextEditor) => {
       continue;
     }
 
-    const dictionaryJsonPath = join(
-      config.system.unmergedDictionariesDir,
-      `${dictionaryKey}.json`,
-    );
-    const dictionaries = await getCachedDictionary(dictionaryJsonPath);
+    let dictionaries = localDictionaryCache.get(dictionaryKey);
+
+    if (!dictionaries) {
+      const dictionaryJsonPath = join(
+        config.system.unmergedDictionariesDir,
+        `${dictionaryKey}.json`
+      );
+      dictionaries = (await getCachedDictionary(dictionaryJsonPath)) || [];
+      localDictionaryCache.set(dictionaryKey, dictionaries);
+    }
 
     if (!dictionaries || dictionaries.length === 0) {
       continue;
@@ -163,10 +176,10 @@ const updateDecorations = async (editor: TextEditor) => {
       let remoteCount = 0;
 
       dictionaries.forEach((d) => {
-        if (d.location === "local" || d.location === "local&remote") {
+        if (d.location === 'local' || d.location === 'local&remote') {
           localCount++;
         }
-        if (d.location === "remote") {
+        if (d.location === 'remote') {
           remoteCount++;
         }
       });
@@ -202,14 +215,20 @@ const updateDecorations = async (editor: TextEditor) => {
       path: initialPath,
       declarationNode,
     } of variables) {
+      variablesMap.set(variableName, {
+        dictionaryContent,
+        defaultLocale,
+        initialPath,
+      });
+
       const identifiers = sourceFile.getDescendantsOfKind(
-        SyntaxKind.Identifier,
+        SyntaxKind.Identifier
       );
 
       const references = identifiers.filter((id) => {
         const idText = id.getText();
         // Support both direct variable access and Svelte's '$' store prefix
-        if (idText !== variableName && idText !== "$" + variableName) {
+        if (idText !== variableName && idText !== `$${variableName}`) {
           return false;
         }
         if (isDeclarationIdentifier(id)) {
@@ -229,7 +248,7 @@ const updateDecorations = async (editor: TextEditor) => {
         const rawValue = getValueFromPath(
           dictionaryContent,
           contentPath,
-          defaultLocale,
+          defaultLocale
         );
 
         if (rawValue) {
@@ -243,6 +262,10 @@ const updateDecorations = async (editor: TextEditor) => {
           const position = document.positionAt(nodeEndPos);
           const lineIndex = position.line;
 
+          if (processedLines.has(lineIndex)) {
+            continue;
+          }
+
           const line = document.lineAt(lineIndex);
           const range = new Range(line.range.end, line.range.end);
 
@@ -252,10 +275,107 @@ const updateDecorations = async (editor: TextEditor) => {
             renderOptions: {
               after: {
                 contentText: `    ${displayText}`,
-                color: "rgba(128, 128, 128, 0.3)",
+                color: 'rgba(128, 128, 128, 0.3)',
               },
             },
           });
+          processedLines.add(lineIndex);
+        }
+      }
+    }
+  }
+
+  // Angular Template Logic
+  if (extension === '.ts' && document.getText().includes('@Component')) {
+    const text = document.getText();
+    const templateRegex = /template\s*:\s*(["'`])([\s\S]*?)\1/g;
+    let match: RegExpExecArray | null = null;
+    while (true) {
+      match = templateRegex.exec(text);
+      if (!match) {
+        break;
+      }
+      const templateStart = match.index + match[0].indexOf(match[2]); // Start of content
+      const templateContent = match[2];
+
+      for (const [
+        variableName,
+        { dictionaryContent, defaultLocale, initialPath },
+      ] of variablesMap) {
+        // 1. Collect targets (variable + aliases)
+        const targets = [{ name: variableName, pathPrefix: [] as string[] }];
+
+        // Alias Regex: variable(...) or variable.path as alias
+        // Matches: content as c, content() as c, content().path as p
+        const aliasPattern = new RegExp(
+          `\\b${variableName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\s+as\\s+([a-zA-Z0-9_]+)`,
+          'g'
+        );
+
+        let aliasMatch: RegExpExecArray | null = null;
+        while (true) {
+          aliasMatch = aliasPattern.exec(templateContent);
+          if (!aliasMatch) {
+            break;
+          }
+          const pathStr = aliasMatch[1];
+          const alias = aliasMatch[2];
+          const extraPath = pathStr ? pathStr.split('.').filter(Boolean) : [];
+          targets.push({ name: alias, pathPrefix: extraPath });
+        }
+
+        // 2. Search usages for all targets
+        for (const { name: targetName, pathPrefix } of targets) {
+          const usageRegex = new RegExp(
+            `\\b${targetName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\b`,
+            'g'
+          );
+
+          let usageMatch: RegExpExecArray | null = null;
+          while (true) {
+            usageMatch = usageRegex.exec(templateContent);
+            if (!usageMatch) {
+              break;
+            }
+            const fullMatch = usageMatch[0];
+            const pathStr = usageMatch[1];
+            const keys = pathStr ? pathStr.split('.').filter(Boolean) : [];
+            const contentPath = [...initialPath, ...pathPrefix, ...keys];
+
+            const rawValue = getValueFromPath(
+              dictionaryContent,
+              contentPath,
+              defaultLocale
+            );
+            if (rawValue) {
+              const displayText = parseContentValue(rawValue);
+              if (displayText) {
+                const startOffset = templateStart + usageMatch.index;
+                const endOffset = startOffset + fullMatch.length;
+                const position = document.positionAt(endOffset);
+
+                const lineIndex = position.line;
+                if (processedLines.has(lineIndex)) {
+                  continue;
+                }
+
+                const line = document.lineAt(lineIndex);
+                const range = new Range(line.range.end, line.range.end);
+
+                translationDecorations.push({
+                  range,
+                  hoverMessage: displayText,
+                  renderOptions: {
+                    after: {
+                      contentText: `    ${displayText}`,
+                      color: 'rgba(128, 128, 128, 0.3)',
+                    },
+                  },
+                });
+                processedLines.add(lineIndex);
+              }
+            }
+          }
         }
       }
     }
@@ -278,15 +398,15 @@ const parseContentValue = (value: any): string | null => {
     return null;
   }
 
-  let text = "";
+  let text = '';
 
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     text = value;
-  } else if (typeof value === "number") {
+  } else if (typeof value === 'number') {
     text = String(value);
-  } else if (typeof value === "object") {
+  } else if (typeof value === 'object') {
     if (Array.isArray(value)) {
-      text = value.map(parseContentValue).join("");
+      text = value.map(parseContentValue).join('');
     } else if (isValidElementLike(value)) {
       // It's a React Node structure
       text = extractTextFromReactNode(value);
@@ -302,7 +422,7 @@ const parseContentValue = (value: any): string | null => {
   }
 
   // Clean up whitespace
-  text = text.replace(/\s+/g, " ").trim();
+  text = text.replace(/\s+/g, ' ').trim();
 
   // Truncate
 
@@ -319,10 +439,10 @@ const parseContentValue = (value: any): string | null => {
 const isValidElementLike = (obj: any): boolean => {
   return (
     obj &&
-    typeof obj === "object" &&
-    "props" in obj &&
+    typeof obj === 'object' &&
+    'props' in obj &&
     // Check for common React internal keys to be sure, or just duck type 'props'
-    (!("key" in obj) || obj.key === null || typeof obj.key === "string")
+    (!('key' in obj) || obj.key === null || typeof obj.key === 'string')
   );
 };
 
@@ -331,22 +451,22 @@ const isValidElementLike = (obj: any): boolean => {
  */
 const extractTextFromReactNode = (node: any): string => {
   if (!node) {
-    return "";
+    return '';
   }
 
-  if (typeof node === "string" || typeof node === "number") {
+  if (typeof node === 'string' || typeof node === 'number') {
     return String(node);
   }
 
   if (Array.isArray(node)) {
-    return node.map(extractTextFromReactNode).join("");
+    return node.map(extractTextFromReactNode).join('');
   }
 
-  if (typeof node === "object" && node.props && node.props.children) {
+  if (typeof node === 'object' && node.props && node.props.children) {
     return extractTextFromReactNode(node.props.children);
   }
 
-  return "";
+  return '';
 };
 
 const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
@@ -358,7 +478,7 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
 
   const funcName = expr.getText();
 
-  if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
+  if (funcName !== 'useIntlayer' && funcName !== 'getIntlayer') {
     return { dictionaryKey: null, variables: [] };
   }
 
@@ -386,6 +506,7 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
   }[] = [];
 
   const varDecl = callExpr.getParentIfKind(SyntaxKind.VariableDeclaration);
+  const propDecl = callExpr.getParentIfKind(SyntaxKind.PropertyDeclaration);
 
   if (varDecl) {
     const pattern = varDecl.getNameNode();
@@ -412,6 +533,15 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
         declarationNode: pattern, // Capture the Variable declaration identifier
       });
     }
+  } else if (propDecl) {
+    const nameNode = propDecl.getNameNode();
+    if (Node.isIdentifier(nameNode)) {
+      variables.push({
+        variableName: nameNode.getText(),
+        path: [],
+        declarationNode: nameNode,
+      });
+    }
   }
 
   return { dictionaryKey, variables };
@@ -423,7 +553,8 @@ const isDeclarationIdentifier = (node: Node) => {
   if (
     Node.isBindingElement(parent) ||
     Node.isVariableDeclaration(parent) ||
-    Node.isParameterDeclaration(parent)
+    Node.isParameterDeclaration(parent) ||
+    Node.isPropertyDeclaration(parent)
   ) {
     return true;
   }
@@ -441,7 +572,7 @@ const isPropertyAccessName = (node: Node) => {
     return parent.getNameNode() === node;
   }
 
-  if (parent && parent.getKindName() === "JsxMemberExpression") {
+  if (parent && parent.getKindName() === 'JsxMemberExpression') {
     return (parent as any).getNameNode() === node;
   }
   return false;

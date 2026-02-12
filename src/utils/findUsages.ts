@@ -1,9 +1,9 @@
-import { join, extname } from "node:path";
-import { workspace, Uri, Range, RelativePattern } from "vscode";
-import { Project, SyntaxKind, Node, type SourceFile } from "ts-morph";
-import { getConfiguration } from "@intlayer/config";
-import { getConfigurationOptions } from "./getConfiguration";
-import { extractScriptContent } from "./extractScript";
+import { extname, join } from 'node:path';
+import { getConfiguration } from '@intlayer/config';
+import { Node, Project, type SourceFile, SyntaxKind } from 'ts-morph';
+import { Range, RelativePattern, type Uri, workspace } from 'vscode';
+import { extractScriptContent } from './extractScript';
+import { getConfigurationOptions } from './getConfiguration';
 
 // Reuse project instance
 const project = new Project({
@@ -19,6 +19,71 @@ export interface UsageLocation {
   keyLocations: Map<string, Range[]>; // Specific ranges for each key access
 }
 
+const extractScriptContentWithAngular = (text: string, extension: string) => {
+  let processedText = extractScriptContent(text, extension);
+
+  // Angular: Extract template content
+  if (extension === '.ts' && text.includes('@Component')) {
+    const templateRegex = /template\s*:\s*(["'`])([\s\S]*?)\1/g;
+
+    processedText = processedText.replace(
+      templateRegex,
+      (match, quote, content) => {
+        const expressions: string[] = [];
+        // Sanitize and push expression
+        const sanitize = (e: string) => {
+          let s = e;
+          s = s.replace(/;/g, ',');
+          s = s.replace(/\s+as\s+/g, ',');
+          s = s.replace(/\b\w+\s+of\s+/g, '');
+          s = s.replace(/\btrack\s+/g, '');
+          s = s.replace(/\blet\s+/g, '');
+          return s.trim();
+        };
+
+        // 1. Interpolations {{ ... }}
+        const interpolationRegex = /{{([\s\S]*?)}}/g;
+        const interpolationMatches = content.matchAll(interpolationRegex);
+        for (const match of interpolationMatches) {
+          expressions.push(sanitize(match[1]));
+        }
+
+        // 2. Bindings [prop]="..." or bind-prop="..."
+        // We match value inside quotes
+        const bindingRegex = /(?:\[.*?\]|bind-.*?)\s*=\s*(["'])(.*?)\1/g;
+        const bindingMatches = content.matchAll(bindingRegex);
+        for (const match of bindingMatches) {
+          expressions.push(sanitize(match[2]));
+        }
+
+        // 3. Structural Directives *ngIf="..."
+        const structRegex = /\*\w+\s*=\s*(["'])(.*?)\1/g;
+        const structMatches = content.matchAll(structRegex);
+        for (const match of structMatches) {
+          expressions.push(sanitize(match[2]));
+        }
+
+        // 4. Control Flow @if(...), @for(...), @switch(...)
+        // Match content inside parentheses
+        const controlFlowRegex = /@\w+\s*\((.*?)\)/g;
+        const controlFlowMatches = content.matchAll(controlFlowRegex);
+        for (const match of controlFlowMatches) {
+          expressions.push(sanitize(match[1]));
+        }
+
+        // Combine all expressions into an array
+        // We join them with commas.
+        // We wrap in [ ... ] to form a valid array literal
+        const combined = `[${expressions.join(', ')}]`;
+
+        return `template: ${combined}`;
+      }
+    );
+  }
+
+  return processedText;
+};
+
 export const findUsagesOfDictionary = async (
   projectDir: string,
   dictionaryKey: string
@@ -29,54 +94,70 @@ export const findUsagesOfDictionary = async (
   // Search across the project (excluding node_modules)
   const searchPattern = new RelativePattern(
     projectDir,
-    "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}"
+    '**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}'
   );
 
   const relevantFiles = await workspace.findFiles(
     searchPattern,
-    "**/node_modules/**"
+    '**/node_modules/**'
   );
 
   const usageLocations: UsageLocation[] = [];
 
-  for (const fileUri of relevantFiles) {
-    try {
-      const content = await workspace.fs.readFile(fileUri);
-      const text = new TextDecoder("utf-8").decode(content);
+  // Concurrency Limit to prevent EMFILE and UI blocking
+  const CONCURRENCY_LIMIT = 10;
+  const chunks = [];
+  for (let i = 0; i < relevantFiles.length; i += CONCURRENCY_LIMIT) {
+    chunks.push(relevantFiles.slice(i, i + CONCURRENCY_LIMIT));
+  }
 
-      // Fast pre-check
-      if (!text.includes(dictionaryKey)) {
-        continue;
-      }
+  for (const chunk of chunks) {
+    await Promise.all(
+      chunk.map(async (fileUri) => {
+        try {
+          const content = await workspace.fs.readFile(fileUri);
+          const text = new TextDecoder('utf-8').decode(content);
 
-      const extension = extname(fileUri.fsPath).toLowerCase();
-      const scriptContent = extractScriptContent(text, extension);
-      const fileName =
-        fileUri.fsPath +
-        (extension === ".vue" || extension === ".svelte" ? ".tsx" : "");
+          // Fast pre-check
+          if (!text.includes(dictionaryKey)) {
+            return;
+          }
 
-      const existingFile = project.getSourceFile(fileName);
-      if (existingFile) {
-        project.removeSourceFile(existingFile);
-      }
+          const extension = extname(fileUri.fsPath).toLowerCase();
+          const scriptContent = extractScriptContentWithAngular(
+            text,
+            extension
+          );
+          const fileName =
+            fileUri.fsPath +
+            (extension === '.vue' || extension === '.svelte' ? '.tsx' : '');
 
-      const sourceFile = project.createSourceFile(fileName, scriptContent);
+          // Synchronous part - protect with try-catch and potential yield if needed
+          // But for 10 files it should be fine.
+          const existingFile = project.getSourceFile(fileName);
+          if (existingFile) {
+            project.removeSourceFile(existingFile);
+          }
 
-      const fileUsages = analyzeFileForUsages(sourceFile, dictionaryKey);
+          const sourceFile = project.createSourceFile(fileName, scriptContent);
 
-      if (fileUsages.length > 0) {
-        const { keys, locations } = mergeUsageData(fileUsages);
+          const fileUsages = analyzeFileForUsages(sourceFile, dictionaryKey);
 
-        usageLocations.push({
-          uri: fileUri,
-          range: fileUsages[0].range, // Default to first declaration for file-level
-          keysUsed: keys,
-          keyLocations: locations,
-        });
-      }
-    } catch (e) {
-      console.error(`Error parsing ${fileUri.fsPath}`, e);
-    }
+          if (fileUsages.length > 0) {
+            const { keys, locations } = mergeUsageData(fileUsages);
+
+            usageLocations.push({
+              uri: fileUri,
+              range: fileUsages[0].range, // Default to first declaration for file-level
+              keysUsed: keys,
+              keyLocations: locations,
+            });
+          }
+        } catch (e) {
+          console.error(`Error parsing ${fileUri.fsPath}`, e);
+        }
+      })
+    );
   }
 
   return usageLocations;
@@ -120,7 +201,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
       continue;
     }
     const funcName = expr.getText();
-    if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
+    if (funcName !== 'useIntlayer' && funcName !== 'getIntlayer') {
       continue;
     }
 
@@ -131,7 +212,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
     }
 
     const firstArg = args[0];
-    let argText = "";
+    let argText = '';
     if (
       Node.isStringLiteral(firstArg) ||
       Node.isNoSubstitutionTemplateLiteral(firstArg)
@@ -160,15 +241,15 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
     const addLocation = (key: string, node: Node) => {
       // --- Clean Key ---
       // remove .value or .raw at the end if present
-      const cleanKey = key.replace(/\.(value|raw)$/, "");
+      const cleanKey = key.replace(/\.(value|raw)$/, '');
 
       // Add the full key
       keysUsed.add(cleanKey);
 
       // Add all parent prefixes (e.g., "a.b.c" -> "a", "a.b")
-      const parts = cleanKey.split(".");
+      const parts = cleanKey.split('.');
       for (let i = 1; i < parts.length; i++) {
-        keysUsed.add(parts.slice(0, i).join("."));
+        keysUsed.add(parts.slice(0, i).join('.'));
       }
 
       const nStart = sourceFile.getLineAndColumnAtPos(node.getStart());
@@ -184,14 +265,14 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
       keyLocations.set(cleanKey, list);
     };
 
-    const traceUsages = (varName: string, prefix = "") => {
+    const traceUsages = (varName: string, prefix = '') => {
       const scope = sourceFile;
       const refs = scope
         .getDescendantsOfKind(SyntaxKind.Identifier)
         .filter((id) => {
           const idText = id.getText();
           // Support both direct variable access and Svelte's '$' store prefix
-          if (idText !== varName && idText !== "$" + varName) {
+          if (idText !== varName && idText !== `$${varName}`) {
             return false;
           }
 
@@ -199,7 +280,8 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
           const parent = id.getParent();
           if (
             Node.isVariableDeclaration(parent) ||
-            Node.isBindingElement(parent)
+            Node.isBindingElement(parent) ||
+            Node.isPropertyDeclaration(parent)
           ) {
             return parent.getNameNode() === id ? false : true;
           }
@@ -209,7 +291,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
 
       for (const ref of refs) {
         let current: Node = ref;
-        let path: string[] = [];
+        const path: string[] = [];
 
         while (true) {
           const parent = current.getParent();
@@ -233,56 +315,80 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
               current = parent;
             } else {
               // Non-literal access, mark as ALL used for this branch
-              keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
+              keysUsed.add(prefix ? `${prefix}.__ALL__` : '__ALL__');
               break;
             }
+          } else if (
+            Node.isCallExpression(parent) &&
+            parent.getExpression() === current
+          ) {
+            // Function call: content()
+            // Treat the call result as the object.
+            current = parent;
           } else {
             break;
           }
         }
 
         if (path.length > 0) {
-          const fullKey = prefix ? `${prefix}.${path.join(".")}` : path.join(".");
+          const fullKey = prefix
+            ? `${prefix}.${path.join('.')}`
+            : path.join('.');
           addLocation(fullKey, current);
         } else {
           // Used without property access (e.g. passed to function)
-          keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
+          // Exception: If current is a CallExpression, it means we called it but didn't access properties.
+          // e.g. content()
+          // This should be treated as __ALL__ unless we assume content() returns the object.
+          // If content() returns the object, and we stopped here, it means we didn't access properties of the returned object.
+          // So it IS __ALL__.
+          keysUsed.add(prefix ? `${prefix}.__ALL__` : '__ALL__');
         }
       }
     };
 
     // 3. Trace Variable
     const varDecl = call.getParentIfKind(SyntaxKind.VariableDeclaration);
+    const propDecl = call.getParentIfKind(SyntaxKind.PropertyDeclaration);
 
-    if (!varDecl) {
-      keysUsed.add("__EXISTENCE_CHECK__");
+    if (!varDecl && !propDecl) {
+      keysUsed.add('__EXISTENCE_CHECK__');
       results.push({ range: declarationRange, keysUsed, keyLocations });
       continue;
     }
 
-    const nameNode = varDecl.getNameNode();
+    if (varDecl) {
+      const nameNode = varDecl.getNameNode();
 
-    // Pattern A: Destructuring -> const { textArea } = useIntlayer('app')
-    if (Node.isObjectBindingPattern(nameNode)) {
-      for (const element of nameNode.getElements()) {
-        const propName = element.getPropertyNameNode();
-        const key = propName
-          ? propName.getText()
-          : element.getNameNode().getText();
+      // Pattern A: Destructuring -> const { textArea } = useIntlayer('app')
+      if (Node.isObjectBindingPattern(nameNode)) {
+        for (const element of nameNode.getElements()) {
+          const propName = element.getPropertyNameNode();
+          const key = propName
+            ? propName.getText()
+            : element.getNameNode().getText();
 
-        const varName = element.getNameNode().getText();
+          const varName = element.getNameNode().getText();
 
-        // Mark the key as used (destructuring site)
-        addLocation(key, propName || element.getNameNode());
+          // Mark the key as used (destructuring site)
+          addLocation(key, propName || element.getNameNode());
 
-        // Trace usages of the destructured variable
-        traceUsages(varName, key);
+          // Trace usages of the destructured variable
+          traceUsages(varName, key);
+        }
       }
-    }
-    // Pattern B: Variable -> const content = useIntlayer('app')
-    else if (Node.isIdentifier(nameNode)) {
-      const varName = nameNode.getText();
-      traceUsages(varName);
+      // Pattern B: Variable -> const content = useIntlayer('app')
+      else if (Node.isIdentifier(nameNode)) {
+        const varName = nameNode.getText();
+        traceUsages(varName);
+      }
+    } else if (propDecl) {
+      // Pattern C: Class Property -> content = useIntlayer('app')
+      const nameNode = propDecl.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const varName = nameNode.getText();
+        traceUsages(varName);
+      }
     }
 
     results.push({ range: declarationRange, keysUsed, keyLocations });

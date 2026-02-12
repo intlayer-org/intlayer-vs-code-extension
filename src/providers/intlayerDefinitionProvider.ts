@@ -1,18 +1,18 @@
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { getConfiguration } from "@intlayer/config";
-import type { Dictionary } from "@intlayer/types";
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { getConfiguration } from '@intlayer/config';
 import {
   type DefinitionLink,
   type DefinitionProvider,
   Position,
   Range,
   Uri,
-} from "vscode";
-import { findProjectRoot } from "../utils/findProjectRoot";
-import { getConfigurationOptions } from "../utils/getConfiguration";
-import { findFieldLocation } from "../utils/findFieldLocation";
-import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
+} from 'vscode';
+import { findFieldLocation } from '../utils/findFieldLocation';
+import { findProjectRoot } from '../utils/findProjectRoot';
+import { getConfigurationOptions } from '../utils/getConfiguration';
+import { getCachedDictionary } from '../utils/intlayerCache';
+import { resolveIntlayerPath } from '../utils/intlayerPathResolver';
 
 export const intlayerDefinitionProvider: DefinitionProvider = {
   provideDefinition: async (document, position) => {
@@ -31,7 +31,7 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
     // ---------------------------------------------------------
     const cleanPath = [...fieldPath];
     const lastKey = cleanPath[cleanPath.length - 1];
-    if (lastKey === "value" || lastKey === "raw") {
+    if (lastKey === 'value' || lastKey === 'raw') {
       cleanPath.pop();
     }
     // ---------------------------------------------------------
@@ -48,17 +48,12 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
     // 3. Load Unmerged Dictionary
     const dictionaryJsonPath = join(
       config.system.unmergedDictionariesDir,
-      `${dictionaryKey}.json`,
+      `${dictionaryKey}.json`
     );
 
-    if (!existsSync(dictionaryJsonPath)) {
-      return null;
-    }
+    const dictionaries = await getCachedDictionary(dictionaryJsonPath);
 
-    let dictionaries: Dictionary[];
-    try {
-      dictionaries = JSON.parse(readFileSync(dictionaryJsonPath, "utf8"));
-    } catch {
+    if (!dictionaries) {
       return null;
     }
 
@@ -66,7 +61,7 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
     const targets: DefinitionLink[] = [];
 
     for (const dict of dictionaries) {
-      if (dict.location !== "local" || !dict.filePath) {
+      if (dict.location !== 'local' || !dict.filePath) {
         continue;
       }
 
@@ -78,14 +73,14 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
       const sourceUri = Uri.file(absoluteSourcePath);
 
       // usage: content.title -> source: { key: '...', content: { title: ... } }
-      const astPath = ["content", ...cleanPath];
+      const astPath = ['content', ...cleanPath];
 
       const location = await findFieldLocation(absoluteSourcePath, astPath);
 
       const targetRange = location
         ? new Range(
             new Position(location.line, location.character),
-            new Position(location.line, location.character),
+            new Position(location.line, location.character)
           )
         : new Range(new Position(0, 0), new Position(0, 0));
 
