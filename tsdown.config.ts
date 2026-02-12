@@ -1,5 +1,5 @@
-import { mkdir, cp, readdir, stat } from "node:fs/promises";
-import { resolve, dirname, join, basename } from "node:path";
+import { mkdir, cp } from "node:fs/promises";
+import { resolve, dirname, basename } from "node:path";
 import { createRequire } from "node:module";
 import { defineConfig } from "tsdown";
 
@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 async function copyPackageAssets(
   pkgName: string,
   subDirName: string,
-  destRoot: string
+  destRoot: string,
 ) {
   try {
     // Locate the package's root
@@ -30,7 +30,7 @@ async function copyPackageAssets(
   } catch (error) {
     console.warn(
       `! Could not copy assets for ${pkgName} (it might not have any):`,
-      error.message
+      error.message,
     );
   }
 }
@@ -126,7 +126,7 @@ export default defineConfig({
         // Copy your local HTML (not flattened, stays in dist root as per your request)
         await cp(
           resolve("src/explorer/searchInput.html"),
-          resolve("dist/searchInput.html")
+          resolve("dist/searchInput.html"),
         ).catch(() => {});
 
         // Copy dependencies into namespaced folders to avoid collisions
