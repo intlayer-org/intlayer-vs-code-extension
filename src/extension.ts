@@ -1,6 +1,7 @@
 import { commands, type ExtensionContext, languages, window } from 'vscode';
 import { buildCommand } from './commands/buildAllCommand';
 import { fillCommand } from './commands/fillAllCommand';
+import { initSkills } from './commands/initSkills';
 import { pullCommand } from './commands/pullCommand';
 import { pushCommand } from './commands/pushCommand';
 import { selectEnvironment } from './commands/selectEnvironment';
@@ -119,7 +120,8 @@ export const activate = (context: ExtensionContext) => {
     commands.registerCommand('extension.pullDictionaries', pullCommand),
     commands.registerCommand('extension.fillDictionaries', fillCommand),
     commands.registerCommand('extension.testDictionaries', testCommand),
-    commands.registerCommand('intlayer.transform', transformCommand)
+    commands.registerCommand('intlayer.transform', transformCommand),
+    commands.registerCommand('intlayer.initSkills', initSkills)
   );
 
   const treeDataProvider = new DictionaryTreeDataProvider();

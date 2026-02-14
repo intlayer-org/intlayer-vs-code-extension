@@ -1,6 +1,6 @@
-import { dirname, extname, join } from 'node:path';
-import { DefaultValues } from '@intlayer/config';
-import { type CallExpression, Node, Project, SyntaxKind } from 'ts-morph';
+import { dirname, extname, join } from "node:path";
+import { DefaultValues } from "@intlayer/config";
+import { type CallExpression, Node, Project, SyntaxKind } from "ts-morph";
 import {
   type DecorationOptions,
   type Disposable,
@@ -8,11 +8,11 @@ import {
   type TextEditor,
   window,
   workspace,
-} from 'vscode';
-import { extractScriptContent } from '../utils/extractScript';
-import { findProjectRoot } from '../utils/findProjectRoot';
-import { getCachedConfig, getCachedDictionary } from '../utils/intlayerCache';
-import { getValueFromPath } from '../utils/intlayerValueResolver';
+} from "vscode";
+import { extractScriptContent } from "../utils/extractScript";
+import { findProjectRoot } from "../utils/findProjectRoot";
+import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
+import { getValueFromPath } from "../utils/intlayerValueResolver";
 
 // Configuration
 const DEBOUNCE_DELAY = 500;
@@ -21,21 +21,11 @@ const TRUNCATE_LENGTH = 60;
 // Decoration Style: Appears at the end of the line (Translation Preview)
 const translationDecorationType = window.createTextEditorDecorationType({
   after: {
-    margin: '0 0 0 1ch',
-    color: 'rgba(128, 128, 128, 0.3)',
-    fontStyle: 'italic',
+    margin: "0 0 0 1ch",
+    color: "rgba(128, 128, 128, 0.3)",
+    fontStyle: "italic",
   },
   rangeBehavior: 1, // ClosedOpen
-});
-
-// Decoration Style for Multiple Declarations warning
-const duplicateDecorationType = window.createTextEditorDecorationType({
-  after: {
-    margin: '0 0 0 2ch',
-    color: 'rgba(255, 165, 0, 0.6)', // Orange-ish
-    fontStyle: 'italic',
-  },
-  rangeBehavior: 1,
 });
 
 // Reusable project for AST parsing
@@ -85,17 +75,17 @@ export const intlayerDecorationProvider = (): Disposable[] => {
 };
 
 const allowedExtensions = [
-  '.ts',
-  '.tsx',
-  '.js',
-  '.jsx',
-  '.mjs',
-  '.cjs',
-  '.json',
-  '.jsonc',
-  '.json5',
-  '.vue',
-  '.svelte',
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".json",
+  ".jsonc",
+  ".json5",
+  ".vue",
+  ".svelte",
 ];
 
 const updateDecorations = async (editor: TextEditor) => {
@@ -121,7 +111,7 @@ const updateDecorations = async (editor: TextEditor) => {
     DefaultValues.Internationalization.DEFAULT_LOCALE;
 
   const scriptContent = extractScriptContent(document.getText(), extension);
-  const fileName = `temp_decoration${extension}${extension === '.vue' || extension === '.svelte' ? '.tsx' : ''}`;
+  const fileName = `temp_decoration${extension}${extension === ".vue" || extension === ".svelte" ? ".tsx" : ""}`;
 
   // Ensure fresh file in the project
   const existingFile = project.getSourceFile(fileName);
@@ -137,7 +127,7 @@ const updateDecorations = async (editor: TextEditor) => {
 
   // Find all `useIntlayer` calls
   const callExpressions = sourceFile.getDescendantsOfKind(
-    SyntaxKind.CallExpression
+    SyntaxKind.CallExpression,
   );
 
   const variablesMap = new Map<
@@ -160,7 +150,7 @@ const updateDecorations = async (editor: TextEditor) => {
     if (!dictionaries) {
       const dictionaryJsonPath = join(
         config.system.unmergedDictionariesDir,
-        `${dictionaryKey}.json`
+        `${dictionaryKey}.json`,
       );
       dictionaries = (await getCachedDictionary(dictionaryJsonPath)) || [];
       localDictionaryCache.set(dictionaryKey, dictionaries);
@@ -175,11 +165,15 @@ const updateDecorations = async (editor: TextEditor) => {
       let localCount = 0;
       let remoteCount = 0;
 
-      dictionaries.forEach((d) => {
-        if (d.location === 'local' || d.location === 'local&remote') {
+      dictionaries.forEach((dictionary) => {
+        if (
+          dictionary.location === "local" ||
+          dictionary.location === "local&remote" ||
+          dictionary.location === undefined
+        ) {
           localCount++;
         }
-        if (d.location === 'remote') {
+        if (dictionary.location === "remote") {
           remoteCount++;
         }
       });
@@ -222,7 +216,7 @@ const updateDecorations = async (editor: TextEditor) => {
       });
 
       const identifiers = sourceFile.getDescendantsOfKind(
-        SyntaxKind.Identifier
+        SyntaxKind.Identifier,
       );
 
       const references = identifiers.filter((id) => {
@@ -248,7 +242,7 @@ const updateDecorations = async (editor: TextEditor) => {
         const rawValue = getValueFromPath(
           dictionaryContent,
           contentPath,
-          defaultLocale
+          defaultLocale,
         );
 
         if (rawValue) {
@@ -275,7 +269,7 @@ const updateDecorations = async (editor: TextEditor) => {
             renderOptions: {
               after: {
                 contentText: `    ${displayText}`,
-                color: 'rgba(128, 128, 128, 0.3)',
+                color: "rgba(128, 128, 128, 0.3)",
               },
             },
           });
@@ -286,7 +280,7 @@ const updateDecorations = async (editor: TextEditor) => {
   }
 
   // Angular Template Logic
-  if (extension === '.ts' && document.getText().includes('@Component')) {
+  if (extension === ".ts" && document.getText().includes("@Component")) {
     const text = document.getText();
     const templateRegex = /template\s*:\s*(["'`])([\s\S]*?)\1/g;
     let match: RegExpExecArray | null = null;
@@ -309,7 +303,7 @@ const updateDecorations = async (editor: TextEditor) => {
         // Matches: content as c, content() as c, content().path as p
         const aliasPattern = new RegExp(
           `\\b${variableName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\s+as\\s+([a-zA-Z0-9_]+)`,
-          'g'
+          "g",
         );
 
         let aliasMatch: RegExpExecArray | null = null;
@@ -320,7 +314,7 @@ const updateDecorations = async (editor: TextEditor) => {
           }
           const pathStr = aliasMatch[1];
           const alias = aliasMatch[2];
-          const extraPath = pathStr ? pathStr.split('.').filter(Boolean) : [];
+          const extraPath = pathStr ? pathStr.split(".").filter(Boolean) : [];
           targets.push({ name: alias, pathPrefix: extraPath });
         }
 
@@ -328,7 +322,7 @@ const updateDecorations = async (editor: TextEditor) => {
         for (const { name: targetName, pathPrefix } of targets) {
           const usageRegex = new RegExp(
             `\\b${targetName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\b`,
-            'g'
+            "g",
           );
 
           let usageMatch: RegExpExecArray | null = null;
@@ -339,13 +333,13 @@ const updateDecorations = async (editor: TextEditor) => {
             }
             const fullMatch = usageMatch[0];
             const pathStr = usageMatch[1];
-            const keys = pathStr ? pathStr.split('.').filter(Boolean) : [];
+            const keys = pathStr ? pathStr.split(".").filter(Boolean) : [];
             const contentPath = [...initialPath, ...pathPrefix, ...keys];
 
             const rawValue = getValueFromPath(
               dictionaryContent,
               contentPath,
-              defaultLocale
+              defaultLocale,
             );
             if (rawValue) {
               const displayText = parseContentValue(rawValue);
@@ -368,7 +362,7 @@ const updateDecorations = async (editor: TextEditor) => {
                   renderOptions: {
                     after: {
                       contentText: `    ${displayText}`,
-                      color: 'rgba(128, 128, 128, 0.3)',
+                      color: "rgba(128, 128, 128, 0.3)",
                     },
                   },
                 });
@@ -382,7 +376,7 @@ const updateDecorations = async (editor: TextEditor) => {
   }
 
   editor.setDecorations(translationDecorationType, translationDecorations);
-  editor.setDecorations(duplicateDecorationType, duplicateDecorations);
+  editor.setDecorations(translationDecorationType, duplicateDecorations);
 };
 
 // Content Parsing Helpers
@@ -398,15 +392,15 @@ const parseContentValue = (value: any): string | null => {
     return null;
   }
 
-  let text = '';
+  let text = "";
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     text = value;
-  } else if (typeof value === 'number') {
+  } else if (typeof value === "number") {
     text = String(value);
-  } else if (typeof value === 'object') {
+  } else if (typeof value === "object") {
     if (Array.isArray(value)) {
-      text = value.map(parseContentValue).join('');
+      text = value.map(parseContentValue).join("");
     } else if (isValidElementLike(value)) {
       // It's a React Node structure
       text = extractTextFromReactNode(value);
@@ -422,7 +416,7 @@ const parseContentValue = (value: any): string | null => {
   }
 
   // Clean up whitespace
-  text = text.replace(/\s+/g, ' ').trim();
+  text = text.replace(/\s+/g, " ").trim();
 
   // Truncate
 
@@ -439,10 +433,10 @@ const parseContentValue = (value: any): string | null => {
 const isValidElementLike = (obj: any): boolean => {
   return (
     obj &&
-    typeof obj === 'object' &&
-    'props' in obj &&
+    typeof obj === "object" &&
+    "props" in obj &&
     // Check for common React internal keys to be sure, or just duck type 'props'
-    (!('key' in obj) || obj.key === null || typeof obj.key === 'string')
+    (!("key" in obj) || obj.key === null || typeof obj.key === "string")
   );
 };
 
@@ -451,22 +445,22 @@ const isValidElementLike = (obj: any): boolean => {
  */
 const extractTextFromReactNode = (node: any): string => {
   if (!node) {
-    return '';
+    return "";
   }
 
-  if (typeof node === 'string' || typeof node === 'number') {
+  if (typeof node === "string" || typeof node === "number") {
     return String(node);
   }
 
   if (Array.isArray(node)) {
-    return node.map(extractTextFromReactNode).join('');
+    return node.map(extractTextFromReactNode).join("");
   }
 
-  if (typeof node === 'object' && node.props && node.props.children) {
+  if (typeof node === "object" && node.props && node.props.children) {
     return extractTextFromReactNode(node.props.children);
   }
 
-  return '';
+  return "";
 };
 
 const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
@@ -478,7 +472,7 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
 
   const funcName = expr.getText();
 
-  if (funcName !== 'useIntlayer' && funcName !== 'getIntlayer') {
+  if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
     return { dictionaryKey: null, variables: [] };
   }
 
@@ -572,7 +566,7 @@ const isPropertyAccessName = (node: Node) => {
     return parent.getNameNode() === node;
   }
 
-  if (parent && parent.getKindName() === 'JsxMemberExpression') {
+  if (parent && parent.getKindName() === "JsxMemberExpression") {
     return (parent as any).getNameNode() === node;
   }
   return false;

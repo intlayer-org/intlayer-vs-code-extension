@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.0.4",
+  "version": "8.1.1",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -102,6 +102,11 @@
           "command": "intlayer.refreshDictionaries",
           "when": "view == intlayer.searchBar",
           "group": "navigation@0"
+        },
+        {
+          "command": "intlayer.initSkills",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@99"
         }
       ],
       "view/item/context": [
@@ -232,6 +237,11 @@
         "command": "intlayer.selectEnvironment",
         "title": "Intlayer: Select Environment",
         "icon": "$(gear)"
+      },
+      {
+        "command": "intlayer.initSkills",
+        "title": "Intlayer: Setup AI Skills",
+        "icon": "$(gear)"
       }
     ]
   },
@@ -254,6 +264,7 @@
     "onCommand:extension.testDictionaries",
     "onCommand:intlayer.selectEnvironment",
     "onCommand:intlayer.transform",
+    "onCommand:intlayer.initSkills",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
@@ -288,22 +299,22 @@
     "tsdown": "0.20.1",
     "@vscode/test-electron": "^2.5.2",
     "typescript": "^5.9.3",
-    "@intlayer/api": "^8.0.4",
-    "@intlayer/core": "^8.0.4",
+    "@intlayer/api": "^8.1.1",
+    "@intlayer/core": "^8.1.1",
     "@biomejs/biome": "2.3.13",
     "bun": "1.3.8",
-    "@intlayer/chokidar": "^8.0.4",
-    "@intlayer/cli": "^8.0.4",
-    "@intlayer/config": "^8.0.4",
-    "@intlayer/svelte-transformer": "^8.0.4",
-    "@intlayer/types": "^8.0.4",
-    "@intlayer/vue-transformer": "^8.0.4",
+    "@intlayer/chokidar": "^8.1.1",
+    "@intlayer/cli": "^8.1.1",
+    "@intlayer/config": "^8.1.1",
+    "@intlayer/svelte-transformer": "^8.1.1",
+    "@intlayer/types": "^8.1.1",
+    "@intlayer/vue-transformer": "^8.1.1",
     "dotenv": "^17.2.3",
     "fuse.js": "^7.1.0",
     "ts-morph": "^27.0.2"
   },
   "dependencies": {
-    "intlayer": "^8.0.4",
+    "intlayer": "^8.1.1",
     "esbuild": "0.27.2"
   }
 }
