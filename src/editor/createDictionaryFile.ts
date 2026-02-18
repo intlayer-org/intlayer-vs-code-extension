@@ -3,7 +3,7 @@ import {
   type Extension,
   type Format,
   getFormatFromExtension,
-} from "@intlayer/chokidar";
+} from "@intlayer/chokidar/utils";
 import { window } from "vscode";
 import { generateDictionaryContent } from "../createDictionaryContent";
 
@@ -26,7 +26,7 @@ export const createDictionaryFile = async () => {
           { label: "JSONC (.jsonc)", value: "jsonc" },
           { label: "JSON5 (.json5)", value: "json5" },
         ],
-        { placeHolder: "Select content file format" }
+        { placeHolder: "Select content file format" },
       )
       .then((choice) => choice?.value as Format);
   }

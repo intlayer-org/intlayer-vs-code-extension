@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { type GetConfigurationOptions } from "@intlayer/config";
-import { transformFiles, type PackageName } from "@intlayer/chokidar";
+import { type PackageName, transformFiles } from "@intlayer/chokidar/cli";
+import type { GetConfigurationOptions } from "@intlayer/config";
 import { type Uri, window, workspace } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
@@ -34,9 +34,8 @@ export const transformCommand = async (resource?: Uri) => {
     }
   }
 
-  const configOptions: GetConfigurationOptions = await getConfigurationOptions(
-    projectDir
-  );
+  const configOptions: GetConfigurationOptions =
+    await getConfigurationOptions(projectDir);
 
   // Detect package
   const dependencies = getDependencies(projectDir);
@@ -87,7 +86,7 @@ export const transformCommand = async (resource?: Uri) => {
 
     if (items.length === 0) {
       window.showInformationMessage(
-        "No transformable files found in the project."
+        "No transformable files found in the project.",
       );
       return;
     }
@@ -112,7 +111,7 @@ export const transformCommand = async (resource?: Uri) => {
 
   // Save dirty files before transformation to ensure disk content matches editor content
   const dirtyDocs = workspace.textDocuments.filter(
-    (doc) => filesToTransform.includes(doc.uri.fsPath) && doc.isDirty
+    (doc) => filesToTransform.includes(doc.uri.fsPath) && doc.isDirty,
   );
   if (dirtyDocs.length > 0) {
     await Promise.all(dirtyDocs.map((doc) => doc.save()));
@@ -123,7 +122,7 @@ export const transformCommand = async (resource?: Uri) => {
       configOptions,
     });
     window.showInformationMessage(
-      `Successfully transformed ${filesToTransform.length} files.`
+      `Successfully transformed ${filesToTransform.length} files.`,
     );
   } catch (error) {
     console.error(error);

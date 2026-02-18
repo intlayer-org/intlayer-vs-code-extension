@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, extname, join, relative } from "node:path";
-import { listProjects } from "@intlayer/chokidar";
+import { listProjects } from "@intlayer/chokidar/cli";
 import { getConfiguration } from "@intlayer/config";
 import {
   type Event,

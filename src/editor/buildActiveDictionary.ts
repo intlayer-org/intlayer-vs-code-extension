@@ -3,7 +3,7 @@ import {
   buildDictionary,
   createTypes,
   loadLocalDictionaries,
-} from "@intlayer/chokidar";
+} from "@intlayer/chokidar/build";
 import { getConfiguration } from "@intlayer/config";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
@@ -15,7 +15,7 @@ export const buildActiveDictionary = async () => {
 
   if (!editor) {
     window.showErrorMessage(
-      `${prefix}No active editor. Open a content declaration file.`
+      `${prefix}No active editor. Open a content declaration file.`,
     );
     return;
   }
@@ -35,22 +35,22 @@ export const buildActiveDictionary = async () => {
     const localeDictionaries = await loadLocalDictionaries(filePath, config);
     const dictionariesOutput = await buildDictionary(
       localeDictionaries,
-      config
+      config,
     );
 
     const updatedDictionaries = Object.values(
-      dictionariesOutput?.mergedDictionaries ?? {}
+      dictionariesOutput?.mergedDictionaries ?? {},
     ).map((dictionary) => dictionary.dictionary);
 
     await createTypes(updatedDictionaries, config);
 
     const fileName = basename(filePath);
     window.showInformationMessage(
-      `${prefix}Build completed successfully for ${fileName}`
+      `${prefix}Build completed successfully for ${fileName}`,
     );
   } catch (error) {
     window.showErrorMessage(
-      `${prefix} single-dictionary build failed: ${(error as Error).message}`
+      `${prefix} single-dictionary build failed: ${(error as Error).message}`,
     );
   }
 };

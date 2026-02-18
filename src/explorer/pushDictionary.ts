@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { getBuiltDictionariesPath } from "@intlayer/chokidar";
+import { getBuiltDictionariesPath } from "@intlayer/chokidar/build";
 import { push } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config";
 import type { Dictionary } from "@intlayer/types";
@@ -18,7 +18,7 @@ export const pushDictionary = async (element?: unknown) => {
   // Push can only be made for merged dictionaries (dictionary nodes without filePath)
   if (!node || node.type !== "dictionary" || !node.projectDir || !node.key) {
     window.showWarningMessage(
-      `${prefix}Push is only available for merged dictionaries.`
+      `${prefix}Push is only available for merged dictionaries.`,
     );
     return;
   }
@@ -35,7 +35,7 @@ export const pushDictionary = async (element?: unknown) => {
     const builtDictionariesPath = await getBuiltDictionariesPath(configuration);
 
     const dictionaryPath = builtDictionariesPath.find((p) =>
-      p.endsWith(`${node.key}.json`)
+      p.endsWith(`${node.key}.json`),
     );
 
     if (!dictionaryPath) {
@@ -56,7 +56,7 @@ export const pushDictionary = async (element?: unknown) => {
     window.showInformationMessage(`${prefix}Pushed ${displayName}`);
   } catch (error) {
     window.showErrorMessage(
-      `${prefix}Push failed: ${(error as Error).message}`
+      `${prefix}Push failed: ${(error as Error).message}`,
     );
   }
 };

@@ -1,4 +1,4 @@
-import { loadContentDeclarations } from "@intlayer/chokidar";
+import { loadContentDeclarations } from "@intlayer/chokidar/build";
 import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
 import { getConfiguration } from "@intlayer/config";
 import type { Dictionary } from "@intlayer/types";
@@ -29,12 +29,12 @@ export const pushCommand = async () => {
 
     const localDictionaries: Dictionary[] = await loadContentDeclarations(
       selectedDictionaries,
-      configuration
+      configuration,
     );
 
     window.showInformationMessage(JSON.stringify(localDictionaries));
     const dictionariesKeys = localDictionaries.map(
-      (dictionary) => dictionary.key
+      (dictionary) => dictionary.key,
     );
 
     window.showInformationMessage(`${prefix}Pushing dictionaries...`);
@@ -47,7 +47,7 @@ export const pushCommand = async () => {
     window.showInformationMessage(`${prefix} push completed successfully!`);
   } catch (error) {
     window.showErrorMessage(
-      `${prefix} push failed: ${(error as Error).message}`
+      `${prefix} push failed: ${(error as Error).message}`,
     );
   }
 };

@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import { prepareIntlayer } from "@intlayer/chokidar";
+import { prepareIntlayer } from "@intlayer/chokidar/build";
 import { getConfiguration } from "@intlayer/config";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
@@ -23,11 +23,11 @@ export const buildCommand = async () => {
 
     const projectName = basename(projectDir);
     window.showInformationMessage(
-      `${prefix}Build completed successfully in ${projectName}`
+      `${prefix}Build completed successfully in ${projectName}`,
     );
   } catch (error) {
     window.showErrorMessage(
-      `${prefix}Build failed: ${(error as Error).message}`
+      `${prefix}Build failed: ${(error as Error).message}`,
     );
   }
 };
