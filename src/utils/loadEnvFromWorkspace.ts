@@ -8,7 +8,7 @@ let hasLogged = false;
 export const loadEnvFromWorkspace = async (
   baseDir: string,
   env?: string,
-  logEnvFileName: boolean = false
+  logEnvFileName: boolean = false,
 ): Promise<Record<string, string> | undefined> => {
   const folders = workspace.workspaceFolders;
   if (!folders || folders.length === 0) {
@@ -28,9 +28,9 @@ export const loadEnvFromWorkspace = async (
       const content = new TextDecoder("utf-8").decode(bytes);
       const parsed = parse(content);
 
-      for (const [k, v] of Object.entries(parsed)) {
-        if (process.env[k] === undefined) {
-          process.env[k] = v;
+      for (const [key, value] of Object.entries(parsed)) {
+        if (process.env[key] === undefined) {
+          process.env[key] = value;
         }
       }
 
@@ -39,7 +39,7 @@ export const loadEnvFromWorkspace = async (
 
         if (!hasLogged) {
           window.showInformationMessage(
-            `${prefix}Loaded env from ${candidate} in ${projectName}`
+            `${prefix}Loaded env from ${candidate} in ${projectName}`,
           );
 
           hasLogged = true;

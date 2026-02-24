@@ -1,6 +1,6 @@
 import { basename } from "node:path";
 import { prepareIntlayer } from "@intlayer/chokidar/build";
-import { getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { getConfiguration } from '@intlayer/config';
+import { getConfiguration } from '@intlayer/config/node';
 import {
   type DefinitionLink,
   type DefinitionProvider,

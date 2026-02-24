@@ -1,9 +1,9 @@
-import { extname, join } from 'node:path';
-import { getConfiguration } from '@intlayer/config';
-import { Node, Project, type SourceFile, SyntaxKind } from 'ts-morph';
-import { Range, RelativePattern, type Uri, workspace } from 'vscode';
-import { extractScriptContent } from './extractScript';
-import { getConfigurationOptions } from './getConfiguration';
+import { extname } from "node:path";
+import { getConfiguration } from "@intlayer/config/node";
+import { Node, Project, type SourceFile, SyntaxKind } from "ts-morph";
+import { Range, RelativePattern, type Uri, workspace } from "vscode";
+import { extractScriptContent } from "./extractScript";
+import { getConfigurationOptions } from "./getConfiguration";
 
 // Reuse project instance
 const project = new Project({
@@ -23,7 +23,7 @@ const extractScriptContentWithAngular = (text: string, extension: string) => {
   let processedText = extractScriptContent(text, extension);
 
   // Angular: Extract template content
-  if (extension === '.ts' && text.includes('@Component')) {
+  if (extension === ".ts" && text.includes("@Component")) {
     const templateRegex = /template\s*:\s*(["'`])([\s\S]*?)\1/g;
 
     processedText = processedText.replace(
@@ -33,11 +33,11 @@ const extractScriptContentWithAngular = (text: string, extension: string) => {
         // Sanitize and push expression
         const sanitize = (e: string) => {
           let s = e;
-          s = s.replace(/;/g, ',');
-          s = s.replace(/\s+as\s+/g, ',');
-          s = s.replace(/\b\w+\s+of\s+/g, '');
-          s = s.replace(/\btrack\s+/g, '');
-          s = s.replace(/\blet\s+/g, '');
+          s = s.replace(/;/g, ",");
+          s = s.replace(/\s+as\s+/g, ",");
+          s = s.replace(/\b\w+\s+of\s+/g, "");
+          s = s.replace(/\btrack\s+/g, "");
+          s = s.replace(/\blet\s+/g, "");
           return s.trim();
         };
 
@@ -74,10 +74,10 @@ const extractScriptContentWithAngular = (text: string, extension: string) => {
         // Combine all expressions into an array
         // We join them with commas.
         // We wrap in [ ... ] to form a valid array literal
-        const combined = `[${expressions.join(', ')}]`;
+        const combined = `[${expressions.join(", ")}]`;
 
         return `template: ${combined}`;
-      }
+      },
     );
   }
 
@@ -86,7 +86,7 @@ const extractScriptContentWithAngular = (text: string, extension: string) => {
 
 export const findUsagesOfDictionary = async (
   projectDir: string,
-  dictionaryKey: string
+  dictionaryKey: string,
 ): Promise<UsageLocation[]> => {
   const configOptions = await getConfigurationOptions(projectDir);
   const config = getConfiguration(configOptions);
@@ -94,12 +94,12 @@ export const findUsagesOfDictionary = async (
   // Search across the project (excluding node_modules)
   const searchPattern = new RelativePattern(
     projectDir,
-    '**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}'
+    "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}",
   );
 
   const relevantFiles = await workspace.findFiles(
     searchPattern,
-    '**/node_modules/**'
+    "**/node_modules/**",
   );
 
   const usageLocations: UsageLocation[] = [];
@@ -116,7 +116,7 @@ export const findUsagesOfDictionary = async (
       chunk.map(async (fileUri) => {
         try {
           const content = await workspace.fs.readFile(fileUri);
-          const text = new TextDecoder('utf-8').decode(content);
+          const text = new TextDecoder("utf-8").decode(content);
 
           // Fast pre-check
           if (!text.includes(dictionaryKey)) {
@@ -126,11 +126,11 @@ export const findUsagesOfDictionary = async (
           const extension = extname(fileUri.fsPath).toLowerCase();
           const scriptContent = extractScriptContentWithAngular(
             text,
-            extension
+            extension,
           );
           const fileName =
             fileUri.fsPath +
-            (extension === '.vue' || extension === '.svelte' ? '.tsx' : '');
+            (extension === ".vue" || extension === ".svelte" ? ".tsx" : "");
 
           // Synchronous part - protect with try-catch and potential yield if needed
           // But for 10 files it should be fine.
@@ -156,7 +156,7 @@ export const findUsagesOfDictionary = async (
         } catch (e) {
           console.error(`Error parsing ${fileUri.fsPath}`, e);
         }
-      })
+      }),
     );
   }
 
@@ -164,7 +164,7 @@ export const findUsagesOfDictionary = async (
 };
 
 const mergeUsageData = (
-  usages: { keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[]
+  usages: { keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[],
 ) => {
   const keys = new Set<string>();
   const locations = new Map<string, Range[]>();
@@ -201,7 +201,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
       continue;
     }
     const funcName = expr.getText();
-    if (funcName !== 'useIntlayer' && funcName !== 'getIntlayer') {
+    if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
       continue;
     }
 
@@ -212,7 +212,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
     }
 
     const firstArg = args[0];
-    let argText = '';
+    let argText = "";
     if (
       Node.isStringLiteral(firstArg) ||
       Node.isNoSubstitutionTemplateLiteral(firstArg)
@@ -234,22 +234,22 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
       start.line - 1,
       start.column - 1,
       end.line - 1,
-      end.column - 1
+      end.column - 1,
     );
 
     // Helper to add location
     const addLocation = (key: string, node: Node) => {
       // --- Clean Key ---
       // remove .value or .raw at the end if present
-      const cleanKey = key.replace(/\.(value|raw)$/, '');
+      const cleanKey = key.replace(/\.(value|raw)$/, "");
 
       // Add the full key
       keysUsed.add(cleanKey);
 
       // Add all parent prefixes (e.g., "a.b.c" -> "a", "a.b")
-      const parts = cleanKey.split('.');
+      const parts = cleanKey.split(".");
       for (let i = 1; i < parts.length; i++) {
-        keysUsed.add(parts.slice(0, i).join('.'));
+        keysUsed.add(parts.slice(0, i).join("."));
       }
 
       const nStart = sourceFile.getLineAndColumnAtPos(node.getStart());
@@ -258,14 +258,14 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
         nStart.line - 1,
         nStart.column - 1,
         nEnd.line - 1,
-        nEnd.column - 1
+        nEnd.column - 1,
       );
       const list = keyLocations.get(cleanKey) || [];
       list.push(r);
       keyLocations.set(cleanKey, list);
     };
 
-    const traceUsages = (varName: string, prefix = '') => {
+    const traceUsages = (varName: string, prefix = "") => {
       const scope = sourceFile;
       const refs = scope
         .getDescendantsOfKind(SyntaxKind.Identifier)
@@ -315,7 +315,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
               current = parent;
             } else {
               // Non-literal access, mark as ALL used for this branch
-              keysUsed.add(prefix ? `${prefix}.__ALL__` : '__ALL__');
+              keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
               break;
             }
           } else if (
@@ -332,8 +332,8 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
 
         if (path.length > 0) {
           const fullKey = prefix
-            ? `${prefix}.${path.join('.')}`
-            : path.join('.');
+            ? `${prefix}.${path.join(".")}`
+            : path.join(".");
           addLocation(fullKey, current);
         } else {
           // Used without property access (e.g. passed to function)
@@ -342,7 +342,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
           // This should be treated as __ALL__ unless we assume content() returns the object.
           // If content() returns the object, and we stopped here, it means we didn't access properties of the returned object.
           // So it IS __ALL__.
-          keysUsed.add(prefix ? `${prefix}.__ALL__` : '__ALL__');
+          keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
         }
       }
     };
@@ -352,7 +352,7 @@ const analyzeFileForUsages = (sourceFile: SourceFile, targetKey: string) => {
     const propDecl = call.getParentIfKind(SyntaxKind.PropertyDeclaration);
 
     if (!varDecl && !propDecl) {
-      keysUsed.add('__EXISTENCE_CHECK__');
+      keysUsed.add("__EXISTENCE_CHECK__");
       results.push({ range: declarationRange, keysUsed, keyLocations });
       continue;
     }

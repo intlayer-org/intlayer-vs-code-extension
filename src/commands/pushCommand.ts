@@ -1,6 +1,6 @@
 import { loadContentDeclarations } from "@intlayer/chokidar/build";
-import { push } from "@intlayer/cli"; // Assume getDictionaries fetches available dictionaries
-import { getConfiguration } from "@intlayer/config";
+import { push } from "@intlayer/cli";
+import { getConfiguration } from "@intlayer/config/node";
 import type { Dictionary } from "@intlayer/types";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";

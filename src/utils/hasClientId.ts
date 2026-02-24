@@ -1,4 +1,4 @@
-import { getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
 import { getConfigurationOptions } from "./getConfiguration";
 
 /**

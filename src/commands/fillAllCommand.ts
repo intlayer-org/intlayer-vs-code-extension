@@ -1,7 +1,7 @@
 import { relative } from "node:path";
-import { listDictionaries } from "@intlayer/chokidar";
+import { listDictionaries } from "@intlayer/chokidar/cli";
 import { fill } from "@intlayer/cli";
-import { getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";

@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { getAlias, getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
+import { getAlias } from "@intlayer/config/utils";
 import { window } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getConfigurationOptionsSync } from "./utils/getConfiguration";

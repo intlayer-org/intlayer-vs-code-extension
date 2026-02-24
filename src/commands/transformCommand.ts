@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { type PackageName, transformFiles } from "@intlayer/chokidar/cli";
-import type { GetConfigurationOptions } from "@intlayer/config";
+import type { GetConfigurationOptions } from "@intlayer/config/node";
 import { type Uri, window, workspace } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";

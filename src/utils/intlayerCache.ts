@@ -1,5 +1,5 @@
 import { promises as fs, constants } from "node:fs";
-import { getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
 import type { IntlayerConfig, Dictionary } from "@intlayer/types";
 import { getConfigurationOptions } from "./getConfiguration";
 
@@ -21,7 +21,7 @@ const CACHE_TTL = 2000; // Only check for config updates every 2 seconds
  * Prevents re-parsing the config file on every mouse move.
  */
 export const getCachedConfig = async (
-  projectDir: string
+  projectDir: string,
 ): Promise<IntlayerConfig> => {
   const now = Date.now();
 
@@ -52,7 +52,7 @@ export const getCachedConfig = async (
  * Shared between Hover and Definition providers.
  */
 export const getCachedDictionary = async (
-  filePath: string
+  filePath: string,
 ): Promise<Dictionary[] | null> => {
   try {
     // Check if file exists (fast)

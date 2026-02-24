@@ -1,6 +1,6 @@
 import { getIntlayerAPIProxy } from "@intlayer/api";
 import { pull } from "@intlayer/cli";
-import { getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
 import type { Dictionary } from "@intlayer/types";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
@@ -47,7 +47,7 @@ export const pullCommand = async () => {
 
     // Place the preselected item(s) at the top of the list
     quickPickItems.sort((a, b) =>
-      a.picked === b.picked ? 0 : a.picked ? -1 : 1
+      a.picked === b.picked ? 0 : a.picked ? -1 : 1,
     );
 
     const selectedDictionaries = await window.showQuickPick(quickPickItems, {
@@ -70,7 +70,7 @@ export const pullCommand = async () => {
     window.showInformationMessage(`${prefix} pull completed successfully!`);
   } catch (error) {
     window.showErrorMessage(
-      `${prefix} pull failed: ${(error as Error).message}`
+      `${prefix} pull failed: ${(error as Error).message}`,
     );
   }
 };

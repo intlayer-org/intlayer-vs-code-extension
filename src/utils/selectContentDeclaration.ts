@@ -1,6 +1,6 @@
 import { join, relative } from "node:path";
-import { listDictionaries } from "@intlayer/chokidar";
-import { getConfiguration } from "@intlayer/config";
+import { listDictionaries } from "@intlayer/chokidar/cli";
+import { getConfiguration } from "@intlayer/config/node";
 import { type QuickPickItem, window } from "vscode";
 import { getConfigurationOptions } from "./getConfiguration";
 
@@ -33,7 +33,7 @@ export const selectLocalDictionaries = async (projectDir: string) => {
   });
 
   const selectedDictionariesPaths = selectedDictionaries?.map((dict) =>
-    join(projectDir, dict.label)
+    join(projectDir, dict.label),
   );
 
   return selectedDictionariesPaths;

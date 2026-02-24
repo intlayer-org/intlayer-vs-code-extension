@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { getBuiltDictionariesPath } from "@intlayer/chokidar/build";
 import { push } from "@intlayer/cli";
-import { getConfiguration } from "@intlayer/config";
+import { getConfiguration } from "@intlayer/config/node";
 import type { Dictionary } from "@intlayer/types";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";

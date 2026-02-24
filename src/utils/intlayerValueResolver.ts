@@ -8,7 +8,7 @@ export const resolveIntlayerNode = (node: any, locale: string): any => {
 
   let current = node;
 
-  // 1. Unwrap structural wrappers (markdown, html, insertion, content)
+  // Unwrap structural wrappers (markdown, html, insertion, content)
   const wrapperKeys = ["markdown", "html", "insertion", "content"];
   while (
     current &&
@@ -27,7 +27,7 @@ export const resolveIntlayerNode = (node: any, locale: string): any => {
     }
   }
 
-  // 2. Resolve Translation node
+  // Resolve Translation node
   if (
     current &&
     typeof current === "object" &&

@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import {
   type GetConfigurationOptions,
   searchConfigurationFile,
-} from "@intlayer/config";
+} from "@intlayer/config/node";
 import { getSelectedEnvironment } from "./envStore";
 import { loadEnvFromWorkspace } from "./loadEnvFromWorkspace";
 import { logFunctions, prefix } from "./logFunctions";

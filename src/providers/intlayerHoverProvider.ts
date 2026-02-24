@@ -4,7 +4,7 @@ import { findProjectRoot } from "../utils/findProjectRoot";
 import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 import { getValueFromPath } from "../utils/intlayerValueResolver";
-import { isValidElement } from "@intlayer/core";
+import { isValidElement } from "@intlayer/core/utils";
 
 export const intlayerHoverProvider: HoverProvider = {
   provideHover: async (document, position) => {
