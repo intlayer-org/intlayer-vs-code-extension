@@ -1,11 +1,11 @@
 import { execSync } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join } from "node:path";
-import { getContentDeclarationFileTemplate } from "@intlayer/chokidar/cli";
 import {
-  detectExportedComponentName,
   detectFormatCommand,
-} from "@intlayer/chokidar/build";
+  getContentDeclarationFileTemplate,
+} from "@intlayer/chokidar/cli";
+import { detectExportedComponentName } from "@intlayer/chokidar/build";
 import { getConfiguration } from "@intlayer/config/node";
 import {
   Position,

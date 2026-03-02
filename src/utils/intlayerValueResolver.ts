@@ -51,7 +51,8 @@ export const resolveIntlayerNode = (node: any, locale: string): any => {
 export const getValueFromPath = (
   content: any,
   path: string[],
-  locale: string
+  locale: string,
+  resolve = true,
 ): any => {
   let current = content;
 
@@ -68,5 +69,5 @@ export const getValueFromPath = (
     }
   }
 
-  return resolveIntlayerNode(current, locale);
+  return resolve ? resolveIntlayerNode(current, locale) : current;
 };

@@ -61,6 +61,7 @@ export const intlayerHoverProvider: HoverProvider = {
         dict.content,
         cleanPath,
         config.internationalization?.defaultLocale,
+        false,
       );
       if (targetNode) {
         if (
@@ -87,7 +88,9 @@ export const intlayerHoverProvider: HoverProvider = {
           }
           // Framework wrappers return Nodes, unless we accessed .value/.raw
           else {
-            displayType = isAccessor ? primitiveType : "IntlayerNode";
+            displayType = isAccessor
+              ? primitiveType
+              : `IntlayerNode<${primitiveType}>`;
           }
         } else if (typeof targetNode === "object") {
           // If the node itself is a React Node (e.g. flat content)
@@ -131,6 +134,7 @@ export const intlayerHoverProvider: HoverProvider = {
         dict.content,
         cleanPath,
         config.internationalization?.defaultLocale,
+        false,
       );
 
       if (targetNode) {

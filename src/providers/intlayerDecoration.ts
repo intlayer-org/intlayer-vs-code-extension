@@ -1,5 +1,5 @@
 import { dirname, extname, join } from "node:path";
-import { DefaultValues } from "@intlayer/config";
+import { DefaultValues } from "@intlayer/config/client";
 import { type CallExpression, Node, Project, SyntaxKind } from "ts-morph";
 import {
   type DecorationOptions,
@@ -138,6 +138,8 @@ const updateDecorations = async (editor: TextEditor) => {
   // Local cache for dictionaries in this pass
   const localDictionaryCache = new Map<string, any[]>();
 
+  const identifiers = sourceFile.getDescendantsOfKind(SyntaxKind.Identifier);
+
   for (const callExpr of callExpressions) {
     const { dictionaryKey, variables } = analyzeUseIntlayerCall(callExpr);
 
@@ -214,10 +216,6 @@ const updateDecorations = async (editor: TextEditor) => {
         defaultLocale,
         initialPath,
       });
-
-      const identifiers = sourceFile.getDescendantsOfKind(
-        SyntaxKind.Identifier,
-      );
 
       const references = identifiers.filter((id) => {
         const idText = id.getText();
@@ -375,8 +373,10 @@ const updateDecorations = async (editor: TextEditor) => {
     }
   }
 
-  editor.setDecorations(translationDecorationType, translationDecorations);
-  editor.setDecorations(translationDecorationType, duplicateDecorations);
+  editor.setDecorations(translationDecorationType, [
+    ...translationDecorations,
+    ...duplicateDecorations,
+  ]);
 };
 
 // Content Parsing Helpers
