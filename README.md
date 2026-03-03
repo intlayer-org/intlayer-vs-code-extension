@@ -1,4 +1,34 @@
-# Intlayer
+<p align="center">
+  <a href="https://intlayer.org" rel="">
+    <img src="https://raw.githubusercontent.com/aymericzip/intlayer/main/docs/assets/cover.png" width="60%" alt="Intlayer Logo" />
+  </a>
+</p>
+
+<h1 align="center">
+  <strong>Per-component i18n</strong>
+</h1>
+
+<h2 align="center">
+  <strong>AI-powered translation. Visual Editor. Multilingual CMS.</strong>
+</h2>
+
+<br />
+
+<p align="center">
+  <a href="https://intlayer.org/doc/concept/content" rel="">Docs</a> •
+  <a href="https://intlayer.org/doc/environment/nextjs" rel="">Next.js</a> •
+  <a href="https://intlayer.org/doc/environment/vite-and-react" rel="">React + Vite</a> •
+  <a href="https://intlayer.org/doc/concept/cms" rel="">CMS</a> •
+  <a href="https://discord.gg/7uxamYVeCk" rel="noopener noreferrer nofollow">Discord</a>
+</p>
+<p align="center" style="margin-top:15px;">
+  <a href="https://www.npmjs.com/package/intlayer" target="_blank" rel="noopener noreferrer nofollow"><img src="https://img.shields.io/npm/v/intlayer?style=for-the-badge&labelColor=FFFFFF&color=000000&logoColor=FFFFFF" alt="npm version" height="24"/></a>
+  <a href="https://github.com/aymericzip/intlayer/stargazers" target="_blank" rel="noopener noreferrer nofollow"><img src="https://img.shields.io/github/stars/aymericzip/intlayer?style=for-the-badge&labelColor=000000&color=FFFFFF&logo=github&logoColor=FFD700" alt="GitHub Stars" height="24"/></a>
+  <a href="https://www.npmjs.org/package/intlayer" target="_blank" rel="noopener noreferrer nofollow"><img src="https://img.shields.io/npm/dm/intlayer?style=for-the-badge&labelColor=000000&color=FFFFFF&logoColor=000000&cacheSeconds=86400" alt="monthly downloads" height="24"/></a>
+  <a href="https://github.com/aymericzip/intlayer/blob/main/LICENSE" target="_blank" rel="noopener noreferrer nofollow"><img src="https://img.shields.io/github/license/aymericzip/intlayer?style=for-the-badge&labelColor=000000&color=FFFFFF&logoColor=000000&cacheSeconds=86400" alt="license"/></a>
+  <a href="https://github.com/aymericzip/intlayer/commits/main" target="_blank" rel="noopener noreferrer nofollow"><img src="https://img.shields.io/github/last-commit/aymericzip/intlayer?style=for-the-badge&labelColor=000000&color=FFFFFF&logoColor=000000&cacheSeconds=86400" alt="last commit"/>
+  </a>
+</p>
 
 **Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React and Vue projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
