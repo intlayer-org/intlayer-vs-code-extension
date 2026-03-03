@@ -107,6 +107,11 @@
           "command": "intlayer.initSkills",
           "when": "view == intlayer.dictionaries",
           "group": "navigation@99"
+        },
+        {
+          "command": "intlayer.initMCP",
+          "when": "view == intlayer.dictionaries",
+          "group": "navigation@98"
         }
       ],
       "view/item/context": [
@@ -240,7 +245,12 @@
       },
       {
         "command": "intlayer.initSkills",
-        "title": "Intlayer: Setup AI Skills",
+        "title": "Intlayer: Setup AI Agent Skills",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "intlayer.initMCP",
+        "title": "Intlayer: Setup MCP",
         "icon": "$(gear)"
       }
     ]
@@ -265,6 +275,7 @@
     "onCommand:intlayer.selectEnvironment",
     "onCommand:intlayer.transform",
     "onCommand:intlayer.initSkills",
+    "onCommand:intlayer.initMCP",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
