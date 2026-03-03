@@ -95,13 +95,15 @@ export const generateDictionaryContent = async (
   const pickedFileExtension = configuration.content.fileExtensions.find(
     (extension) => extension.includes(contentFileExtension),
   );
-  const targetFileName =
+
+  const targetFileName = (
     toLowerCamelCase(fileBaseName) +
     (
       pickedFileExtension ??
       configuration.content.fileExtensions[0] ??
       ".content.ts"
-    ).replace(".ts", contentFileExtension);
+    ).replace(".ts", contentFileExtension)
+  ).replace(/\.{2,}/g, ".");
   const targetPath = join(currentDir, targetFileName);
 
   // Build the dictionary key

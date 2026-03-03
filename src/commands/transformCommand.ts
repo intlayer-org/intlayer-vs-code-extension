@@ -67,7 +67,7 @@ export const transformCommand = async (resource?: Uri) => {
     // Find files logic
     const globPattern = "**/*.{tsx,jsx,vue,svelte,ts,js}";
     const excludePattern =
-      "**/{*.content.{ts,tsx,js,jsx,mjs,cjs},*.config.{ts,tsx,js,jsx,mjs,cjs},*.test.{ts,tsx,js,jsx,mjs,cjs},*.stories.{ts,tsx,js,jsx,mjs,cjs},node_modules/**,dist/**,build/**}";
+      "{**/*.content.*,**/*.config.*,**/*.test.*,**/*.stories.*,**/node_modules/**,**/dist/**,**/build/**}";
 
     // Use vscode.workspace.findFiles
     const uris = await workspace.findFiles(globPattern, excludePattern);
