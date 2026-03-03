@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.1.10",
+  "version": "8.1.11",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -299,16 +299,16 @@
     "tsdown": "0.20.3",
     "@vscode/test-electron": "^2.5.2",
     "typescript": "^5.9.3",
-    "@intlayer/api": "^8.1.10",
-    "@intlayer/core": "^8.1.10",
+    "@intlayer/api": "^8.1.11",
+    "@intlayer/core": "^8.1.11",
     "@biomejs/biome": "2.4.4",
     "bun": "1.3.10",
-    "@intlayer/chokidar": "^8.1.10",
-    "@intlayer/cli": "^8.1.10",
-    "@intlayer/config": "^8.1.10",
-    "@intlayer/svelte-transformer": "^8.1.10",
-    "@intlayer/types": "^8.1.10",
-    "@intlayer/vue-transformer": "^8.1.10",
+    "@intlayer/chokidar": "^8.1.11",
+    "@intlayer/cli": "^8.1.11",
+    "@intlayer/config": "^8.1.11",
+    "@intlayer/svelte-transformer": "^8.1.11",
+    "@intlayer/types": "^8.1.11",
+    "@intlayer/vue-transformer": "^8.1.11",
     "dotenv": "^17.3.1",
     "fuse.js": "^7.1.0",
     "ts-morph": "^27.0.2"
