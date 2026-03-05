@@ -40,15 +40,25 @@ export default defineConfig({
     extension: "./src/extension.ts",
   },
   format: "cjs",
+  outExtensions: () => ({ js: ".js" }),
   target: "node20",
   clean: true,
   platform: "node",
   minify: true,
-  sourcemap: true,
+  sourcemap: false,
 
   // Bundle everything
   noExternal: [/(.*)/],
-  external: ["vscode", "esbuild", "fsevents"],
+  external: [
+    "vscode",
+    "esbuild",
+    "picocolors",
+    "fsevents",
+    "node:fs",
+    "node:path",
+    "node:module",
+    "node:child_process",
+  ],
 
   alias: {
     "@intlayer/config/built": resolve("src/config-built.ts"),

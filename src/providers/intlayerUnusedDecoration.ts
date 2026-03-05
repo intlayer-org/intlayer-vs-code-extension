@@ -1,4 +1,5 @@
 import { dirname, join, extname } from "node:path";
+import { parse as babelParse } from "@babel/parser";
 import {
   type TextEditor,
   window,
@@ -7,12 +8,6 @@ import {
   type DecorationOptions,
   Disposable,
 } from "vscode";
-import {
-  Project,
-  SyntaxKind,
-  Node,
-  type ObjectLiteralExpression,
-} from "ts-morph";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import {
   findUsagesOfDictionary,
@@ -23,12 +18,37 @@ import { extractScriptContent } from "../utils/extractScript";
 
 const DEBOUNCE_DELAY = 1000;
 
-// Reusable project for AST parsing
-const project = new Project({
-  useInMemoryFileSystem: true,
-  skipLoadingLibFiles: true,
-  compilerOptions: { allowJs: true, jsx: 1 },
-});
+const parseCode = (code: string): any =>
+  babelParse(code, {
+    sourceType: "module",
+    strictMode: false,
+    allowImportExportEverywhere: true,
+    allowReturnOutsideFunction: true,
+    plugins: ["typescript", "jsx", "estree"],
+    ranges: true,
+  });
+
+const findAllOfType = (root: any, type: string): any[] => {
+  const results: any[] = [];
+  const walk = (node: any) => {
+    if (!node || typeof node !== "object") return;
+
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+
+    if (!node.type) return;
+
+    if (node.type === type) results.push(node);
+    for (const key of Object.keys(node)) {
+      if (key === "parent" || key === "tokens" || key === "comments") continue;
+      walk(node[key]);
+    }
+  };
+  walk(root);
+  return results;
+};
 
 // --- Caching Strategy ---
 const usageCache = new Map<
@@ -89,37 +109,38 @@ export const intlayerUnusedDecorationProvider = (): Disposable[] => {
 };
 
 const getKeysFromObject = (
-  obj: ObjectLiteralExpression,
+  obj: any,
   prefix = "",
-): { key: string; node: Node }[] => {
-  const keys: { key: string; node: Node }[] = [];
-  for (const prop of obj.getProperties()) {
-    if (Node.isPropertyAssignment(prop)) {
-      const nameNode = prop.getNameNode();
-      const name = nameNode.getText().replace(/['"]/g, "");
-      const fullKey = prefix ? `${prefix}.${name}` : name;
+): { key: string; node: any }[] => {
+  const keys: { key: string; node: any }[] = [];
+  for (const prop of obj.properties) {
+    if (prop.type !== "Property") continue;
 
-      const initializer = prop.getInitializer();
+    const nameNode = prop.key;
+    const name =
+      nameNode.type === "Identifier"
+        ? nameNode.name
+        : nameNode.type === "Literal"
+          ? String(nameNode.value).replace(/['"]/g, "")
+          : "";
+    const fullKey = prefix ? `${prefix}.${name}` : name;
 
-      // If it's a translation (t() call), it's a leaf key.
+    const initializer = prop.value;
 
-      if (Node.isCallExpression(initializer)) {
-        const expr = initializer.getExpression();
+    if (initializer?.type === "CallExpression") {
+      const callee = initializer.callee;
 
-        if (expr.getText() === "t") {
-          keys.push({ key: fullKey, node: nameNode });
-          continue;
-        }
-      }
-
-      // If it's an object literal, it's a nested group of keys.
-
-      if (Node.isObjectLiteralExpression(initializer)) {
+      if (callee?.type === "Identifier" && callee.name === "t") {
         keys.push({ key: fullKey, node: nameNode });
-        keys.push(...getKeysFromObject(initializer, fullKey));
-      } else {
-        keys.push({ key: fullKey, node: nameNode });
+        continue;
       }
+    }
+
+    if (initializer?.type === "ObjectExpression") {
+      keys.push({ key: fullKey, node: nameNode });
+      keys.push(...getKeysFromObject(initializer, fullKey));
+    } else {
+      keys.push({ key: fullKey, node: nameNode });
     }
   }
   return keys;
@@ -150,12 +171,12 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
 
   const text = document.getText();
 
-  // Basic guard
   if (!text.includes("key:") || !text.includes("content:")) {
     return;
   }
 
   const projectDir = findProjectRoot(dirname(document.uri.fsPath));
+
   if (!projectDir) {
     return;
   }
@@ -163,13 +184,13 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
   const scriptContent = extractScriptContent(text, extension);
 
   const keyMatch = /key\s*:\s*(["'])(.*?)\1/.exec(text);
+
   if (!keyMatch) {
     return;
   }
   const dictionaryKey = keyMatch[2];
   const keyIndex = text.indexOf(keyMatch[0]);
 
-  // Check for Duplicate Definitions (Local or Remote)
   let isDuplicated = false;
   let duplicateDecoration: DecorationOptions | null = null;
 
@@ -191,13 +212,10 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
           remoteDuplicates++;
         }
 
-        // Count "local" and "local&remote" as local duplicates
-
         if (
           (dict.location === "local" || dict.location === "local&remote") &&
           dict.filePath
         ) {
-          // Check if the file path is different from the current one
           const dictAbsPath = join(projectDir, dict.filePath);
 
           if (dictAbsPath !== currentAbsPath) {
@@ -236,30 +254,31 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     console.error("Error checking for duplicates:", error);
   }
 
-  // --- Cache Lookup for Usages (Code usage) ---
   const cacheKey = `${projectDir}:${dictionaryKey}`;
   const now = Date.now();
   let usages: UsageLocation[] | undefined;
 
   const cached = usageCache.get(cacheKey);
+
   if (cached && now - cached.timestamp < CACHE_TTL) {
     usages = cached.data;
   } else {
     try {
       usages = await findUsagesOfDictionary(projectDir, dictionaryKey);
       usageCache.set(cacheKey, { timestamp: now, data: usages });
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       return;
     }
   }
 
   const isDictionaryUsed = usages && usages.length > 0;
   const usedKeys = new Set<string>();
+
   if (isDictionaryUsed && usages) {
-    for (const u of usages) {
-      u.keysUsed.forEach((k) => {
-        usedKeys.add(k);
+    for (const usage of usages) {
+      usage.keysUsed.forEach((keyItem) => {
+        usedKeys.add(keyItem);
       });
     }
   }
@@ -268,12 +287,10 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
   const unusedTextDecorations: DecorationOptions[] = [];
   const duplicateDecorations: DecorationOptions[] = [];
 
-  // Add the duplicate decoration if found
   if (duplicateDecoration) {
     duplicateDecorations.push(duplicateDecoration);
   }
 
-  // Helper to push both strike and text decorations
   const addUnused = (range: Range, hover: string) => {
     strikeDecorations.push({ range, hoverMessage: hover });
     const line = document.lineAt(range.start.line);
@@ -282,9 +299,6 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     });
   };
 
-  // A. Check Main Dictionary Usage
-  // ONLY mark as unused if it is NOT duplicated.
-  // If it is duplicated, we already showed the warning above, so we skip the "(unused)" text.
   if (!isDictionaryUsed && !isDuplicated) {
     if (keyIndex !== -1) {
       const startPos = document.positionAt(keyIndex);
@@ -296,39 +310,52 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     }
   }
 
-  // B. Check Content Keys (Properties)
-  // We perform this even if the dictionary itself is duplicated,
-  // because specific properties might still be unused in the code.
-  const fileName = `temp_unused${extension}${extension === ".vue" || extension === ".svelte" ? ".tsx" : ""}`;
-  const existingFile = project.getSourceFile(fileName);
-  if (existingFile) {
-    project.removeSourceFile(existingFile);
+  let ast: any;
+  try {
+    ast = parseCode(scriptContent);
+  } catch {
+    editor.setDecorations(strikeDecorationType, strikeDecorations);
+    editor.setDecorations(unusedTextDecorationType, unusedTextDecorations);
+    editor.setDecorations(unusedTextDecorationType, duplicateDecorations);
+    return;
   }
-  const sourceFile = project.createSourceFile(fileName, scriptContent);
 
-  const dictionaryObj = sourceFile
-    .getDescendantsOfKind(SyntaxKind.ObjectLiteralExpression)
-    .find((obj) => obj.getProperty("key") && obj.getProperty("content"));
+  const program = ast.program;
+
+  const dictionaryObj = findAllOfType(program, "ObjectExpression").find(
+    (obj: any) => {
+      const propNames = obj.properties
+        .filter((prop: any) => prop.type === "Property")
+        .map((prop: any) =>
+          prop.key?.type === "Identifier"
+            ? prop.key.name
+            : String(prop.key?.value ?? ""),
+        );
+      return propNames.includes("key") && propNames.includes("content");
+    },
+  );
 
   if (dictionaryObj) {
-    const contentProp = dictionaryObj.getProperty("content");
-    if (Node.isPropertyAssignment(contentProp)) {
-      const contentValue = contentProp.getInitializer();
+    const contentProp = dictionaryObj.properties.find(
+      (prop: any) =>
+        prop.type === "Property" &&
+        (prop.key?.name === "content" || String(prop.key?.value) === "content"),
+    );
 
-      if (Node.isObjectLiteralExpression(contentValue)) {
+    if (contentProp?.type === "Property") {
+      const contentValue = contentProp.value;
+
+      if (contentValue?.type === "ObjectExpression") {
         const allKeys = getKeysFromObject(contentValue);
 
         for (const { key: rawKey, node } of allKeys) {
-          // Skip usage check if dictionary itself is completely unused
-
           if (!isDictionaryUsed) {
             continue;
           }
 
-          // If key is NOT used and we don't have a wildcard usage
           if (!usedKeys.has(rawKey) && !usedKeys.has("__ALL__")) {
-            const startPos = document.positionAt(node.getStart());
-            const endPos = document.positionAt(node.getEnd());
+            const startPos = document.positionAt(node.range[0]);
+            const endPos = document.positionAt(node.range[1]);
 
             addUnused(
               new Range(startPos, endPos),
@@ -340,7 +367,6 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     }
   }
 
-  // Apply all decorations
   editor.setDecorations(strikeDecorationType, strikeDecorations);
   editor.setDecorations(unusedTextDecorationType, unusedTextDecorations);
   editor.setDecorations(unusedTextDecorationType, duplicateDecorations);

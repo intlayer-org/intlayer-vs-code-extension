@@ -1,6 +1,6 @@
 import { dirname, extname, join } from "node:path";
 import { DefaultValues } from "@intlayer/config/client";
-import { type CallExpression, Node, Project, SyntaxKind } from "ts-morph";
+import { parse as babelParse } from "@babel/parser";
 import {
   type DecorationOptions,
   type Disposable,
@@ -28,16 +28,77 @@ const translationDecorationType = window.createTextEditorDecorationType({
   rangeBehavior: 1, // ClosedOpen
 });
 
-// Reusable project for AST parsing
-const project = new Project({
-  useInMemoryFileSystem: true,
-  skipLoadingLibFiles: true,
-  compilerOptions: {
-    allowJs: true,
-    jsx: 1, // JsxEmit.Preserve
-    target: 99, // ESNext
-  },
-});
+const parseCode = (code: string): any =>
+  babelParse(code, {
+    sourceType: "module",
+    strictMode: false,
+    allowImportExportEverywhere: true,
+    allowReturnOutsideFunction: true,
+    plugins: ["typescript", "jsx", "estree"],
+    ranges: true,
+  });
+
+const buildParentMap = (root: any): Map<any, any> => {
+  const parentMap = new Map<any, any>();
+  const walk = (node: any, parent: any) => {
+    if (!node || typeof node !== "object") return;
+
+    if (Array.isArray(node)) {
+      node.forEach((child) => {
+        walk(child, parent);
+      });
+      return;
+    }
+
+    if (!node.type) return;
+
+    parentMap.set(node, parent);
+
+    for (const key of Object.keys(node)) {
+      if (key === "parent" || key === "tokens" || key === "comments") continue;
+      walk(node[key], node);
+    }
+  };
+  walk(root, null);
+  return parentMap;
+};
+
+const findAllOfType = (root: any, type: string): any[] => {
+  const results: any[] = [];
+  const walk = (node: any) => {
+    if (!node || typeof node !== "object") return;
+
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+
+    if (!node.type) return;
+
+    if (node.type === type) results.push(node);
+
+    for (const key of Object.keys(node)) {
+      if (key === "parent" || key === "tokens" || key === "comments") continue;
+      walk(node[key]);
+    }
+  };
+  walk(root);
+  return results;
+};
+
+const isStringLiteral = (node: any): boolean =>
+  node?.type === "Literal" && typeof node.value === "string";
+
+const isNoSubTemplateLiteral = (node: any): boolean =>
+  node?.type === "TemplateLiteral" && node.expressions.length === 0;
+
+const getLiteralText = (node: any): string => {
+  if (node?.type === "Literal") return String(node.value);
+
+  if (node?.type === "TemplateLiteral")
+    return node.quasis[0]?.value?.cooked ?? "";
+  return "";
+};
 
 export const intlayerDecorationProvider = (): Disposable[] => {
   let activeEditor = window.activeTextEditor;
@@ -111,37 +172,37 @@ const updateDecorations = async (editor: TextEditor) => {
     DefaultValues.Internationalization.DEFAULT_LOCALE;
 
   const scriptContent = extractScriptContent(document.getText(), extension);
-  const fileName = `temp_decoration${extension}${extension === ".vue" || extension === ".svelte" ? ".tsx" : ""}`;
 
-  // Ensure fresh file in the project
-  const existingFile = project.getSourceFile(fileName);
-  if (existingFile) {
-    project.removeSourceFile(existingFile);
+  let ast: any;
+  try {
+    ast = parseCode(scriptContent);
+  } catch {
+    return;
   }
 
-  const sourceFile = project.createSourceFile(fileName, scriptContent);
+  const program = ast.program;
+  const parentMap = buildParentMap(program);
 
   const translationDecorations: DecorationOptions[] = [];
   const duplicateDecorations: DecorationOptions[] = [];
-  const processedLines = new Set<number>(); // Prevent duplicate decorations on the same line
+  const processedLines = new Set<number>();
 
-  // Find all `useIntlayer` calls
-  const callExpressions = sourceFile.getDescendantsOfKind(
-    SyntaxKind.CallExpression,
-  );
+  const callExpressions = findAllOfType(program, "CallExpression");
 
   const variablesMap = new Map<
     string,
     { dictionaryContent: any; defaultLocale: string; initialPath: string[] }
   >();
 
-  // Local cache for dictionaries in this pass
   const localDictionaryCache = new Map<string, any[]>();
 
-  const identifiers = sourceFile.getDescendantsOfKind(SyntaxKind.Identifier);
+  const identifiers = findAllOfType(program, "Identifier");
 
   for (const callExpr of callExpressions) {
-    const { dictionaryKey, variables } = analyzeUseIntlayerCall(callExpr);
+    const { dictionaryKey, variables } = analyzeUseIntlayerCall(
+      callExpr,
+      parentMap,
+    );
 
     if (!dictionaryKey) {
       continue;
@@ -162,7 +223,6 @@ const updateDecorations = async (editor: TextEditor) => {
       continue;
     }
 
-    // Logic: Check for Multiple Declarations
     if (dictionaries.length > 1) {
       let localCount = 0;
       let remoteCount = 0;
@@ -175,18 +235,20 @@ const updateDecorations = async (editor: TextEditor) => {
         ) {
           localCount++;
         }
+
         if (dictionary.location === "remote") {
           remoteCount++;
         }
       });
 
       let label = `(${dictionaries.length} declarations - ${localCount} local`;
+
       if (remoteCount > 0) {
         label += ` / ${remoteCount} remote`;
       }
       label += `)`;
 
-      const endOffset = callExpr.getEnd();
+      const endOffset = callExpr.range[1];
       const position = document.positionAt(endOffset);
       const range = new Range(position, position);
 
@@ -206,11 +268,7 @@ const updateDecorations = async (editor: TextEditor) => {
 
     const dictionaryContent = dictionaries[0].content;
 
-    for (const {
-      variableName,
-      path: initialPath,
-      declarationNode,
-    } of variables) {
+    for (const { variableName, path: initialPath } of variables) {
       variablesMap.set(variableName, {
         dictionaryContent,
         defaultLocale,
@@ -218,23 +276,24 @@ const updateDecorations = async (editor: TextEditor) => {
       });
 
       const references = identifiers.filter((id) => {
-        const idText = id.getText();
-        // Support both direct variable access and Svelte's '$' store prefix
+        const idText = id.name;
+
         if (idText !== variableName && idText !== `$${variableName}`) {
           return false;
         }
-        if (isDeclarationIdentifier(id)) {
-          return false;
-        }
-        if (isPropertyAccessName(id)) {
+
+        if (isDeclarationIdentifier(id, parentMap)) {
           return false;
         }
 
+        if (isPropertyAccessName(id, parentMap)) {
+          return false;
+        }
         return true;
       });
 
       for (const ref of references) {
-        const { fullPath, rangeNode } = resolvePropertyAccess(ref);
+        const { fullPath, rangeNode } = resolvePropertyAccess(ref, parentMap);
         const contentPath = [...initialPath, ...fullPath];
 
         const rawValue = getValueFromPath(
@@ -250,7 +309,7 @@ const updateDecorations = async (editor: TextEditor) => {
             continue;
           }
 
-          const nodeEndPos = rangeNode.getEnd();
+          const nodeEndPos = rangeNode.range[1];
           const position = document.positionAt(nodeEndPos);
           const lineIndex = position.line;
 
@@ -278,27 +337,27 @@ const updateDecorations = async (editor: TextEditor) => {
   }
 
   // Angular Template Logic
+
   if (extension === ".ts" && document.getText().includes("@Component")) {
     const text = document.getText();
     const templateRegex = /template\s*:\s*(["'`])([\s\S]*?)\1/g;
-    let match: RegExpExecArray | null = null;
+    let templateMatch: RegExpExecArray | null = null;
     while (true) {
-      match = templateRegex.exec(text);
-      if (!match) {
+      templateMatch = templateRegex.exec(text);
+
+      if (!templateMatch) {
         break;
       }
-      const templateStart = match.index + match[0].indexOf(match[2]); // Start of content
-      const templateContent = match[2];
+      const templateStart =
+        templateMatch.index + templateMatch[0].indexOf(templateMatch[2]);
+      const templateContent = templateMatch[2];
 
       for (const [
         variableName,
-        { dictionaryContent, defaultLocale, initialPath },
+        { dictionaryContent, defaultLocale: locale, initialPath },
       ] of variablesMap) {
-        // 1. Collect targets (variable + aliases)
         const targets = [{ name: variableName, pathPrefix: [] as string[] }];
 
-        // Alias Regex: variable(...) or variable.path as alias
-        // Matches: content as c, content() as c, content().path as p
         const aliasPattern = new RegExp(
           `\\b${variableName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\s+as\\s+([a-zA-Z0-9_]+)`,
           "g",
@@ -307,6 +366,7 @@ const updateDecorations = async (editor: TextEditor) => {
         let aliasMatch: RegExpExecArray | null = null;
         while (true) {
           aliasMatch = aliasPattern.exec(templateContent);
+
           if (!aliasMatch) {
             break;
           }
@@ -316,7 +376,6 @@ const updateDecorations = async (editor: TextEditor) => {
           targets.push({ name: alias, pathPrefix: extraPath });
         }
 
-        // 2. Search usages for all targets
         for (const { name: targetName, pathPrefix } of targets) {
           const usageRegex = new RegExp(
             `\\b${targetName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\b`,
@@ -326,6 +385,7 @@ const updateDecorations = async (editor: TextEditor) => {
           let usageMatch: RegExpExecArray | null = null;
           while (true) {
             usageMatch = usageRegex.exec(templateContent);
+
             if (!usageMatch) {
               break;
             }
@@ -337,16 +397,19 @@ const updateDecorations = async (editor: TextEditor) => {
             const rawValue = getValueFromPath(
               dictionaryContent,
               contentPath,
-              defaultLocale,
+              locale,
             );
+
             if (rawValue) {
               const displayText = parseContentValue(rawValue);
+
               if (displayText) {
                 const startOffset = templateStart + usageMatch.index;
                 const endOffset = startOffset + fullMatch.length;
                 const position = document.positionAt(endOffset);
 
                 const lineIndex = position.line;
+
                 if (processedLines.has(lineIndex)) {
                   continue;
                 }
@@ -381,12 +444,6 @@ const updateDecorations = async (editor: TextEditor) => {
 
 // Content Parsing Helpers
 
-/**
- * Extracts a human-readable string from a dictionary value.
- * Handles:
- * 1. Primitives (String, Number)
- * 2. React Element Objects (recursively flattens children)
- */
 const parseContentValue = (value: any): string | null => {
   if (value === null || value === undefined) {
     return null;
@@ -402,11 +459,8 @@ const parseContentValue = (value: any): string | null => {
     if (Array.isArray(value)) {
       text = value.map(parseContentValue).join("");
     } else if (isValidElementLike(value)) {
-      // It's a React Node structure
       text = extractTextFromReactNode(value);
     } else {
-      // Fallback for random objects -> JSON string
-      // But we prefer skipping if it's just a structural object (not a leaf)
       return null;
     }
   }
@@ -415,10 +469,7 @@ const parseContentValue = (value: any): string | null => {
     return null;
   }
 
-  // Clean up whitespace
   text = text.replace(/\s+/g, " ").trim();
-
-  // Truncate
 
   if (text.length > TRUNCATE_LENGTH) {
     return `${text.substring(0, TRUNCATE_LENGTH)}...`;
@@ -426,23 +477,12 @@ const parseContentValue = (value: any): string | null => {
   return text;
 };
 
-/**
- * Detects if an object looks like the React Element structure found in dictionaries.
- * Matches structure: { props: { children: ... }, ... }
- */
-const isValidElementLike = (obj: any): boolean => {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "props" in obj &&
-    // Check for common React internal keys to be sure, or just duck type 'props'
-    (!("key" in obj) || obj.key === null || typeof obj.key === "string")
-  );
-};
+const isValidElementLike = (obj: any): boolean =>
+  obj &&
+  typeof obj === "object" &&
+  "props" in obj &&
+  (!("key" in obj) || obj.key === null || typeof obj.key === "string");
 
-/**
- * Recursively extracts text from a React Node object structure.
- */
 const extractTextFromReactNode = (node: any): string => {
   if (!node) {
     return "";
@@ -463,20 +503,30 @@ const extractTextFromReactNode = (node: any): string => {
   return "";
 };
 
-const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
-  const expr = callExpr.getExpression();
+const analyzeUseIntlayerCall = (
+  callExpr: any,
+  parentMap: Map<any, any>,
+): {
+  dictionaryKey: string | null;
+  variables: {
+    variableName: string;
+    path: string[];
+    declarationNode?: any;
+  }[];
+} => {
+  const callee = callExpr.callee;
 
-  if (!Node.isIdentifier(expr)) {
+  if (callee?.type !== "Identifier") {
     return { dictionaryKey: null, variables: [] };
   }
 
-  const funcName = expr.getText();
+  const funcName = callee.name;
 
   if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
     return { dictionaryKey: null, variables: [] };
   }
 
-  const args = callExpr.getArguments();
+  const args = callExpr.arguments;
 
   if (args.length === 0) {
     return { dictionaryKey: null, variables: [] };
@@ -485,53 +535,62 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
   let dictionaryKey: string | null = null;
   const firstArg = args[0];
 
-  if (
-    Node.isStringLiteral(firstArg) ||
-    Node.isNoSubstitutionTemplateLiteral(firstArg)
-  ) {
-    dictionaryKey = firstArg.getLiteralText();
+  if (isStringLiteral(firstArg) || isNoSubTemplateLiteral(firstArg)) {
+    dictionaryKey = getLiteralText(firstArg);
   }
 
-  // variables now includes declarationNode for scope checking
   const variables: {
     variableName: string;
     path: string[];
-    declarationNode?: Node;
+    declarationNode?: any;
   }[] = [];
 
-  const varDecl = callExpr.getParentIfKind(SyntaxKind.VariableDeclaration);
-  const propDecl = callExpr.getParentIfKind(SyntaxKind.PropertyDeclaration);
+  const callParent = parentMap.get(callExpr);
+  const varDecl =
+    callParent?.type === "VariableDeclarator" && callParent.init === callExpr
+      ? callParent
+      : null;
+  const propDecl =
+    callParent?.type === "PropertyDefinition" && callParent.value === callExpr
+      ? callParent
+      : null;
 
   if (varDecl) {
-    const pattern = varDecl.getNameNode();
+    const pattern = varDecl.id;
 
-    if (Node.isObjectBindingPattern(pattern)) {
-      for (const element of pattern.getElements()) {
-        const propNameNode = element.getPropertyNameNode();
-        const nameNode = element.getNameNode();
-        const dictionaryField = propNameNode
-          ? propNameNode.getText()
-          : nameNode.getText();
-        const variableName = nameNode.getText();
+    if (pattern.type === "ObjectPattern") {
+      for (const element of pattern.properties) {
+        if (element.type !== "Property") continue;
+
+        const dictionaryField = element.shorthand
+          ? element.key.name
+          : element.key.type === "Identifier"
+            ? element.key.name
+            : getLiteralText(element.key);
+        const variableName =
+          element.value?.type === "Identifier" ? element.value.name : "";
+
+        if (!variableName) continue;
 
         variables.push({
           variableName,
           path: [dictionaryField],
-          declarationNode: nameNode, // Capture the BindingElement identifier
+          declarationNode: element.value,
         });
       }
-    } else if (Node.isIdentifier(pattern)) {
+    } else if (pattern.type === "Identifier") {
       variables.push({
-        variableName: pattern.getText(),
+        variableName: pattern.name,
         path: [],
-        declarationNode: pattern, // Capture the Variable declaration identifier
+        declarationNode: pattern,
       });
     }
   } else if (propDecl) {
-    const nameNode = propDecl.getNameNode();
-    if (Node.isIdentifier(nameNode)) {
+    const nameNode = propDecl.key;
+
+    if (nameNode?.type === "Identifier") {
       variables.push({
-        variableName: nameNode.getText(),
+        variableName: nameNode.name,
         path: [],
         declarationNode: nameNode,
       });
@@ -541,57 +600,78 @@ const analyzeUseIntlayerCall = (callExpr: CallExpression) => {
   return { dictionaryKey, variables };
 };
 
-const isDeclarationIdentifier = (node: Node) => {
-  const parent = node.getParent();
+const isDeclarationIdentifier = (
+  id: any,
+  parentMap: Map<any, any>,
+): boolean => {
+  const parent = parentMap.get(id);
+
+  if (!parent) return false;
+
+  if (parent.type === "VariableDeclarator" && parent.id === id) return true;
 
   if (
-    Node.isBindingElement(parent) ||
-    Node.isVariableDeclaration(parent) ||
-    Node.isParameterDeclaration(parent) ||
-    Node.isPropertyDeclaration(parent)
-  ) {
+    parent.type === "Property" &&
+    parentMap.get(parent)?.type === "ObjectPattern"
+  )
     return true;
-  }
 
-  if (Node.isPropertyAssignment(parent)) {
-    return (parent as any).getNameNode() === node;
-  }
+  if (parent.type === "PropertyDefinition") return true;
+
+  if (
+    [
+      "FunctionDeclaration",
+      "FunctionExpression",
+      "ArrowFunctionExpression",
+    ].includes(parent.type)
+  )
+    return true;
+
+  if (
+    parent.type === "Property" &&
+    parent.key === id &&
+    parentMap.get(parent)?.type === "ObjectExpression"
+  )
+    return true;
+
   return false;
 };
 
-const isPropertyAccessName = (node: Node) => {
-  const parent = node.getParent();
+const isPropertyAccessName = (id: any, parentMap: Map<any, any>): boolean => {
+  const parent = parentMap.get(id);
 
-  if (Node.isPropertyAccessExpression(parent)) {
-    return parent.getNameNode() === node;
-  }
+  if (!parent) return false;
 
-  if (parent && parent.getKindName() === "JsxMemberExpression") {
-    return (parent as any).getNameNode() === node;
-  }
+  if (parent.type === "MemberExpression" && parent.property === id) return true;
+
+  if (parent.type === "JSXMemberExpression" && parent.property === id)
+    return true;
+
   return false;
 };
 
-const resolvePropertyAccess = (startNode: Node) => {
+const resolvePropertyAccess = (
+  startNode: any,
+  parentMap: Map<any, any>,
+): { fullPath: string[]; rangeNode: any } => {
   let current = startNode;
   const path: string[] = [];
 
   while (true) {
-    const parent = current.getParent();
+    const parent = parentMap.get(current);
 
-    if (Node.isPropertyAccessExpression(parent)) {
-      if (parent.getExpression() === current) {
-        path.push(parent.getName());
-        current = parent;
-        continue;
-      }
-    } else if (Node.isCallExpression(parent)) {
-      if (parent.getExpression() === current) {
-        current = parent;
-        continue;
-      }
+    if (
+      parent?.type === "MemberExpression" &&
+      !parent.computed &&
+      parent.object === current
+    ) {
+      path.push(parent.property.name ?? "");
+      current = parent;
+    } else if (parent?.type === "CallExpression" && parent.callee === current) {
+      current = parent;
+    } else {
+      break;
     }
-    break;
   }
 
   return { fullPath: path, rangeNode: current };

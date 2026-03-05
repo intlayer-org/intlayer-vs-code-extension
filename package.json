@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.1.11",
+  "version": "8.2.2",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -93,7 +93,7 @@
         },
         {
           "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
-          "command": "intlayer.transform",
+          "command": "intlayer.extract",
           "group": "navigation@900"
         }
       ],
@@ -184,7 +184,7 @@
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "intlayer.transform",
+        "command": "intlayer.extract",
         "title": "Intlayer: Extract Content to Dictionary",
         "icon": "$(file-code)"
       },
@@ -273,7 +273,7 @@
     "onCommand:extension.fillDictionaries",
     "onCommand:extension.testDictionaries",
     "onCommand:intlayer.selectEnvironment",
-    "onCommand:intlayer.transform",
+    "onCommand:intlayer.extract",
     "onCommand:intlayer.initSkills",
     "onCommand:intlayer.initMCP",
     "onLanguage:javascript",
@@ -296,13 +296,13 @@
     "vscode:login": "vsce login intlayer",
     "test": "vscode-test",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsdown && mv ./dist/extension.cjs ./dist/extension.js",
+    "compile": "tsdown",
     "watch": "tsdown --watch",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "25.0.10",
+    "@types/node": "25.3.3",
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.52.0",
@@ -310,21 +310,24 @@
     "tsdown": "0.20.3",
     "@vscode/test-electron": "^2.5.2",
     "typescript": "^5.9.3",
-    "@intlayer/api": "^8.1.11",
-    "@intlayer/core": "^8.1.11",
-    "@biomejs/biome": "2.4.4",
+    "@intlayer/api": "^8.2.2",
+    "@intlayer/core": "^8.2.2",
+    "@biomejs/biome": "2.4.5",
     "bun": "1.3.10",
-    "@intlayer/chokidar": "^8.1.11",
-    "@intlayer/cli": "^8.1.11",
-    "@intlayer/config": "^8.1.11",
-    "@intlayer/svelte-transformer": "^8.1.11",
-    "@intlayer/types": "^8.1.11",
-    "@intlayer/vue-transformer": "^8.1.11",
+    "@intlayer/chokidar": "^8.2.2",
+    "@intlayer/cli": "^8.2.2",
+    "@intlayer/config": "^8.2.2",
+    "@intlayer/svelte-compiler": "^8.2.2",
+    "@intlayer/babel": "^8.2.2",
+    "@babel/parser": "7.29.0",
+    "@intlayer/types": "^8.2.2",
+    "@intlayer/unmerged-dictionaries-entry": "^8.2.2",
+    "@intlayer/vue-compiler": "^8.2.2",
     "dotenv": "^17.3.1",
-    "fuse.js": "^7.1.0",
-    "ts-morph": "^27.0.2"
+    "fuse.js": "^7.1.0"
   },
   "dependencies": {
-    "esbuild": "0.27.2"
+    "esbuild": "0.27.3",
+    "picocolors": "^1.1.1"
   }
 }

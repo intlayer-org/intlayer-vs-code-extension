@@ -23,9 +23,9 @@ export const pullCommand = async () => {
     const apiProxy = getIntlayerAPIProxy(undefined, configuration);
     const dictionariesKeysResult =
       await apiProxy.dictionary.getDictionariesKeys();
-    const dictionaries = dictionariesKeysResult.data as Dictionary[];
+    const dictionariesKeys = dictionariesKeysResult.data as Dictionary["key"][];
 
-    if (!dictionaries.length) {
+    if (!dictionariesKeys.length) {
       window.showWarningMessage(`${prefix}No dictionaries available.`);
       return;
     }
@@ -36,13 +36,13 @@ export const pullCommand = async () => {
       ? activeEditor.document.uri.fsPath
       : undefined;
 
-    const quickPickItems = dictionaries.map((dict) => ({
-      label: dict.key,
+    const quickPickItems = dictionariesKeys.map((dictionariesKey) => ({
+      label: dictionariesKey,
       picked:
         !!activeFileName &&
-        (activeFileName.endsWith(`${dict.key}.content.ts`) ||
-          activeFileName.endsWith(`${dict.key}.content.js`) ||
-          activeFileName.endsWith(`${dict.key}.content.json`)),
+        (activeFileName.endsWith(`${dictionariesKey}.content.ts`) ||
+          activeFileName.endsWith(`${dictionariesKey}.content.js`) ||
+          activeFileName.endsWith(`${dictionariesKey}.content.json`)),
     }));
 
     // Place the preselected item(s) at the top of the list

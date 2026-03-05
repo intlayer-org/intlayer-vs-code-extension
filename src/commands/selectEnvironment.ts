@@ -35,14 +35,15 @@ const discoverEnvNames = (projectDir: string): string[] => {
 
 export const selectEnvironment = async (
   projectDirFromContext: string | undefined,
-  treeDataProvider?: DictionaryTreeDataProvider
+  treeDataProvider?: DictionaryTreeDataProvider,
 ) => {
   let projectDir = projectDirFromContext;
   if (!projectDir) {
-    const roots = findAllProjectRoots();
+    const roots = await findAllProjectRoots();
+
     if (!roots.length) {
       window.showWarningMessage(
-        `${prefix}No Intlayer projects found in workspace.`
+        `${prefix}No Intlayer projects found in workspace.`,
       );
       return;
     }
@@ -57,7 +58,7 @@ export const selectEnvironment = async (
         ? relative(workspaceRoot, absPath)
         : absPath;
       return {
-        label: workspaceRoot ? relPath ?? "." : absPath,
+        label: workspaceRoot ? (relPath ?? ".") : absPath,
         description: absPath,
       } as const;
     });
@@ -95,7 +96,7 @@ export const selectEnvironment = async (
 
   const projectName = basename(projectDir);
   window.showInformationMessage(
-    `${prefix}Environment set to "${pickedEnv.label}" for ${projectName}`
+    `${prefix}Environment set to "${pickedEnv.label}" for ${projectName}`,
   );
 
   if (treeDataProvider) {

@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { type PackageName, transformFiles } from "@intlayer/chokidar/cli";
-import type { GetConfigurationOptions } from "@intlayer/config/node";
+import { extractContent, type PackageName } from "@intlayer/babel";
+import {
+  getConfiguration,
+  type GetConfigurationOptions,
+} from "@intlayer/config/node";
+import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
 import { type Uri, window, workspace } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
@@ -21,7 +25,7 @@ const getDependencies = (baseDir: string) => {
   }
 };
 
-export const transformCommand = async (resource?: Uri) => {
+export const extractCommand = async (resource?: Uri) => {
   let projectDir = findProjectRoot(resource?.fsPath);
 
   if (!projectDir) {
@@ -36,28 +40,16 @@ export const transformCommand = async (resource?: Uri) => {
 
   const configOptions: GetConfigurationOptions =
     await getConfigurationOptions(projectDir);
+  const configuration = getConfiguration(configOptions);
 
   // Detect package
   const dependencies = getDependencies(projectDir);
-  let packageName: PackageName = "react-intlayer";
+  const dependencyNames = Object.keys(dependencies);
 
-  if (dependencies["next-intlayer"]) {
-    packageName = "next-intlayer";
-  } else if (dependencies["vue-intlayer"]) {
-    packageName = "vue-intlayer";
-  } else if (dependencies["svelte-intlayer"]) {
-    packageName = "svelte-intlayer";
-  } else if (dependencies["react-intlayer"]) {
-    packageName = "react-intlayer";
-  } else if (dependencies["preact-intlayer"]) {
-    packageName = "preact-intlayer";
-  } else if (dependencies["solid-intlayer"]) {
-    packageName = "solid-intlayer";
-  } else if (dependencies["angular-intlayer"]) {
-    packageName = "angular-intlayer";
-  } else if (dependencies["express-intlayer"]) {
-    packageName = "express-intlayer";
-  }
+  // This handles hono-intlayer, fastify-intlayer, etc., automatically.
+  const packageName = (dependencyNames.find((name) =>
+    name.endsWith("-intlayer"),
+  ) ?? "react-intlayer") as PackageName; // Fallback default
 
   let filesToTransform: string[] = [];
 
@@ -93,7 +85,7 @@ export const transformCommand = async (resource?: Uri) => {
 
     const selected = await window.showQuickPick(items, {
       canPickMany: true,
-      placeHolder: "Select files to transform",
+      placeHolder: "Select files to extract",
     });
 
     if (!selected || selected.length === 0) {
@@ -113,20 +105,36 @@ export const transformCommand = async (resource?: Uri) => {
   const dirtyDocs = workspace.textDocuments.filter(
     (doc) => filesToTransform.includes(doc.uri.fsPath) && doc.isDirty,
   );
+
   if (dirtyDocs.length > 0) {
     await Promise.all(dirtyDocs.map((doc) => doc.save()));
   }
 
-  try {
-    await transformFiles(filesToTransform, packageName, {
-      configOptions,
-    });
-    window.showInformationMessage(
-      `Successfully transformed ${filesToTransform.length} files.`,
+  const unmergedDictionaries = getUnmergedDictionaries(configuration);
+  let errorCount = 0;
+
+  await Promise.all(
+    filesToTransform.map(async (filePath) => {
+      try {
+        await extractContent(filePath, packageName, {
+          unmergedDictionaries,
+          configuration,
+        });
+      } catch (error) {
+        errorCount++;
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Failed to extract ${filePath}: ${message}`);
+      }
+    }),
+  );
+
+  if (errorCount > 0) {
+    window.showWarningMessage(
+      `Completed with ${errorCount} errors. Check the debug console for details.`,
     );
-  } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : String(error);
-    window.showErrorMessage(`Error transforming files: ${message}`);
+  } else {
+    window.showInformationMessage(
+      `Successfully extracted content from ${filesToTransform.length} files.`,
+    );
   }
 };
