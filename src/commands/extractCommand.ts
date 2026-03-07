@@ -6,11 +6,10 @@ import {
   type GetConfigurationOptions,
 } from "@intlayer/config/node";
 import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
-import { type Uri, window, workspace } from "vscode";
+import { Uri, window, workspace, RelativePattern } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 
-// Helper to read package.json dependencies
 const getDependencies = (baseDir: string) => {
   try {
     const packageJsonPath = resolve(baseDir, "package.json");
@@ -29,7 +28,6 @@ export const extractCommand = async (resource?: Uri) => {
   let projectDir = findProjectRoot(resource?.fsPath);
 
   if (!projectDir) {
-    // fallback to workspace folder if only one
     if (workspace.workspaceFolders && workspace.workspaceFolders.length === 1) {
       projectDir = workspace.workspaceFolders[0].uri.fsPath;
     } else {
@@ -42,37 +40,111 @@ export const extractCommand = async (resource?: Uri) => {
     await getConfigurationOptions(projectDir);
   const configuration = getConfiguration(configOptions);
 
-  // Detect package
-  const dependencies = getDependencies(projectDir);
-  const dependencyNames = Object.keys(dependencies);
+  const { baseDir, codeDir, excludedPath } = configuration.content;
+  const { traversePattern } = configuration.build;
+  const dependencies = getDependencies(baseDir);
 
-  // This handles hono-intlayer, fastify-intlayer, etc., automatically.
-  const packageName = (dependencyNames.find((name) =>
-    name.endsWith("-intlayer"),
-  ) ?? "react-intlayer") as PackageName; // Fallback default
+  let packageName: PackageName = "react-intlayer";
+
+  if (dependencies["next-intlayer"]) {
+    packageName = "next-intlayer";
+  } else if (dependencies["vue-intlayer"]) {
+    packageName = "vue-intlayer";
+  } else if (dependencies["svelte-intlayer"]) {
+    packageName = "svelte-intlayer";
+  } else if (dependencies["react-intlayer"]) {
+    packageName = "react-intlayer";
+  } else if (dependencies["preact-intlayer"]) {
+    packageName = "preact-intlayer";
+  } else if (dependencies["solid-intlayer"]) {
+    packageName = "solid-intlayer";
+  } else if (dependencies["angular-intlayer"]) {
+    packageName = "angular-intlayer";
+  } else if (dependencies["express-intlayer"]) {
+    packageName = "express-intlayer";
+  }
 
   let filesToTransform: string[] = [];
 
   if (resource) {
     filesToTransform = [resource.fsPath];
   } else {
-    // Find files logic
-    const globPattern = "**/*.{tsx,jsx,vue,svelte,ts,js}";
-    const excludePattern =
-      "{**/*.content.*,**/*.config.*,**/*.test.*,**/*.stories.*,**/node_modules/**,**/dist/**,**/build/**}";
+    // 1. Safely handle arrays (fallback to defaults if undefined)
+    const traverseArr = Array.isArray(traversePattern) ? traversePattern : [];
+    const excludeArr = Array.isArray(excludedPath) ? excludedPath : [];
+    const codeDirArr = Array.isArray(codeDir) ? codeDir : ["."];
 
-    // Use vscode.workspace.findFiles
-    const uris = await workspace.findFiles(globPattern, excludePattern);
+    // 2. Separate positive and negative patterns
+    const positivePatterns = traverseArr.filter(
+      (p) => typeof p === "string" && !p.startsWith("!"),
+    );
+    const negativePatterns = traverseArr
+      .filter((p) => typeof p === "string" && p.startsWith("!"))
+      .map((p) => p.slice(1));
 
-    // Filter existing files and make paths relative
-    const items = uris.map((uri) => {
-      const relPath = projectDir
-        ? relative(projectDir, uri.fsPath)
-        : uri.fsPath;
+    if (positivePatterns.length === 0) {
+      positivePatterns.push("**/*.{tsx,jsx,vue,svelte,ts,js}");
+    }
+
+    // 3. Format the include and exclude strings for VS Code GlobPattern
+    const includeGlob =
+      positivePatterns.length === 1
+        ? positivePatterns[0]
+        : `{${positivePatterns.join(",")}}`;
+
+    const combinedExcludes = [...excludeArr, ...negativePatterns].filter(
+      Boolean,
+    );
+    const excludeGlob =
+      combinedExcludes.length === 0
+        ? null
+        : combinedExcludes.length === 1
+          ? combinedExcludes[0]
+          : `{${combinedExcludes.join(",")}}`;
+
+    // Helper: check if a resolved dir path is itself excluded (e.g. codeDir points into a dist folder)
+    const isDirExcluded = (dirPath: string): boolean =>
+      combinedExcludes.some((pattern) => {
+        // Extract literal path segments from the glob (ignore wildcard segments)
+        const segments = pattern
+          .split("/")
+          .filter((s) => !s.includes("*") && s.length > 0);
+        const parts = dirPath.split("/");
+        return segments.some((seg) => parts.includes(seg));
+      });
+
+    // 4. Fetch files for every directory mapping correctly to Uri to avoid "Illegal base/pattern"
+    const urisArrays = await Promise.all(
+      codeDirArr
+        .filter((dir) => !isDirExcluded(resolve(baseDir, String(dir))))
+        .map((dir) => {
+        // Guarantee an absolute path and convert to URI for strict VS Code compliance
+        const absoluteDir = resolve(baseDir, String(dir));
+        const baseUri = Uri.file(absoluteDir);
+
+        const searchPattern = new RelativePattern(baseUri, includeGlob);
+        const excludePattern = excludeGlob
+          ? new RelativePattern(baseUri, excludeGlob)
+          : null;
+
+        return workspace.findFiles(searchPattern, excludePattern);
+      }),
+    );
+
+    // Flatten and deduplicate files based on their absolute paths
+    const allUris = urisArrays.flat();
+    const uniqueUris = Array.from(
+      new Map(allUris.map((uri) => [uri.fsPath, uri])).values(),
+    );
+
+    const activeFilePath = window.activeTextEditor?.document.uri.fsPath;
+
+    const items = uniqueUris.map((uri) => {
+      const relPath = relative(baseDir, uri.fsPath);
       return {
         label: relPath,
         description: uri.fsPath,
-        picked: false,
+        picked: uri.fsPath === activeFilePath,
       };
     });
 
@@ -101,7 +173,6 @@ export const extractCommand = async (resource?: Uri) => {
     return;
   }
 
-  // Save dirty files before transformation to ensure disk content matches editor content
   const dirtyDocs = workspace.textDocuments.filter(
     (doc) => filesToTransform.includes(doc.uri.fsPath) && doc.isDirty,
   );
