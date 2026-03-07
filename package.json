@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.2.2",
+  "version": "8.2.3",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -310,19 +310,19 @@
     "tsdown": "0.20.3",
     "@vscode/test-electron": "^2.5.2",
     "typescript": "^5.9.3",
-    "@intlayer/api": "^8.2.2",
-    "@intlayer/core": "^8.2.2",
+    "@intlayer/api": "^8.2.3",
+    "@intlayer/core": "^8.2.3",
     "@biomejs/biome": "2.4.5",
     "bun": "1.3.10",
-    "@intlayer/chokidar": "^8.2.2",
-    "@intlayer/cli": "^8.2.2",
-    "@intlayer/config": "^8.2.2",
-    "@intlayer/svelte-compiler": "^8.2.2",
-    "@intlayer/babel": "^8.2.2",
+    "@intlayer/chokidar": "^8.2.3",
+    "@intlayer/cli": "^8.2.3",
+    "@intlayer/config": "^8.2.3",
+    "@intlayer/svelte-compiler": "^8.2.3",
+    "@intlayer/babel": "^8.2.3",
     "@babel/parser": "7.29.0",
-    "@intlayer/types": "^8.2.2",
-    "@intlayer/unmerged-dictionaries-entry": "^8.2.2",
-    "@intlayer/vue-compiler": "^8.2.2",
+    "@intlayer/types": "^8.2.3",
+    "@intlayer/unmerged-dictionaries-entry": "^8.2.3",
+    "@intlayer/vue-compiler": "^8.2.3",
     "dotenv": "^17.3.1",
     "fuse.js": "^7.1.0"
   },
