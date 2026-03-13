@@ -32,6 +32,15 @@ export const extractCommand = async (resource?: Uri) => {
   const { baseDir } = configuration.system;
   const { codeDir, excludedPath } = configuration.content;
   const { traversePattern } = configuration.build;
+  const { output } = configuration.compiler;
+
+  if (!output) {
+    window.showErrorMessage(
+      `No output configuration found. Add a 'compiler.output' in your configuration.`,
+    );
+
+    return;
+  }
 
   const packageName: PackageName = detectPackageName(baseDir);
 

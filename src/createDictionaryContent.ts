@@ -58,6 +58,16 @@ export const generateDictionaryContent = async (
   const configOptions = await getConfigurationOptions(projectDir);
   const configuration = getConfiguration(configOptions);
 
+  const { output } = configuration.compiler;
+
+  if (!output) {
+    window.showErrorMessage(
+      `No output configuration found. Add a 'compiler.output' in your configuration.`,
+    );
+
+    return;
+  }
+
   // Grab the entire file text to parse for an exported component name
   const fileText = editor.document.getText();
 
