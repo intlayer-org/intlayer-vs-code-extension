@@ -47,18 +47,25 @@ export default defineConfig({
   minify: true,
   sourcemap: false,
 
-  // Bundle everything
-  noExternal: [/(.*)/],
-  external: [
-    "vscode",
-    "esbuild",
-    "picocolors",
-    "fsevents",
-    "node:fs",
-    "node:path",
-    "node:module",
-    "node:child_process",
-  ],
+  deps: {
+    // Bundle everything
+    alwaysBundle: [/(.*)/],
+
+    // Disable the hint since bundling node_modules is intentional
+    onlyAllowBundle: false,
+
+    // Externalize ALL bare imports (i.e., all packages)
+    neverBundle: [
+      "vscode",
+      "esbuild",
+      "picocolors",
+      "fsevents",
+      "node:fs",
+      "node:path",
+      "node:module",
+      "node:child_process",
+    ],
+  },
 
   alias: {
     "@intlayer/config/built": resolve("src/config-built.ts"),
