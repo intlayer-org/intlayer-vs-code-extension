@@ -1,6 +1,9 @@
-import { existsSync, readFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { extractContent, type PackageName } from "@intlayer/babel";
+import {
+  extractContent,
+  type PackageName,
+  detectPackageName,
+} from "@intlayer/babel";
 import {
   getConfiguration,
   type GetConfigurationOptions,
@@ -9,20 +12,6 @@ import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
 import { Uri, window, workspace, RelativePattern } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
-
-const getDependencies = (baseDir: string) => {
-  try {
-    const packageJsonPath = resolve(baseDir, "package.json");
-    if (!existsSync(packageJsonPath)) {
-      return {};
-    }
-    const file = readFileSync(packageJsonPath, "utf8");
-    const packageJSON = JSON.parse(file);
-    return packageJSON.dependencies || {};
-  } catch {
-    return {};
-  }
-};
 
 export const extractCommand = async (resource?: Uri) => {
   let projectDir = findProjectRoot(resource?.fsPath);
@@ -40,53 +29,37 @@ export const extractCommand = async (resource?: Uri) => {
     await getConfigurationOptions(projectDir);
   const configuration = getConfiguration(configOptions);
 
-  const { baseDir, codeDir, excludedPath } = configuration.content;
+  const { baseDir } = configuration.system;
+  const { codeDir, excludedPath } = configuration.content;
   const { traversePattern } = configuration.build;
-  const dependencies = getDependencies(baseDir);
 
-  let packageName: PackageName = "react-intlayer";
-
-  if (dependencies["next-intlayer"]) {
-    packageName = "next-intlayer";
-  } else if (dependencies["vue-intlayer"]) {
-    packageName = "vue-intlayer";
-  } else if (dependencies["svelte-intlayer"]) {
-    packageName = "svelte-intlayer";
-  } else if (dependencies["react-intlayer"]) {
-    packageName = "react-intlayer";
-  } else if (dependencies["preact-intlayer"]) {
-    packageName = "preact-intlayer";
-  } else if (dependencies["solid-intlayer"]) {
-    packageName = "solid-intlayer";
-  } else if (dependencies["angular-intlayer"]) {
-    packageName = "angular-intlayer";
-  } else if (dependencies["express-intlayer"]) {
-    packageName = "express-intlayer";
-  }
+  const packageName: PackageName = detectPackageName(baseDir);
 
   let filesToTransform: string[] = [];
 
   if (resource) {
     filesToTransform = [resource.fsPath];
   } else {
-    // 1. Safely handle arrays (fallback to defaults if undefined)
+    // Safely handle arrays (fallback to defaults if undefined)
     const traverseArr = Array.isArray(traversePattern) ? traversePattern : [];
     const excludeArr = Array.isArray(excludedPath) ? excludedPath : [];
     const codeDirArr = Array.isArray(codeDir) ? codeDir : ["."];
 
-    // 2. Separate positive and negative patterns
+    // Separate positive and negative patterns
     const positivePatterns = traverseArr.filter(
-      (p) => typeof p === "string" && !p.startsWith("!"),
+      (pattern) => typeof pattern === "string" && !pattern.startsWith("!"),
     );
     const negativePatterns = traverseArr
-      .filter((p) => typeof p === "string" && p.startsWith("!"))
-      .map((p) => p.slice(1));
+      .filter(
+        (pattern) => typeof pattern === "string" && pattern.startsWith("!"),
+      )
+      .map((pattern) => pattern.slice(1));
 
     if (positivePatterns.length === 0) {
       positivePatterns.push("**/*.{tsx,jsx,vue,svelte,ts,js}");
     }
 
-    // 3. Format the include and exclude strings for VS Code GlobPattern
+    // Format the include and exclude strings for VS Code GlobPattern
     const includeGlob =
       positivePatterns.length === 1
         ? positivePatterns[0]
@@ -108,27 +81,28 @@ export const extractCommand = async (resource?: Uri) => {
         // Extract literal path segments from the glob (ignore wildcard segments)
         const segments = pattern
           .split("/")
-          .filter((s) => !s.includes("*") && s.length > 0);
+          .filter((segment) => !segment.includes("*") && segment.length > 0);
         const parts = dirPath.split("/");
+
         return segments.some((seg) => parts.includes(seg));
       });
 
-    // 4. Fetch files for every directory mapping correctly to Uri to avoid "Illegal base/pattern"
+    // Fetch files for every directory mapping correctly to Uri to avoid "Illegal base/pattern"
     const urisArrays = await Promise.all(
       codeDirArr
         .filter((dir) => !isDirExcluded(resolve(baseDir, String(dir))))
         .map((dir) => {
-        // Guarantee an absolute path and convert to URI for strict VS Code compliance
-        const absoluteDir = resolve(baseDir, String(dir));
-        const baseUri = Uri.file(absoluteDir);
+          // Guarantee an absolute path and convert to URI for strict VS Code compliance
+          const absoluteDir = resolve(baseDir, String(dir));
+          const baseUri = Uri.file(absoluteDir);
 
-        const searchPattern = new RelativePattern(baseUri, includeGlob);
-        const excludePattern = excludeGlob
-          ? new RelativePattern(baseUri, excludeGlob)
-          : null;
+          const searchPattern = new RelativePattern(baseUri, includeGlob);
+          const excludePattern = excludeGlob
+            ? new RelativePattern(baseUri, excludeGlob)
+            : null;
 
-        return workspace.findFiles(searchPattern, excludePattern);
-      }),
+          return workspace.findFiles(searchPattern, excludePattern);
+        }),
     );
 
     // Flatten and deduplicate files based on their absolute paths
@@ -184,12 +158,16 @@ export const extractCommand = async (resource?: Uri) => {
   const unmergedDictionaries = getUnmergedDictionaries(configuration);
   let errorCount = 0;
 
+  const editor = window.activeTextEditor;
+  const fileText = editor?.document.getText();
+
   await Promise.all(
     filesToTransform.map(async (filePath) => {
       try {
         await extractContent(filePath, packageName, {
           unmergedDictionaries,
           configuration,
+          code: fileText,
         });
       } catch (error) {
         errorCount++;
