@@ -191,6 +191,7 @@ export const activate = (context: ExtensionContext) => {
           if (!ed) {
             return;
           }
+          treeDataProvider.refresh();
           const node = await treeDataProvider.findFileNodeByAbsolutePath(
             ed.document.uri.fsPath,
           );

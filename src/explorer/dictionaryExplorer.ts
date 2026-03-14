@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { basename, extname, join, relative } from "node:path";
+import { basename, extname, join, relative, resolve, sep } from "node:path";
 import { listProjects } from "@intlayer/chokidar/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import {
@@ -15,6 +15,7 @@ import {
 import { getSelectedEnvironment } from "../utils/envStore";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { hasClientId } from "../utils/hasClientId";
+import { findProjectRoot } from "../utils/findProjectRoot";
 
 type DictionaryEntry = {
   filePath?: string;
@@ -65,6 +66,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
   }
 
   refresh(): void {
+    this.cachedEnvironments = undefined;
     this.changeEmitter.fire();
   }
 
@@ -126,57 +128,90 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
           }
         }
 
-        const uniqueRoots = Array.from(new Set(foundRoots));
+        let uniqueRoots = Array.from(new Set(foundRoots));
 
         if (!uniqueRoots.length) {
           return [];
         }
 
-        const envs: {
-          projectDir: string;
-          dir: string;
-          files: string[];
-          label: string;
-        }[] = [];
-
-        for (const projectDir of uniqueRoots) {
-          try {
-            const configOptions = await getConfigurationOptions(
-              projectDir,
-              false,
-            );
-            const config = getConfiguration(configOptions);
-            const dir =
-              (config.system.unmergedDictionariesDir as string | undefined) ??
-              projectDir;
-
-            const files = existsSync(dir)
-              ? readdirSync(dir)
-                  .filter((f) => extname(f) === ".json")
-                  .sort()
-              : [];
-
-            // FILTER: Skip project if it has no .content (empty dictionary files)
-            if (files.length === 0) {
-              continue;
-            }
-
-            // derive label from package.json name or fallback to directory name
-            let label = basename(projectDir);
-            try {
-              const pkg = JSON.parse(
-                readFileSync(join(projectDir, "package.json"), "utf8"),
+        // If multiple projects exist, show only the one matching the active file
+        const allRoots = uniqueRoots;
+        let wasFiltered = false;
+        if (uniqueRoots.length > 1) {
+          const activeProjectRoot = findProjectRoot();
+          if (activeProjectRoot) {
+            const normalizedActive = resolve(activeProjectRoot);
+            const filtered = uniqueRoots.filter((r) => {
+              const normalizedRoot = resolve(r);
+              return (
+                normalizedRoot === normalizedActive ||
+                normalizedRoot.startsWith(normalizedActive + sep) ||
+                normalizedActive.startsWith(normalizedRoot + sep)
               );
-              if (pkg?.name && typeof pkg.name === "string") {
-                label = pkg.name;
-              }
-            } catch {}
-
-            envs.push({ projectDir, dir, files, label });
-          } catch {
-            // If configuration loading fails, skip this project
+            });
+            if (filtered.length > 0) {
+              uniqueRoots = filtered;
+              wasFiltered = true;
+            }
           }
         }
+
+        const buildEnvs = async (roots: string[]) => {
+          const result: {
+            projectDir: string;
+            dir: string;
+            files: string[];
+            label: string;
+          }[] = [];
+
+          for (const projectDir of roots) {
+            try {
+              const configOptions = await getConfigurationOptions(
+                projectDir,
+                false,
+              );
+              const config = getConfiguration(configOptions);
+              const dir =
+                (config.system.unmergedDictionariesDir as string | undefined) ??
+                projectDir;
+
+              const files = existsSync(dir)
+                ? readdirSync(dir)
+                    .filter((f) => extname(f) === ".json")
+                    .sort()
+                : [];
+
+              // FILTER: Skip project if it has no .content (empty dictionary files)
+              if (files.length === 0) {
+                continue;
+              }
+
+              // derive label from package.json name or fallback to directory name
+              let label = basename(projectDir);
+              try {
+                const pkg = JSON.parse(
+                  readFileSync(join(projectDir, "package.json"), "utf8"),
+                );
+                if (pkg?.name && typeof pkg.name === "string") {
+                  label = pkg.name;
+                }
+              } catch {}
+
+              result.push({ projectDir, dir, files, label });
+            } catch {
+              // If configuration loading fails, skip this project
+            }
+          }
+          return result;
+        };
+
+        let envs = await buildEnvs(uniqueRoots);
+
+        // If the active-project filter yielded nothing, fall back to all projects
+        if (envs.length === 0 && wasFiltered) {
+          envs = await buildEnvs(allRoots);
+        }
+
         this.cachedEnvironments = envs;
 
         // Always return environments as roots (keep grouping by project)
