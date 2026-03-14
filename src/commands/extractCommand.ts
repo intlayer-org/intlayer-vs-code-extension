@@ -36,7 +36,7 @@ export const extractCommand = async (resource?: Uri) => {
 
   if (!output) {
     window.showErrorMessage(
-      `No output configuration found. Add a 'compiler.output' in your configuration.`,
+      `No output configuration found. Add a 'compiler.output' in your configuration, and restart the extension.`,
     );
 
     return;
