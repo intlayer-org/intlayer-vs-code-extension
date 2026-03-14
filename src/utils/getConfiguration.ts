@@ -64,6 +64,14 @@ export const getConfigurationOptionsSync = (
   return configOptions;
 };
 
+export const clearConfigurationCache = (projectDir: string): void => {
+  for (const key of envCache.keys()) {
+    if (key.startsWith(`${projectDir}:`)) {
+      envCache.delete(key);
+    }
+  }
+};
+
 export const getConfigurationOptions = async (
   projectDir: string,
   logEnvFileName: boolean = true,

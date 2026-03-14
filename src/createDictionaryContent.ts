@@ -16,7 +16,10 @@ import {
   workspace,
 } from "vscode";
 import { findProjectRoot } from "./utils/findProjectRoot";
-import { getConfigurationOptions } from "./utils/getConfiguration";
+import {
+  clearConfigurationCache,
+  getConfigurationOptions,
+} from "./utils/getConfiguration";
 import { extractDictionaryInfo } from "@intlayer/babel";
 
 const getContentPosition = (content: string): Position => {
@@ -61,8 +64,9 @@ export const generateDictionaryContent = async (
   const { output } = configuration.compiler;
 
   if (!output) {
+    clearConfigurationCache(projectDir);
     window.showErrorMessage(
-      `No output configuration found. Add a 'compiler.output' in your configuration, and restart the extension.`,
+      `No output configuration found. Add a 'compiler.output' in your configuration, then retry.`,
     );
 
     return;

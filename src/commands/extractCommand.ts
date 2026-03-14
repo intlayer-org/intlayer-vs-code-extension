@@ -11,7 +11,10 @@ import {
 import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
 import { Uri, window, workspace, RelativePattern } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
-import { getConfigurationOptions } from "../utils/getConfiguration";
+import {
+  clearConfigurationCache,
+  getConfigurationOptions,
+} from "../utils/getConfiguration";
 
 export const extractCommand = async (resource?: Uri) => {
   let projectDir = findProjectRoot(resource?.fsPath);
@@ -35,8 +38,9 @@ export const extractCommand = async (resource?: Uri) => {
   const { output } = configuration.compiler;
 
   if (!output) {
+    clearConfigurationCache(projectDir);
     window.showErrorMessage(
-      `No output configuration found. Add a 'compiler.output' in your configuration, and restart the extension.`,
+      `No output configuration found. Add a 'compiler.output' in your configuration, then retry.`,
     );
 
     return;
