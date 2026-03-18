@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.3.3",
+  "version": "8.4.0",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -303,16 +303,16 @@
   "devDependencies": {
     "@babel/parser": "7.29.0",
     "@biomejs/biome": "2.4.7",
-    "@intlayer/api": "^8.3.2",
-    "@intlayer/babel": "^8.3.2",
-    "@intlayer/chokidar": "^8.3.2",
-    "@intlayer/cli": "^8.3.2",
-    "@intlayer/config": "^8.3.2",
-    "@intlayer/core": "^8.3.2",
-    "@intlayer/svelte-compiler": "^8.3.2",
-    "@intlayer/types": "^8.3.2",
-    "@intlayer/unmerged-dictionaries-entry": "^8.3.2",
-    "@intlayer/vue-compiler": "^8.3.2",
+    "@intlayer/api": "^8.4.0",
+    "@intlayer/babel": "^8.4.0",
+    "@intlayer/chokidar": "^8.4.0",
+    "@intlayer/cli": "^8.4.0",
+    "@intlayer/config": "^8.4.0",
+    "@intlayer/core": "^8.4.0",
+    "@intlayer/svelte-compiler": "^8.4.0",
+    "@intlayer/types": "^8.4.0",
+    "@intlayer/unmerged-dictionaries-entry": "^8.4.0",
+    "@intlayer/vue-compiler": "^8.4.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.5.0",
     "@types/vscode": "^1.96.0",
