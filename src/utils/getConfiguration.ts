@@ -61,6 +61,19 @@ export const getConfigurationOptionsSync = (
     require: projectRequire,
   };
 
+  // Try to use the project's own esbuild instance (which has the correct
+  // platform-specific binary). This fixes config loading on Windows when the
+  // extension was built on macOS and only ships the darwin binary.
+  // buildOptions.esbuildInstance is available in @intlayer/config >= 8.4.2
+  try {
+    const projectEsbuild = projectRequire("esbuild");
+    (configOptions as Record<string, unknown>).buildOptions = {
+      esbuildInstance: projectEsbuild,
+    };
+  } catch {
+    // Project doesn't have esbuild — fall back to the extension's bundled binary
+  }
+
   return configOptions;
 };
 
@@ -120,6 +133,19 @@ export const getConfigurationOptions = async (
     require: projectRequire,
     cache: false,
   };
+
+  // Try to use the project's own esbuild instance (which has the correct
+  // platform-specific binary). This fixes config loading on Windows when the
+  // extension was built on macOS and only ships the darwin binary.
+  // buildOptions.esbuildInstance is available in @intlayer/config >= 8.4.2
+  try {
+    const projectEsbuild = projectRequire("esbuild");
+    (configOptions as Record<string, unknown>).buildOptions = {
+      esbuildInstance: projectEsbuild,
+    };
+  } catch {
+    // Project doesn't have esbuild — fall back to the extension's bundled binary
+  }
 
   return configOptions;
 };

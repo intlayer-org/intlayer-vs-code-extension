@@ -7,10 +7,10 @@ const rootPathCache = new Map<string, string | undefined>();
 
 const getActiveFilePath = () => {
   const activeFile = window.activeTextEditor?.document.uri.fsPath;
-  if (!activeFile) {
-    return undefined;
+
+  if (activeFile) {
+    return activeFile;
   }
-  return activeFile;
 };
 
 /**
@@ -38,10 +38,12 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
     currentDir !== dirname(currentDir) &&
     currentDir.length >= (repoDir?.length ?? 0)
   ) {
-    // OPTIMIZATION: If we hit a parent folder we've already calculated, reuse it
+    // If we hit a parent folder we've already calculated, reuse it
     if (rootPathCache.has(currentDir)) {
       const cachedRoot = rootPathCache.get(currentDir);
+
       rootPathCache.set(originalStartDir, cachedRoot);
+
       return cachedRoot;
     }
 
@@ -81,7 +83,7 @@ export const findAllProjectRoots = async (): Promise<string[]> => {
   // Use VS Code's internal search. Excludes **/node_modules/** by default or via settings.
   const packageJsonUris = await workspace.findFiles(
     "**/package.json",
-    "**/node_modules/**" // Explicit exclude pattern for extra safety
+    "**/node_modules/**", // Explicit exclude pattern for extra safety
   );
 
   const roots: string[] = [];
