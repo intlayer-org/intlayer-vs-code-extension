@@ -72,7 +72,7 @@ export const activate = (context: ExtensionContext) => {
   // Allows Cmd+Click on content keys
   context.subscriptions.push(
     languages.registerDefinitionProvider(
-      selector, // <--- FIXED: Now uses the full selector (including .tsx/.jsx)
+      selector,
       intlayerContentDefinitionProvider,
     ),
   );

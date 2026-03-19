@@ -1,5 +1,8 @@
 import { promises as fs, constants } from "node:fs";
-import { getConfiguration } from "@intlayer/config/node";
+import {
+  getConfiguration,
+  searchConfigurationFile,
+} from "@intlayer/config/node";
 import type { IntlayerConfig, Dictionary } from "@intlayer/types";
 import { getConfigurationOptions } from "./getConfiguration";
 
@@ -7,14 +10,12 @@ import { getConfigurationOptions } from "./getConfiguration";
 let configCache: {
   path: string;
   data: IntlayerConfig;
-  lastCheck: number;
+  mtime: number;
 } | null = null;
 const dictionaryCache = new Map<
   string,
   { mtime: number; data: Dictionary[] }
 >();
-
-const CACHE_TTL = 2000; // Only check for config updates every 2 seconds
 
 /**
  * Loads configuration with caching.
@@ -23,13 +24,24 @@ const CACHE_TTL = 2000; // Only check for config updates every 2 seconds
 export const getCachedConfig = async (
   projectDir: string,
 ): Promise<IntlayerConfig> => {
-  const now = Date.now();
+  let mtime = 0;
 
-  // Return cached config if fresh
+  try {
+    const searchResult = searchConfigurationFile(projectDir);
+    if (searchResult?.configurationFilePath) {
+      await fs.access(searchResult.configurationFilePath, constants.F_OK);
+      const stats = await fs.stat(searchResult.configurationFilePath);
+      mtime = stats.mtimeMs;
+    }
+  } catch {
+    // If file doesn't exist or stat fails, ignore and proceed
+  }
+
+  // Return cached config if it exists and hasn't changed
   if (
     configCache &&
     configCache.path === projectDir &&
-    now - configCache.lastCheck < CACHE_TTL
+    configCache.mtime === mtime
   ) {
     return configCache.data;
   }
@@ -41,7 +53,7 @@ export const getCachedConfig = async (
   configCache = {
     path: projectDir,
     data: config,
-    lastCheck: now,
+    mtime,
   };
 
   return config;
