@@ -152,8 +152,8 @@ export const activate = (context: ExtensionContext) => {
 
   // When the tree view becomes visible, reveal the last pending node selection
   context.subscriptions.push(
-    treeView.onDidChangeVisibility(async (e) => {
-      if (e.visible && pendingRevealNode) {
+    treeView.onDidChangeVisibility(async (element) => {
+      if (element.visible && pendingRevealNode) {
         try {
           await treeView.reveal(pendingRevealNode as any, {
             select: true,
@@ -180,7 +180,7 @@ export const activate = (context: ExtensionContext) => {
 
   // Reveal currently active editor if it matches an unmerged dictionary file path
   const activeEditorDisposable = window.onDidChangeActiveTextEditor(
-    async (ed) => {
+    async (editorDisposable) => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
@@ -188,18 +188,22 @@ export const activate = (context: ExtensionContext) => {
       // Debounce: Wait 500ms before querying file system / tree
       debounceTimer = setTimeout(async () => {
         try {
-          if (!ed) {
+          if (!editorDisposable) {
             return;
           }
+
           treeDataProvider.refresh();
           const node = await treeDataProvider.findFileNodeByAbsolutePath(
-            ed.document.uri.fsPath,
+            editorDisposable.document.uri.fsPath,
           );
+
           if (!node) {
             return;
           }
+
           // Store the intended selection and only reveal if the view is already visible
           pendingRevealNode = node;
+
           if (treeView.visible) {
             await treeView.reveal(node, {
               select: true,

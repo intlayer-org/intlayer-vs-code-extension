@@ -35,7 +35,7 @@ export const buildDictionaryList = async (filePaths?: string[]) => {
 
       const updatedDictionaries = Object.values(
         dictionariesOutput?.mergedDictionaries ?? {},
-      ).map((dictionary) => dictionary.dictionary);
+      ).map((dictionaryElement) => dictionaryElement.dictionary);
 
       await createTypes(updatedDictionaries, config);
 
