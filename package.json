@@ -33,7 +33,7 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.4.0",
+  "version": "8.4.1",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -285,6 +285,7 @@
   ],
   "scripts": {
     "pretest": "npm run compile && npm run lint",
+    "build": "vsce package",
     "vscode:package": "vsce package",
     "vscode:publish": "vsce publish",
     "check": "biome check .",
@@ -303,19 +304,19 @@
   "devDependencies": {
     "@babel/parser": "7.29.2",
     "@biomejs/biome": "2.4.8",
-    "@intlayer/api": "^8.4.0",
-    "@intlayer/babel": "^8.4.0",
-    "@intlayer/chokidar": "^8.4.0",
-    "@intlayer/cli": "^8.4.0",
-    "@intlayer/config": "^8.4.0",
-    "@intlayer/core": "^8.4.0",
-    "@intlayer/svelte-compiler": "^8.4.0",
-    "@intlayer/types": "^8.4.0",
-    "@intlayer/unmerged-dictionaries-entry": "^8.4.0",
-    "@intlayer/vue-compiler": "^8.4.0",
+    "@intlayer/api": "^8.4.1",
+    "@intlayer/babel": "^8.4.1",
+    "@intlayer/chokidar": "^8.4.1",
+    "@intlayer/cli": "^8.4.1",
+    "@intlayer/config": "^8.4.1",
+    "@intlayer/core": "^8.4.1",
+    "@intlayer/svelte-compiler": "^8.4.1",
+    "@intlayer/types": "^8.4.1",
+    "@intlayer/unmerged-dictionaries-entry": "^8.4.1",
+    "@intlayer/vue-compiler": "^8.4.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.5.0",
-    "@types/vscode": "^1.110.0",
+    "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
     "@vscode/test-cli": "^0.0.12",
