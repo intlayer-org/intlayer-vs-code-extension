@@ -45,6 +45,7 @@ export default defineConfig({
   clean: true,
   platform: "node",
   minify: true,
+  treeshake: true,
   sourcemap: false,
 
   deps: {
