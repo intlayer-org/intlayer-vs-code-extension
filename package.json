@@ -12,6 +12,7 @@
     "internationalization",
     "vscode"
   ],
+  "version": "8.4.4",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -33,7 +34,6 @@
       "url": "https://github.com/aymericzip"
     }
   ],
-  "version": "8.4.2",
   "categories": [
     "Programming Languages",
     "Formatters"
@@ -304,16 +304,16 @@
   "devDependencies": {
     "@babel/parser": "7.29.2",
     "@biomejs/biome": "2.4.8",
-    "@intlayer/api": "^8.4.2",
-    "@intlayer/babel": "^8.4.2",
-    "@intlayer/chokidar": "^8.4.2",
-    "@intlayer/cli": "^8.4.2",
-    "@intlayer/config": "^8.4.2",
-    "@intlayer/core": "^8.4.2",
-    "@intlayer/svelte-compiler": "^8.4.2",
-    "@intlayer/types": "^8.4.2",
-    "@intlayer/unmerged-dictionaries-entry": "^8.4.2",
-    "@intlayer/vue-compiler": "^8.4.2",
+    "@intlayer/api": "^8.4.4",
+    "@intlayer/babel": "^8.4.4",
+    "@intlayer/chokidar": "^8.4.4",
+    "@intlayer/cli": "^8.4.4",
+    "@intlayer/config": "^8.4.4",
+    "@intlayer/core": "^8.4.4",
+    "@intlayer/svelte-compiler": "^8.4.4",
+    "@intlayer/types": "^8.4.4",
+    "@intlayer/unmerged-dictionaries-entry": "^8.4.4",
+    "@intlayer/vue-compiler": "^8.4.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.5.0",
     "@types/vscode": "^1.96.0",

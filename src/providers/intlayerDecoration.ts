@@ -1,5 +1,5 @@
 import { dirname, extname, join } from "node:path";
-import { DefaultValues } from "@intlayer/config/client";
+import { DEFAULT_LOCALE } from "@intlayer/config/defaultValues";
 import { parse as babelParse } from "@babel/parser";
 import {
   type DecorationOptions,
@@ -168,8 +168,7 @@ const updateDecorations = async (editor: TextEditor) => {
 
   const config = await getCachedConfig(projectDir);
   const defaultLocale =
-    config.internationalization?.defaultLocale ||
-    DefaultValues.Internationalization.DEFAULT_LOCALE;
+    config.internationalization?.defaultLocale || DEFAULT_LOCALE;
 
   const scriptContent = extractScriptContent(document.getText(), extension);
 
