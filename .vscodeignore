@@ -15,7 +15,6 @@ node_modules/**
 !node_modules/@esbuild/**
 !node_modules/picocolors/**
 !node_modules/@babel/parser/**
-!node_modules/defu/**
 
 src/**
 !dist/**

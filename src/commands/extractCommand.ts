@@ -10,18 +10,26 @@ import {
 } from "@intlayer/config/node";
 import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
 import { Uri, window, workspace, RelativePattern } from "vscode";
-import { findProjectRoot } from "../utils/findProjectRoot";
+import { findProjectRoot, findAllProjectRoots } from "../utils/findProjectRoot";
 import {
   clearConfigurationCache,
   getConfigurationOptions,
 } from "../utils/getConfiguration";
 
 export const extractCommand = async (resource?: Uri) => {
+  // Resolve project root: prefer the resource URI, then the active editor, then ask the user.
   let projectDir = findProjectRoot(resource?.fsPath);
 
   if (!projectDir) {
-    if (workspace.workspaceFolders && workspace.workspaceFolders.length === 1) {
-      projectDir = workspace.workspaceFolders[0].uri.fsPath;
+    const roots = await findAllProjectRoots();
+    if (roots.length === 1) {
+      projectDir = roots[0];
+    } else if (roots.length > 1) {
+      const picked = await window.showQuickPick(roots, {
+        placeHolder: "Select the Intlayer project to extract from",
+      });
+      if (!picked) return;
+      projectDir = picked;
     } else {
       window.showErrorMessage("Intlayer project root not found.");
       return;

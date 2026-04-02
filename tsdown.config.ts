@@ -60,7 +60,6 @@ export default defineConfig({
       "vscode",
       "esbuild",
       "picocolors",
-      "defu",
       "fsevents",
       "node:fs",
       "node:path",

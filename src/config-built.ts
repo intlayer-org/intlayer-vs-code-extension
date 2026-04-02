@@ -66,6 +66,19 @@ const configJSON = new Proxy(
       return config?.[prop];
     },
   },
-);
+) as any;
+
+export const internationalization = configJSON.internationalization;
+export const dictionary = configJSON.dictionary;
+export const routing = configJSON.routing;
+export const content = configJSON.content;
+export const system = configJSON.system;
+export const editor = configJSON.editor;
+export const log = configJSON.log;
+export const ai = configJSON.ai;
+export const build = configJSON.build;
+export const compiler = configJSON.compiler;
+export const schemas = configJSON.schemas;
+export const plugins = configJSON.plugins;
 
 export default configJSON;
