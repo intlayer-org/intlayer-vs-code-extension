@@ -196,6 +196,17 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
 
   try {
     const config = await getCachedConfig(projectDir);
+
+    const filePath = document.uri.fsPath;
+    if (
+      !config.content.fileExtensions.some((extension) =>
+        filePath.endsWith(extension),
+      )
+    ) {
+      // It's not a content file
+      return;
+    }
+
     const dictionaryJsonPath = join(
       config.system.unmergedDictionariesDir,
       `${dictionaryKey}.json`,
