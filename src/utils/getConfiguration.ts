@@ -37,7 +37,7 @@ const checkConfigFileForEnvUsage = (projectDir: string): boolean => {
         return true;
       }
     }
-  } catch (error) {
+  } catch {
     // If search or read fails, assume false
     return false;
   }

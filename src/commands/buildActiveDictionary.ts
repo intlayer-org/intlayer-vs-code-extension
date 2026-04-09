@@ -19,7 +19,9 @@ export const buildDictionaryList = async (filePaths?: string[]) => {
     const projectDir = findProjectRoot(filePath[0]);
 
     if (!projectDir) {
-      window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+      await window.showErrorMessage(
+        `${prefix}Could not find intlayer project root.`,
+      );
       return;
     }
 
@@ -40,11 +42,11 @@ export const buildDictionaryList = async (filePaths?: string[]) => {
       await createTypes(updatedDictionaries, config);
 
       const fileName = basename(filePath);
-      window.showInformationMessage(
+      await window.showInformationMessage(
         `${prefix}Build completed successfully for ${fileName}`,
       );
     } catch (error) {
-      window.showErrorMessage(
+      await window.showErrorMessage(
         `${prefix} single-dictionary build failed: ${(error as Error).message}`,
       );
     }

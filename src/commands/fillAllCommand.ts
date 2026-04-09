@@ -21,7 +21,9 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
       if (!picked) return;
       projectDir = picked;
     } else {
-      window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+      await window.showErrorMessage(
+        `${prefix}Could not find intlayer project root.`,
+      );
       return;
     }
   }
@@ -56,7 +58,7 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
 
       // Place the preselected item(s) at the top of the list
       quickPickItems.sort((a, b) =>
-        a.picked === b.picked ? 0 : a.picked ? -1 : 1
+        a.picked === b.picked ? 0 : a.picked ? -1 : 1,
       );
 
       const selectedDictionaries = await window.showQuickPick(quickPickItems, {
@@ -73,7 +75,7 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
     }
 
     for (const dictionary of selectedDictionariesPath) {
-      window.showInformationMessage(`${prefix}Filling ${dictionary}…`);
+      await window.showInformationMessage(`${prefix}Filling ${dictionary}…`);
 
       await fill({
         configOptions,
@@ -81,10 +83,12 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
       });
     }
 
-    window.showInformationMessage(`${prefix} fill completed successfully!`);
+    await window.showInformationMessage(
+      `${prefix} fill completed successfully!`,
+    );
   } catch (error) {
-    window.showErrorMessage(
-      `${prefix} fill failed: ${(error as Error).message}`
+    await window.showErrorMessage(
+      `${prefix} fill failed: ${(error as Error).message}`,
     );
   }
 };

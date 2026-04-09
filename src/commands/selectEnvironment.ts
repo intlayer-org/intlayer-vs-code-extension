@@ -72,7 +72,7 @@ export const selectEnvironment = async (
   }
 
   if (!projectDir) {
-    window.showErrorMessage(`${prefix}No project directory selected.`);
+    await window.showErrorMessage(`${prefix}No project directory selected.`);
     return;
   }
 
@@ -95,7 +95,7 @@ export const selectEnvironment = async (
   await setSelectedEnvironment(projectDir, pickedEnv.label);
 
   const projectName = basename(projectDir);
-  window.showInformationMessage(
+  await window.showInformationMessage(
     `${prefix}Environment set to "${pickedEnv.label}" for ${projectName}`,
   );
 

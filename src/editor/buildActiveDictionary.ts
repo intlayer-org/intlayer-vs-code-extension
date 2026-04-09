@@ -14,7 +14,7 @@ export const buildActiveDictionary = async () => {
   const editor = window.activeTextEditor;
 
   if (!editor) {
-    window.showErrorMessage(
+    await window.showErrorMessage(
       `${prefix}No active editor. Open a content declaration file.`,
     );
     return;
@@ -24,7 +24,9 @@ export const buildActiveDictionary = async () => {
   const projectDir = findProjectRoot(filePath);
 
   if (!projectDir) {
-    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+    await window.showErrorMessage(
+      `${prefix}Could not find intlayer project root.`,
+    );
     return;
   }
 
@@ -45,11 +47,11 @@ export const buildActiveDictionary = async () => {
     await createTypes(updatedDictionaries, config);
 
     const fileName = basename(filePath);
-    window.showInformationMessage(
+    await window.showInformationMessage(
       `${prefix}Build completed successfully for ${fileName}`,
     );
   } catch (error) {
-    window.showErrorMessage(
+    await window.showErrorMessage(
       `${prefix} single-dictionary build failed: ${(error as Error).message}`,
     );
   }

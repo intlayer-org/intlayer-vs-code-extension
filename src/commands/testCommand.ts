@@ -6,7 +6,7 @@ import { prefix } from "../utils/logFunctions";
 
 // Helper to pretty-print details into a temporary editor document
 const writeMissingReport = async (
-  result: Awaited<ReturnType<typeof listMissingTranslations>>
+  result: Awaited<ReturnType<typeof listMissingTranslations>>,
 ) => {
   const lines: string[] = [];
   lines.push("## Intlayer — Missing Translations Report");
@@ -14,14 +14,14 @@ const writeMissingReport = async (
   lines.push(
     `- Missing locales (any): ${
       result.missingLocales.length ? result.missingLocales.join(", ") : "—"
-    }`
+    }`,
   );
   lines.push(
     `- Missing required locales: ${
       result.missingRequiredLocales.length
         ? result.missingRequiredLocales.join(", ")
         : "—"
-    }`
+    }`,
   );
   lines.push("");
 
@@ -29,7 +29,7 @@ const writeMissingReport = async (
     lines.push("✔ No missing translation keys found.");
   } else {
     lines.push(
-      `⚠ ${result.missingTranslations.length} missing translation key(s):`
+      `⚠ ${result.missingTranslations.length} missing translation key(s):`,
     );
     lines.push("");
     for (const item of result.missingTranslations) {
@@ -62,7 +62,9 @@ export const testCommand = async () => {
       if (!picked) return;
       projectDir = picked;
     } else {
-      window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+      await window.showErrorMessage(
+        `${prefix}Could not find intlayer project root.`,
+      );
       return;
     }
   }
@@ -78,11 +80,13 @@ export const testCommand = async () => {
     if (hasIssues) {
       await writeMissingReport(result);
     } else {
-      window.showInformationMessage(`${prefix}No missing translations found.`);
+      await window.showInformationMessage(
+        `${prefix}No missing translations found.`,
+      );
     }
   } catch (error) {
-    window.showErrorMessage(
-      `${prefix} test failed: ${(error as Error).message}`
+    await window.showErrorMessage(
+      `${prefix} test failed: ${(error as Error).message}`,
     );
   }
 };

@@ -21,12 +21,14 @@ export const pullCommand = async () => {
       if (!picked) return;
       projectDir = picked;
     } else {
-      window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+      await window.showErrorMessage(
+        `${prefix}Could not find intlayer project root.`,
+      );
       return;
     }
   }
 
-  window.showInformationMessage(`${prefix}Fetching dictionaries...`);
+  await window.showInformationMessage(`${prefix}Fetching dictionaries...`);
 
   try {
     const configOptions = await getConfigurationOptions(projectDir);
@@ -71,16 +73,18 @@ export const pullCommand = async () => {
       return;
     }
 
-    window.showInformationMessage(`${prefix}Pulling...`);
+    await window.showInformationMessage(`${prefix}Pulling...`);
 
     await pull({
       configOptions,
       dictionaries: selectedDictionaries.map((d) => d.label),
     });
 
-    window.showInformationMessage(`${prefix} pull completed successfully!`);
+    await window.showInformationMessage(
+      `${prefix} pull completed successfully!`,
+    );
   } catch (error) {
-    window.showErrorMessage(
+    await window.showErrorMessage(
       `${prefix} pull failed: ${(error as Error).message}`,
     );
   }

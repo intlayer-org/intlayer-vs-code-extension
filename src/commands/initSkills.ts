@@ -32,7 +32,7 @@ export const initSkills = async () => {
   const root = findProjectRoot();
 
   if (!root) {
-    window.showErrorMessage("Could not find project root.");
+    await window.showErrorMessage("Could not find project root.");
     return;
   }
 
@@ -112,11 +112,13 @@ export const initSkills = async () => {
           selectedSkills.map((skill) => skill.value),
         );
 
-        window.showInformationMessage(
+        await window.showInformationMessage(
           `Skills installed successfully: ${formatResult(result)}`,
         );
       } catch (error) {
-        window.showErrorMessage(`Failed to install skills: ${String(error)}`);
+        await window.showErrorMessage(
+          `Failed to install skills: ${String(error)}`,
+        );
 
         process.chdir(originalCwd);
       }

@@ -14,14 +14,16 @@ export const pullDictionary = async (element?: unknown) => {
   // Pull can only be made for merged dictionaries (dictionary nodes without filePath)
   if (!node || node.type !== "dictionary" || !node.projectDir || !node.key) {
     window.showWarningMessage(
-      `${prefix}Pull is only available for merged dictionaries.`
+      `${prefix}Pull is only available for merged dictionaries.`,
     );
     return;
   }
 
   const projectDir = findProjectRoot();
   if (!projectDir) {
-    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+    await window.showErrorMessage(
+      `${prefix}Could not find intlayer project root.`,
+    );
     return;
   }
 
@@ -29,16 +31,16 @@ export const pullDictionary = async (element?: unknown) => {
     const displayName = node.key;
     const configOptions = await getConfigurationOptions(projectDir);
 
-    window.showInformationMessage(`${prefix}Pulling ${displayName}…`);
+    await window.showInformationMessage(`${prefix}Pulling ${displayName}…`);
     await pull({
       configOptions,
       dictionaries: [node.key],
     });
 
-    window.showInformationMessage(`${prefix}Pulled ${displayName}`);
+    await window.showInformationMessage(`${prefix}Pulled ${displayName}`);
   } catch (error) {
-    window.showErrorMessage(
-      `${prefix}Pull failed: ${(error as Error).message}`
+    await window.showErrorMessage(
+      `${prefix}Pull failed: ${(error as Error).message}`,
     );
   }
 };

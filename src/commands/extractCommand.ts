@@ -15,6 +15,7 @@ import {
   clearConfigurationCache,
   getConfigurationOptions,
 } from "../utils/getConfiguration";
+import { clearIntlayerConfigCache } from "../utils/intlayerCache";
 
 export const extractCommand = async (resource?: Uri) => {
   // Resolve project root: prefer the resource URI, then the active editor, then ask the user.
@@ -31,7 +32,7 @@ export const extractCommand = async (resource?: Uri) => {
       if (!picked) return;
       projectDir = picked;
     } else {
-      window.showErrorMessage("Intlayer project root not found.");
+      await window.showErrorMessage("Intlayer project root not found.");
       return;
     }
   }
@@ -47,9 +48,17 @@ export const extractCommand = async (resource?: Uri) => {
 
   if (!output) {
     clearConfigurationCache(projectDir);
-    window.showErrorMessage(
+    clearIntlayerConfigCache();
+
+    const action = await window.showErrorMessage(
       `No output configuration found. Add a 'compiler.output' in your configuration, then retry.`,
+      "Retry",
     );
+
+    // Restart the command if the user clicks "Retry"
+    if (action === "Retry") {
+      return extractCommand(resource);
+    }
 
     return;
   }
@@ -144,7 +153,7 @@ export const extractCommand = async (resource?: Uri) => {
     });
 
     if (items.length === 0) {
-      window.showInformationMessage(
+      await window.showInformationMessage(
         "No transformable files found in the project.",
       );
       return;
@@ -203,7 +212,7 @@ export const extractCommand = async (resource?: Uri) => {
       `Completed with ${errorCount} errors. Check the debug console for details.`,
     );
   } else {
-    window.showInformationMessage(
+    await window.showInformationMessage(
       `Successfully extracted content from ${filesToTransform.length} files.`,
     );
   }

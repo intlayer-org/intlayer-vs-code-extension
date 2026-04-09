@@ -38,7 +38,7 @@ export const loadEnvFromWorkspace = async (
         const projectName = basename(baseDir);
 
         if (!hasLogged) {
-          window.showInformationMessage(
+          await window.showInformationMessage(
             `${prefix}Loaded env from ${candidate} in ${projectName}`,
           );
 

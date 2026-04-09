@@ -59,6 +59,10 @@ export const getCachedConfig = async (
   return config;
 };
 
+export const clearIntlayerConfigCache = (): void => {
+  configCache = null;
+};
+
 /**
  * Loads a dictionary file with caching and async I/O.
  * Shared between Hover and Definition providers.

@@ -15,31 +15,33 @@ export const fillDictionary = async (element?: unknown) => {
   // Fill can only be made for unmerged dictionaries (file nodes with filePath)
   if (!node || node.type !== "file" || !node.projectDir || !node.filePath) {
     window.showWarningMessage(
-      `${prefix}Fill is only available for unmerged dictionary files.`
+      `${prefix}Fill is only available for unmerged dictionary files.`,
     );
     return;
   }
 
   const projectDir = findProjectRoot();
   if (!projectDir) {
-    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+    await window.showErrorMessage(
+      `${prefix}Could not find intlayer project root.`,
+    );
     return;
   }
 
   try {
     const configOptions = await getConfigurationOptions(projectDir);
 
-    window.showInformationMessage(
-      `${prefix}Filling ${dirname(node.filePath)}…`
+    await window.showInformationMessage(
+      `${prefix}Filling ${dirname(node.filePath)}…`,
     );
     await fill({
       configOptions,
       file: node.filePath,
     });
-    window.showInformationMessage(`${prefix}Filled ${node.filePath}`);
+    await window.showInformationMessage(`${prefix}Filled ${node.filePath}`);
   } catch (error) {
-    window.showErrorMessage(
-      `${prefix}Fill failed: ${(error as Error).message}`
+    await window.showErrorMessage(
+      `${prefix}Fill failed: ${(error as Error).message}`,
     );
   }
 };

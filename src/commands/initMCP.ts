@@ -27,7 +27,7 @@ export const initMCP = async () => {
   const root = findProjectRoot();
 
   if (!root) {
-    window.showErrorMessage("Could not find project root.");
+    await window.showErrorMessage("Could not find project root.");
     return;
   }
 
@@ -90,11 +90,11 @@ export const initMCP = async () => {
           selectedTransport.value,
         );
 
-        window.showInformationMessage(
+        await window.showInformationMessage(
           `MCP Server configured successfully: ${formatResult(result)}`,
         );
       } catch (error) {
-        window.showErrorMessage(
+        await window.showErrorMessage(
           `Failed to configure MCP Server: ${String(error)}`,
         );
       }

@@ -8,8 +8,8 @@ import { prefix } from "../utils/logFunctions";
 export const fillActiveDictionary = async () => {
   const editor = window.activeTextEditor;
   if (!editor) {
-    window.showErrorMessage(
-      `${prefix}No active editor. Open a content declaration file.`
+    await window.showErrorMessage(
+      `${prefix}No active editor. Open a content declaration file.`,
     );
     return;
   }
@@ -18,7 +18,9 @@ export const fillActiveDictionary = async () => {
   const projectDir = findProjectRoot(filePath);
 
   if (!projectDir) {
-    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+    await window.showErrorMessage(
+      `${prefix}Could not find intlayer project root.`,
+    );
     return;
   }
 
@@ -30,7 +32,7 @@ export const fillActiveDictionary = async () => {
   });
 
   const fileName = basename(filePath);
-  window.showInformationMessage(
-    `${prefix}Fill completed successfully for ${fileName}`
+  await window.showInformationMessage(
+    `${prefix}Fill completed successfully for ${fileName}`,
   );
 };

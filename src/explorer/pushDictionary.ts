@@ -25,7 +25,9 @@ export const pushDictionary = async (element?: unknown) => {
 
   const projectDir = findProjectRoot();
   if (!projectDir) {
-    window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+    await window.showErrorMessage(
+      `${prefix}Could not find intlayer project root.`,
+    );
     return;
   }
 
@@ -39,7 +41,7 @@ export const pushDictionary = async (element?: unknown) => {
     );
 
     if (!dictionaryPath) {
-      window.showErrorMessage(`${prefix}Dictionary not found.`);
+      await window.showErrorMessage(`${prefix}Dictionary not found.`);
       return;
     }
 
@@ -48,14 +50,14 @@ export const pushDictionary = async (element?: unknown) => {
 
     const displayName = dictionary.key;
 
-    window.showInformationMessage(`${prefix}Pushing ${displayName}…`);
+    await window.showInformationMessage(`${prefix}Pushing ${displayName}…`);
     await push({
       configOptions,
       dictionaries: [dictionary.key],
     });
-    window.showInformationMessage(`${prefix}Pushed ${displayName}`);
+    await window.showInformationMessage(`${prefix}Pushed ${displayName}`);
   } catch (error) {
-    window.showErrorMessage(
+    await window.showErrorMessage(
       `${prefix}Push failed: ${(error as Error).message}`,
     );
   }

@@ -21,6 +21,7 @@ import {
   getConfigurationOptions,
 } from "./utils/getConfiguration";
 import { extractDictionaryInfo } from "@intlayer/babel";
+import { clearIntlayerConfigCache } from "./utils/intlayerCache";
 
 const getContentPosition = (content: string): Position => {
   const lines = content.split("\n");
@@ -47,14 +48,14 @@ export const generateDictionaryContent = async (
 ) => {
   const editor = window.activeTextEditor;
   if (!editor) {
-    window.showErrorMessage("No active text editor");
+    await window.showErrorMessage("No active text editor");
     return;
   }
 
   const projectDir = findProjectRoot();
 
   if (!projectDir) {
-    window.showErrorMessage(`Could not find intlayer project root.`);
+    await window.showErrorMessage(`Could not find intlayer project root.`);
     return;
   }
 
@@ -65,7 +66,9 @@ export const generateDictionaryContent = async (
 
   if (!output) {
     clearConfigurationCache(projectDir);
-    window.showErrorMessage(
+    clearIntlayerConfigCache();
+
+    await window.showErrorMessage(
       `No output configuration found. Add a 'compiler.output' in your configuration, then retry.`,
     );
 
@@ -122,7 +125,7 @@ export const generateDictionaryContent = async (
     console.error(error);
   }
 
-  window.showInformationMessage(`Dictionary created: ${relativePath}`);
+  await window.showInformationMessage(`Dictionary created: ${relativePath}`);
 
   // Open the newly created file in VS Code
   const document = await workspace.openTextDocument(absolutePath);

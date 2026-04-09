@@ -20,7 +20,9 @@ export const buildCommand = async () => {
       if (!picked) return;
       projectDir = picked;
     } else {
-      window.showErrorMessage(`${prefix}Could not find intlayer project root.`);
+      await window.showErrorMessage(
+        `${prefix}Could not find intlayer project root.`,
+      );
       return;
     }
   }
@@ -29,15 +31,15 @@ export const buildCommand = async () => {
     const configOptions = await getConfigurationOptions(projectDir);
     const configuration = getConfiguration(configOptions);
 
-    window.showInformationMessage(`${prefix}Building dictionaries...`);
+    await window.showInformationMessage(`${prefix}Building dictionaries...`);
     await prepareIntlayer(configuration);
 
     const projectName = basename(projectDir);
-    window.showInformationMessage(
+    await window.showInformationMessage(
       `${prefix}Build completed successfully in ${projectName}`,
     );
   } catch (error) {
-    window.showErrorMessage(
+    await window.showErrorMessage(
       `${prefix}Build failed: ${(error as Error).message}`,
     );
   }

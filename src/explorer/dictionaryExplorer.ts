@@ -303,7 +303,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
 
       return [];
     } catch (error) {
-      window.showErrorMessage(
+      await window.showErrorMessage(
         `Failed to load Intlayer dictionaries: ${(error as Error).message}`,
       );
       return [];
