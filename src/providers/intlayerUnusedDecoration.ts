@@ -197,6 +197,12 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
   try {
     const config = await getCachedConfig(projectDir);
 
+    if (config.compiler?.enabled && !config.compiler?.saveComponents) {
+      editor.setDecorations(strikeDecorationType, []);
+      editor.setDecorations(unusedTextDecorationType, []);
+      return;
+    }
+
     const filePath = document.uri.fsPath;
     if (
       !config.content.fileExtensions.some((extension) =>
