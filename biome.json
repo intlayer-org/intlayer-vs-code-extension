@@ -91,9 +91,9 @@
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double",
+      "quoteStyle": "single",
       "semicolons": "always",
-      "trailingCommas": "all",
+      "trailingCommas": "es5",
       "bracketSpacing": true,
       "bracketSameLine": false,
       "quoteProperties": "asNeeded",

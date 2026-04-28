@@ -62,6 +62,7 @@ export default defineConfig({
       "picocolors",
       "fsevents",
       "node:fs",
+      "node:fs/promises",
       "node:path",
       "node:module",
       "node:child_process",
@@ -72,6 +73,7 @@ export default defineConfig({
     "@intlayer/config/built": resolve("src/config-built.ts"),
     // Redirect alias to local if used directly in source
     "utils:asset": resolve("src/utils/assets.ts"),
+    "@vercel/oidc": resolve("src/utils/mock-oidc.ts"),
   },
 
   plugins: [
