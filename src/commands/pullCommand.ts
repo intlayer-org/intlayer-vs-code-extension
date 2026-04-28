@@ -6,6 +6,7 @@ import { window } from "vscode";
 import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
+import { FILE_EXTENSIONS } from "@intlayer/config/defaultValues";
 
 export const pullCommand = async () => {
   let projectDir = findProjectRoot();
@@ -49,13 +50,16 @@ export const pullCommand = async () => {
       ? activeEditor.document.uri.fsPath
       : undefined;
 
+    const fileExtensions =
+      configuration.content?.fileExtensions ?? FILE_EXTENSIONS;
+
     const quickPickItems = dictionariesKeys.map((dictionariesKey) => ({
       label: dictionariesKey,
       picked:
         !!activeFileName &&
-        (activeFileName.endsWith(`${dictionariesKey}.content.ts`) ||
-          activeFileName.endsWith(`${dictionariesKey}.content.js`) ||
-          activeFileName.endsWith(`${dictionariesKey}.content.json`)),
+        fileExtensions.some((ext) =>
+          activeFileName.endsWith(`${dictionariesKey}${ext}`),
+        ),
     }));
 
     // Place the preselected item(s) at the top of the list

@@ -1,3 +1,4 @@
+import { getConfiguration } from "@intlayer/config/node";
 import { commands, type ExtensionContext, languages, window } from "vscode";
 import { buildCommand } from "./commands/buildAllCommand";
 import { extractCommand } from "./commands/extractCommand";
@@ -25,6 +26,8 @@ import { intlayerHoverProvider } from "./providers/intlayerHoverProvider";
 import { intlayerUnusedDecorationProvider } from "./providers/intlayerUnusedDecoration";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { initializeEnvironmentStore } from "./utils/envStore";
+import { findProjectRoot } from "./utils/findProjectRoot";
+import { getConfigurationOptions } from "./utils/getConfiguration";
 
 export const activate = (context: ExtensionContext) => {
   initializeEnvironmentStore(context);
@@ -193,9 +196,33 @@ export const activate = (context: ExtensionContext) => {
             return;
           }
 
+          const activeFilePath = editorDisposable.document.uri.fsPath;
+          const projectRoot = findProjectRoot();
+          
+          if (projectRoot) {
+            const configOptions = await getConfigurationOptions(projectRoot, false);
+            const configuration = getConfiguration(configOptions);
+            const fileExtensions = configuration.content?.fileExtensions ?? [
+              ".content.ts",
+              ".content.tsx",
+              ".content.js",
+              ".content.cjs",
+              ".content.mjs",
+              ".content.json",
+            ];
+            
+            const isContentFile = fileExtensions.some((ext) =>
+              activeFilePath.endsWith(ext)
+            );
+            
+            if (!isContentFile) {
+              return;
+            }
+          }
+
           treeDataProvider.refresh();
           const node = await treeDataProvider.findFileNodeByAbsolutePath(
-            editorDisposable.document.uri.fsPath,
+            activeFilePath,
           );
 
           if (!node) {

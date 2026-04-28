@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { basename, extname, join, relative, resolve, sep } from "node:path";
 import { listProjects } from "@intlayer/chokidar/cli";
 import { getConfiguration } from "@intlayer/config/node";
@@ -51,6 +52,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
     this.changeEmitter.event;
 
   private searchQuery: string | undefined;
+  private forcedRevealJsonPath: string | undefined;
   private cachedEnvironments:
     | { projectDir: string; dir: string; files: string[]; label: string }[]
     | undefined;
@@ -76,6 +78,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
   async findFileNodeByAbsolutePath(
     absolutePath: string,
   ): Promise<IntlayerTreeNode | undefined> {
+    this.forcedRevealJsonPath = undefined;
     if (!this.cachedEnvironments) {
       await this.getChildren();
     }
@@ -95,6 +98,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
             .filter(Boolean)
             .some((d) => d.filePath === relPath);
           if (hasMatch) {
+            this.forcedRevealJsonPath = jsonPath;
             return {
               type: "file",
               filePath: relPath,
@@ -189,9 +193,11 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
               // derive label from package.json name or fallback to directory name
               let label = basename(projectDir);
               try {
-                const pkg = JSON.parse(
-                  readFileSync(join(projectDir, "package.json"), "utf8"),
+                const fileContent = await readFile(
+                  join(projectDir, "package.json"),
+                  "utf8",
                 );
+                const pkg = JSON.parse(fileContent);
                 if (pkg?.name && typeof pkg.name === "string") {
                   label = pkg.name;
                 }
@@ -236,6 +242,11 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
         if (this.searchQuery) {
           const lowered = this.searchQuery.toLowerCase();
           files = files.filter((file) => {
+            const jsonPath = join(env.dir, file);
+            if (this.forcedRevealJsonPath === jsonPath) {
+              return true;
+            }
+
             const key = basename(file, ".json").toLowerCase();
             if (key.includes(lowered)) {
               return true;
