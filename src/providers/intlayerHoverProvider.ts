@@ -1,10 +1,10 @@
-import { join, dirname } from "node:path";
+import { dirname, join } from "node:path";
+import { isValidElement } from "@intlayer/core/utils";
 import { Hover, type HoverProvider, MarkdownString, Uri } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
-import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
+import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 import { getValueFromPath } from "../utils/intlayerValueResolver";
-import { isValidElement } from "@intlayer/core/utils";
 
 export const intlayerHoverProvider: HoverProvider = {
   provideHover: async (document, position) => {

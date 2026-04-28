@@ -3,7 +3,7 @@ import { pull } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import type { Dictionary } from "@intlayer/types";
 import { window } from "vscode";
-import { findProjectRoot, findAllProjectRoots } from "../utils/findProjectRoot";
+import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 

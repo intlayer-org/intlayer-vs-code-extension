@@ -1,23 +1,23 @@
-import { Uri, workspace } from "vscode";
 import type {
   CancellationToken,
   WebviewView,
   WebviewViewProvider,
   WebviewViewResolveContext,
 } from "vscode";
+import { Uri, workspace } from "vscode";
 import type { DictionaryTreeDataProvider } from "./dictionaryExplorer";
 
 export class SearchBarViewProvider implements WebviewViewProvider {
   // 1. Accept extensionUri in constructor
   constructor(
     private readonly extensionUri: Uri,
-    private readonly treeDataProvider: DictionaryTreeDataProvider
+    private readonly treeDataProvider: DictionaryTreeDataProvider,
   ) {}
 
   resolveWebviewView(
     webviewView: WebviewView,
     _context: WebviewViewResolveContext,
-    _token: CancellationToken
+    _token: CancellationToken,
   ) {
     const webview = webviewView.webview;
     webview.options = { enableScripts: true };
@@ -28,7 +28,7 @@ export class SearchBarViewProvider implements WebviewViewProvider {
     const searchInputUri = Uri.joinPath(
       this.extensionUri,
       "dist",
-      "searchInput.html"
+      "searchInput.html",
     );
 
     // 3. Read file asynchronously using VS Code FS
@@ -38,13 +38,13 @@ export class SearchBarViewProvider implements WebviewViewProvider {
 
         webview.html = htmlContent.replace(
           "{{searchQuery}}",
-          this.treeDataProvider.getSearchQuery().replace(/"/g, "&quot;")
+          this.treeDataProvider.getSearchQuery().replace(/"/g, "&quot;"),
         );
       },
       (error) => {
         console.error("Failed to load searchInput.html", error);
         webview.html = `<p style="color:red">Error loading search bar: ${error.message}</p>`;
-      }
+      },
     );
 
     webview.onDidReceiveMessage((msg) => {

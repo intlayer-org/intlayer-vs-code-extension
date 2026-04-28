@@ -1,20 +1,20 @@
-import { dirname, join, extname } from "node:path";
+import { dirname, extname, join } from "node:path";
 import { parse as babelParse } from "@babel/parser";
 import {
+  type DecorationOptions,
+  type Disposable,
+  Range,
   type TextEditor,
   window,
   workspace,
-  Range,
-  type DecorationOptions,
-  Disposable,
 } from "vscode";
+import { extractScriptContent } from "../utils/extractScript";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import {
   findUsagesOfDictionary,
   type UsageLocation,
 } from "../utils/findUsages";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
-import { extractScriptContent } from "../utils/extractScript";
 
 const DEBOUNCE_DELAY = 1000;
 
@@ -75,7 +75,7 @@ const unusedTextDecorationType = window.createTextEditorDecorationType({
 
 export const intlayerUnusedDecorationProvider = (): Disposable[] => {
   let activeEditor = window.activeTextEditor;
-  let timeout: NodeJS.Timeout | undefined = undefined;
+  let timeout: NodeJS.Timeout | undefined;
 
   const triggerUpdate = () => {
     if (timeout) {

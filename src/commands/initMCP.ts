@@ -1,9 +1,9 @@
 import {
-  type Platform,
   installMCP,
-  PLATFORMS_METADATA,
-  PLATFORMS,
   type MCPTransport,
+  PLATFORMS,
+  PLATFORMS_METADATA,
+  type Platform,
 } from "@intlayer/chokidar/cli";
 import { type QuickPickItem, window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";

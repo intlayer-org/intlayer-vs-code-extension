@@ -9,7 +9,7 @@ export const createDictionaryFile = async () => {
       { label: "CommonJS (.js)", value: "cjs" },
       { label: "JSON (.json)", value: "json" },
     ],
-    { placeHolder: "Select content file format" }
+    { placeHolder: "Select content file format" },
   );
 
   if (!choice) {
@@ -17,6 +17,6 @@ export const createDictionaryFile = async () => {
   }
 
   await generateDictionaryContent(
-    choice.value as "ts" | "esm" | "cjs" | "json"
+    choice.value as "ts" | "esm" | "cjs" | "json",
   );
 };

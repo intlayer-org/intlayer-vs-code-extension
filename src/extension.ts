@@ -1,13 +1,13 @@
 import { commands, type ExtensionContext, languages, window } from "vscode";
 import { buildCommand } from "./commands/buildAllCommand";
+import { extractCommand } from "./commands/extractCommand";
 import { fillCommand } from "./commands/fillAllCommand";
-import { initSkills } from "./commands/initSkills";
 import { initMCP } from "./commands/initMCP";
+import { initSkills } from "./commands/initSkills";
 import { pullCommand } from "./commands/pullCommand";
 import { pushCommand } from "./commands/pushCommand";
 import { selectEnvironment } from "./commands/selectEnvironment";
 import { testCommand } from "./commands/testCommand";
-import { extractCommand } from "./commands/extractCommand";
 import { generateDictionaryContent } from "./createDictionaryContent";
 import { buildActiveDictionary } from "./editor/buildActiveDictionary";
 import { createDictionaryFile } from "./editor/createDictionaryFile";
@@ -36,6 +36,7 @@ export const activate = (context: ExtensionContext) => {
     { language: "typescriptreact", scheme: "file" },
     { language: "vue", scheme: "file" },
     { language: "svelte", scheme: "file" },
+    { language: "astro", scheme: "file" },
     { language: "json", scheme: "file" },
     { language: "jsonc", scheme: "file" },
     { language: "json5", scheme: "file" },

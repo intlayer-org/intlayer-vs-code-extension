@@ -1,6 +1,6 @@
 import { extname } from "node:path";
-import { getConfiguration } from "@intlayer/config/node";
 import { parse as babelParse } from "@babel/parser";
+import { getConfiguration } from "@intlayer/config/node";
 import { Range, RelativePattern, type Uri, workspace } from "vscode";
 import { extractScriptContent } from "./extractScript";
 import { getConfigurationOptions } from "./getConfiguration";

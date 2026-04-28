@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  getInitialSkills,
   installSkills,
+  PLATFORMS,
+  PLATFORMS_METADATA,
   type Platform,
   SKILLS,
   SKILLS_METADATA,
-  getInitialSkills,
-  PLATFORMS_METADATA,
-  PLATFORMS,
   type Skill,
 } from "@intlayer/chokidar/cli";
 import { type QuickPickItem, window } from "vscode";

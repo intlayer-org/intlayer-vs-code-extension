@@ -22,9 +22,10 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
   }
 
   // searchConfigurationFile expects a directory; if we have a file path, go up one level
-  const startDir = resolvedPath.includes(".") && !resolvedPath.endsWith("/")
-    ? dirname(resolvedPath)
-    : resolvedPath;
+  const startDir =
+    resolvedPath.includes(".") && !resolvedPath.endsWith("/")
+      ? dirname(resolvedPath)
+      : resolvedPath;
 
   const { configurationFilePath } = searchConfigurationFile(startDir);
 
@@ -74,9 +75,7 @@ export const findAllProjectRoots = async (): Promise<string[]> => {
       ) {
         rootSet.add(dirname(uri.fsPath));
       }
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   return Array.from(rootSet);

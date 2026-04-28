@@ -6,9 +6,9 @@ import {
   Range,
   Uri,
 } from "vscode";
+import { findFieldLocation } from "./utils/findFieldLocation";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "./utils/intlayerCache";
-import { findFieldLocation } from "./utils/findFieldLocation";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
   provideDefinition: async (document, position) => {

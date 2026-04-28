@@ -13,9 +13,9 @@ import {
   workspace,
 } from "vscode";
 import { getSelectedEnvironment } from "../utils/envStore";
+import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { hasClientId } from "../utils/hasClientId";
-import { findProjectRoot } from "../utils/findProjectRoot";
 
 type DictionaryEntry = {
   filePath?: string;

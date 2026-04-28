@@ -1,6 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { existsSync, readFileSync } from "node:fs";
 import {
   type GetConfigurationOptions,
   searchConfigurationFile,

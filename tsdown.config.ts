@@ -1,6 +1,6 @@
-import { mkdir, cp } from "node:fs/promises";
-import { resolve, dirname, basename } from "node:path";
+import { cp, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { basename, dirname, resolve } from "node:path";
 import { defineConfig } from "tsdown";
 
 const require = createRequire(import.meta.url);

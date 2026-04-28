@@ -1,9 +1,9 @@
-import { promises as fs, constants } from "node:fs";
+import { constants, promises as fs } from "node:fs";
 import {
   getConfiguration,
   searchConfigurationFile,
 } from "@intlayer/config/node";
-import type { IntlayerConfig, Dictionary } from "@intlayer/types";
+import type { Dictionary, IntlayerConfig } from "@intlayer/types";
 import { getConfigurationOptions } from "./getConfiguration";
 
 // GLOBAL CACHES

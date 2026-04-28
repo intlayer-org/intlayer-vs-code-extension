@@ -3,7 +3,7 @@ import { listDictionaries } from "@intlayer/chokidar/cli";
 import { fill } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";
-import { findProjectRoot, findAllProjectRoots } from "../utils/findProjectRoot";
+import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 

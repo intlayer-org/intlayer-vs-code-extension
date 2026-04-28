@@ -1,6 +1,6 @@
 import { dirname, extname, join } from "node:path";
-import { DEFAULT_LOCALE } from "@intlayer/config/defaultValues";
 import { parse as babelParse } from "@babel/parser";
+import { DEFAULT_LOCALE } from "@intlayer/config/defaultValues";
 import {
   type DecorationOptions,
   type Disposable,
@@ -147,6 +147,7 @@ const allowedExtensions = [
   ".json5",
   ".vue",
   ".svelte",
+  ".astro",
 ];
 
 const updateDecorations = async (editor: TextEditor) => {
@@ -412,6 +413,94 @@ const updateDecorations = async (editor: TextEditor) => {
                 if (processedLines.has(lineIndex)) {
                   continue;
                 }
+
+                const line = document.lineAt(lineIndex);
+                const range = new Range(line.range.end, line.range.end);
+
+                translationDecorations.push({
+                  range,
+                  hoverMessage: displayText,
+                  renderOptions: {
+                    after: {
+                      contentText: `    ${displayText}`,
+                      color: "rgba(128, 128, 128, 0.3)",
+                    },
+                  },
+                });
+                processedLines.add(lineIndex);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Vue Template Logic
+  // The <template> block was stripped for Babel parsing, so we search it
+  // separately with a regex approach (same strategy as Angular templates).
+  if (extension === ".vue") {
+    const rawText = document.getText();
+    const templateBlockMatch =
+      /(<template\b[^>]*>)([\s\S]*?)(<\/template>)/i.exec(rawText);
+
+    if (templateBlockMatch) {
+      const templateStart =
+        templateBlockMatch.index + templateBlockMatch[1].length;
+      const templateContent = templateBlockMatch[2];
+
+      for (const [
+        variableName,
+        { dictionaryContent, defaultLocale: locale, initialPath },
+      ] of variablesMap) {
+        const targets = [{ name: variableName, pathPrefix: [] as string[] }];
+
+        // Detect v-slot / `as` aliases (e.g. content.title as myTitle)
+        const aliasPattern = new RegExp(
+          `\\b${variableName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\s+as\\s+([a-zA-Z0-9_]+)`,
+          "g",
+        );
+        let aliasMatch: RegExpExecArray | null = null;
+        while (true) {
+          aliasMatch = aliasPattern.exec(templateContent);
+          if (!aliasMatch) break;
+          const extraPath = aliasMatch[1]
+            ? aliasMatch[1].split(".").filter(Boolean)
+            : [];
+          targets.push({ name: aliasMatch[2], pathPrefix: extraPath });
+        }
+
+        for (const { name: targetName, pathPrefix } of targets) {
+          const usageRegex = new RegExp(
+            `\\b${targetName}(?:\\(\\))?((?:\\.[a-zA-Z0-9_]+)*)\\b`,
+            "g",
+          );
+
+          let usageMatch: RegExpExecArray | null = null;
+          while (true) {
+            usageMatch = usageRegex.exec(templateContent);
+            if (!usageMatch) break;
+
+            const fullMatch = usageMatch[0];
+            const pathStr = usageMatch[1];
+            const keys = pathStr ? pathStr.split(".").filter(Boolean) : [];
+            const contentPath = [...initialPath, ...pathPrefix, ...keys];
+
+            const rawValue = getValueFromPath(
+              dictionaryContent,
+              contentPath,
+              locale,
+            );
+
+            if (rawValue) {
+              const displayText = parseContentValue(rawValue);
+              if (displayText) {
+                const endOffset =
+                  templateStart + usageMatch.index + fullMatch.length;
+                const position = document.positionAt(endOffset);
+                const lineIndex = position.line;
+
+                if (processedLines.has(lineIndex)) continue;
 
                 const line = document.lineAt(lineIndex);
                 const range = new Range(line.range.end, line.range.end);

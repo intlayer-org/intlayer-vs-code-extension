@@ -1,39 +1,83 @@
 /**
- * Extracts script content from Svelte and Vue files while preserving offsets.
- * Non-script content is kept but modified to be more TSX-compatible.
+ * Extracts script content from Svelte, Vue, and Astro files while preserving offsets.
+ * Non-script content is replaced with spaces (same length) so byte offsets stay valid.
  */
 export const extractScriptContent = (
   text: string,
-  extension: string
+  extension: string,
 ): string => {
-  if (extension !== '.vue' && extension !== '.svelte') {
+  if (
+    extension !== ".vue" &&
+    extension !== ".svelte" &&
+    extension !== ".astro"
+  ) {
     return text;
+  }
+
+  if (extension === ".astro") {
+    return extractAstroScript(text);
   }
 
   let processedText = text;
 
-  // Replace <script> and </script> tags with spaces to preserve offsets
-  const scriptRegex = /(<script\b[^>]*>)|(<\/script>)/gi;
-  processedText = processedText.replace(scriptRegex, (match) =>
-    ' '.repeat(match.length)
+  if (extension === ".vue") {
+    // Strip <template> and <style> blocks entirely so Vue-specific syntax
+    // (@click, :class, v-for, CSS) doesn't break Babel JSX parsing.
+    // Offset preservation: every char is replaced 1-for-1 with a space.
+    processedText = stripBlockContent(processedText, "template");
+    processedText = stripBlockContent(processedText, "style");
+  }
+
+  // Replace <script> / </script> tags with spaces (keep the script body).
+  const scriptTagRegex = /(<script\b[^>]*>)|(<\/script>)/gi;
+  processedText = processedText.replace(scriptTagRegex, (match) =>
+    " ".repeat(match.length),
   );
 
-  // 2. Replace other tags that might break parsing (like <template>, <style>)
-  const otherTagsRegex = /(<\/?(?:template|style)\b[^>]*>)/gi;
-  processedText = processedText.replace(otherTagsRegex, (match) =>
-    ' '.repeat(match.length)
-  );
-
-  // Make template content more TSX-compatible
-  if (extension === '.vue') {
-    // Vue: Replace {{ ... }} with { ... }
-    processedText = processedText.replace(/{{/g, ' {').replace(/}}/g, '} ');
-  } else if (extension === '.svelte') {
-    // Svelte: Replace {#...}, {/...}, {:...}, {@...} with spaces but keep content length
+  if (extension === ".svelte") {
+    // Svelte block tags like {#if}, {/if}, {:else}, {@html} break Babel.
     processedText = processedText.replace(/\{[#/:@][a-z0-9]*/gi, (match) =>
-      ' '.repeat(match.length)
+      " ".repeat(match.length),
     );
   }
 
   return processedText;
+};
+
+/** Replace an entire <tagName>...</tagName> block with spaces (preserves length). */
+const stripBlockContent = (text: string, tagName: string): string =>
+  text.replace(
+    new RegExp(`(<${tagName}\\b[^>]*>)([\\s\\S]*?)(<\\/${tagName}>)`, "gi"),
+    (_, open, content, close) =>
+      " ".repeat(open.length) +
+      " ".repeat(content.length) +
+      " ".repeat(close.length),
+  );
+
+/**
+ * For Astro files: replace the two `---` frontmatter delimiters with spaces so
+ * the frontmatter JS/TS becomes a plain module body parseable by Babel.
+ * The HTML template below the frontmatter is JSX-compatible and stays intact.
+ * Client-side <script> and <style> blocks are stripped to avoid parse errors.
+ */
+const extractAstroScript = (text: string): string => {
+  let result = text;
+
+  const firstDelim = result.indexOf("---");
+  if (firstDelim !== -1) {
+    result = result.slice(0, firstDelim) + "   " + result.slice(firstDelim + 3);
+
+    const secondDelim = result.indexOf("---", firstDelim + 3);
+    if (secondDelim !== -1) {
+      result =
+        result.slice(0, secondDelim) + "   " + result.slice(secondDelim + 3);
+    }
+  }
+
+  // Strip client-side <script> and <style> blocks so their JS/CSS doesn't
+  // confuse Babel when it parses the remaining JSX template.
+  result = stripBlockContent(result, "script");
+  result = stripBlockContent(result, "style");
+
+  return result;
 };

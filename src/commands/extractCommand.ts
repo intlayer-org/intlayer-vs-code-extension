@@ -1,16 +1,16 @@
 import { relative, resolve } from "node:path";
 import {
+  detectPackageName,
   extractContent,
   type PackageName,
-  detectPackageName,
 } from "@intlayer/babel";
 import {
-  getConfiguration,
   type GetConfigurationOptions,
+  getConfiguration,
 } from "@intlayer/config/node";
 import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
-import { Uri, window, workspace, RelativePattern } from "vscode";
-import { findProjectRoot, findAllProjectRoots } from "../utils/findProjectRoot";
+import { RelativePattern, Uri, window, workspace } from "vscode";
+import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import {
   clearConfigurationCache,
   getConfigurationOptions,
@@ -86,7 +86,7 @@ export const extractCommand = async (resource?: Uri) => {
       .map((pattern) => pattern.slice(1));
 
     if (positivePatterns.length === 0) {
-      positivePatterns.push("**/*.{tsx,jsx,vue,svelte,ts,js}");
+      positivePatterns.push("**/*.{tsx,jsx,vue,svelte,astro,ts,js}");
     }
 
     // Format the include and exclude strings for VS Code GlobPattern

@@ -16,14 +16,14 @@ export const initializeEnvironmentStore = (context: ExtensionContext) => {
 };
 
 export const getSelectedEnvironment = (
-  projectDir: string
+  projectDir: string,
 ): string | undefined => {
   return inMemoryStore[projectDir];
 };
 
 export const setSelectedEnvironment = async (
   projectDir: string,
-  env: string
+  env: string,
 ): Promise<void> => {
   inMemoryStore[projectDir] = env;
   if (workspaceState) {

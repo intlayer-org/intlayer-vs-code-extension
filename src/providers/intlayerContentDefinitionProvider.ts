@@ -1,10 +1,10 @@
+import { dirname } from "node:path";
 import {
   type DefinitionProvider,
-  type TextDocument,
-  type Position,
   Location,
+  type Position,
+  type TextDocument,
 } from "vscode";
-import { dirname } from "node:path";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import {
   findUsagesOfDictionary,

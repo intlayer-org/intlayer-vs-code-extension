@@ -2,6 +2,7 @@ import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { basename } from "node:path";
+import { extractDictionaryInfo } from "@intlayer/babel";
 import {
   detectFormatCommand,
   getContentDeclarationFileTemplate,
@@ -20,7 +21,6 @@ import {
   clearConfigurationCache,
   getConfigurationOptions,
 } from "./utils/getConfiguration";
-import { extractDictionaryInfo } from "@intlayer/babel";
 import { clearIntlayerConfigCache } from "./utils/intlayerCache";
 
 const getContentPosition = (content: string): Position => {

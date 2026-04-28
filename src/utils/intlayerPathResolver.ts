@@ -1,6 +1,6 @@
-import { type TextDocument, Position } from "vscode";
 import { extname } from "node:path";
 import { parse as babelParse } from "@babel/parser";
+import type { Position, TextDocument } from "vscode";
 import { extractScriptContent } from "./extractScript";
 
 // Parse source code using @babel/parser with the `estree` plugin so that node

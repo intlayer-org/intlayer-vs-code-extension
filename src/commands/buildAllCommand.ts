@@ -2,7 +2,7 @@ import { basename } from "node:path";
 import { prepareIntlayer } from "@intlayer/chokidar/build";
 import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";
-import { findProjectRoot, findAllProjectRoots } from "../utils/findProjectRoot";
+import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 

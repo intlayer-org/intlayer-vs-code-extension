@@ -87,12 +87,12 @@
           "group": "navigation@903"
         },
         {
-          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue)$/) && !(resourceFilename =~ /.*\\.content\\.(js|jsx|mjs|cjs|ts|tsx)$/)",
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte || editorLangId == astro) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue|astro)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
           "command": "extension.createDictionaryFile",
           "group": "navigation@901"
         },
         {
-          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte || editorLangId == astro) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue|astro)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
           "command": "intlayer.extract",
           "group": "navigation@900"
         }
@@ -281,7 +281,8 @@
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:vue",
-    "onLanguage:svelte"
+    "onLanguage:svelte",
+    "onLanguage:astro"
   ],
   "scripts": {
     "pretest": "npm run compile && npm run lint",
