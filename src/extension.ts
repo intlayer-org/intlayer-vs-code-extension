@@ -198,9 +198,12 @@ export const activate = (context: ExtensionContext) => {
 
           const activeFilePath = editorDisposable.document.uri.fsPath;
           const projectRoot = findProjectRoot();
-          
+
           if (projectRoot) {
-            const configOptions = await getConfigurationOptions(projectRoot, false);
+            const configOptions = await getConfigurationOptions(
+              projectRoot,
+              false,
+            );
             const configuration = getConfiguration(configOptions);
             const fileExtensions = configuration.content?.fileExtensions ?? [
               ".content.ts",
@@ -210,20 +213,19 @@ export const activate = (context: ExtensionContext) => {
               ".content.mjs",
               ".content.json",
             ];
-            
+
             const isContentFile = fileExtensions.some((ext) =>
-              activeFilePath.endsWith(ext)
+              activeFilePath.endsWith(ext),
             );
-            
+
             if (!isContentFile) {
               return;
             }
           }
 
           treeDataProvider.refresh();
-          const node = await treeDataProvider.findFileNodeByAbsolutePath(
-            activeFilePath,
-          );
+          const node =
+            await treeDataProvider.findFileNodeByAbsolutePath(activeFilePath);
 
           if (!node) {
             return;

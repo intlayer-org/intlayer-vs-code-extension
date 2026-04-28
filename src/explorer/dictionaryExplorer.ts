@@ -1,5 +1,9 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import {
+  existsSync,
+  promises as fsPromises,
+  readdirSync,
+  readFileSync,
+} from "node:fs";
 import { basename, extname, join, relative, resolve, sep } from "node:path";
 import { listProjects } from "@intlayer/chokidar/cli";
 import { getConfiguration } from "@intlayer/config/node";
@@ -193,7 +197,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
               // derive label from package.json name or fallback to directory name
               let label = basename(projectDir);
               try {
-                const fileContent = await readFile(
+                const fileContent = await fsPromises.readFile(
                   join(projectDir, "package.json"),
                   "utf8",
                 );

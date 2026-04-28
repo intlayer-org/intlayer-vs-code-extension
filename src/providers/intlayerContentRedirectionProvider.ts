@@ -1,5 +1,5 @@
-import { existsSync } from 'node:fs';
-import { dirname, isAbsolute, join } from 'node:path';
+import { existsSync } from "node:fs";
+import { dirname, isAbsolute, join } from "node:path";
 import {
   type DefinitionLink,
   type DefinitionProvider,
@@ -8,10 +8,10 @@ import {
   type TextDocument,
   Uri,
   Position as VSCodePosition,
-} from 'vscode';
-import { findFieldLocation } from '../utils/findFieldLocation';
-import { findProjectRoot } from '../utils/findProjectRoot';
-import { getCachedConfig, getCachedDictionary } from '../utils/intlayerCache';
+} from "vscode";
+import { findFieldLocation } from "../utils/findFieldLocation";
+import { findProjectRoot } from "../utils/findProjectRoot";
+import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 
 export const intlayerContentRedirectionProvider: DefinitionProvider = {
   provideDefinition: async (document: TextDocument, position: Position) => {
@@ -25,19 +25,19 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
     // 1. Detection of file() and nest() calls (TS/JS) or nodeType fields (JSON)
     const fileRange = document.getWordRangeAtPosition(
       position,
-      /file\(\s*["']([^"']+)["']\s*\)/
+      /file\(\s*["']([^"']+)["']\s*\)/,
     );
     const nestRange = document.getWordRangeAtPosition(
       position,
-      /nest\(\s*["']([^"']+)["']\s*\)/
+      /nest\(\s*["']([^"']+)["']\s*\)/,
     );
     const jsonFileRange = document.getWordRangeAtPosition(
       position,
-      /"filePath"\s*:\s*["']([^"']+)["']/
+      /"filePath"\s*:\s*["']([^"']+)["']/,
     );
     const jsonNestRange = document.getWordRangeAtPosition(
       position,
-      /"key"\s*:\s*["']([^"']+)["']/
+      /"key"\s*:\s*["']([^"']+)["']/,
     );
 
     // --- Case 1: file() or "filePath" ---
@@ -46,7 +46,7 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
       const text = document.getText(range);
       const match = text.match(/["']([^"']+)["']/);
 
-      if (!match || typeof match.index === 'undefined') {
+      if (!match || typeof match.index === "undefined") {
         return null;
       }
 
@@ -56,7 +56,7 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
 
       const originSelectionRange = new Range(
         document.positionAt(document.offsetAt(range.start) + startOffset),
-        document.positionAt(document.offsetAt(range.start) + endOffset)
+        document.positionAt(document.offsetAt(range.start) + endOffset),
       );
 
       let targetPath = path;
@@ -74,7 +74,7 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
         const targetUri = Uri.file(targetPath);
         const targetRange = new Range(
           new VSCodePosition(0, 0),
-          new VSCodePosition(0, 0)
+          new VSCodePosition(0, 0),
         );
 
         return [
@@ -94,7 +94,7 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
       const text = document.getText(range);
       const match = text.match(/["']([^"']+)["']/);
 
-      if (!match || typeof match.index === 'undefined') {
+      if (!match || typeof match.index === "undefined") {
         return null;
       }
 
@@ -104,13 +104,13 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
 
       const originSelectionRange = new Range(
         document.positionAt(document.offsetAt(range.start) + startOffset),
-        document.positionAt(document.offsetAt(range.start) + endOffset)
+        document.positionAt(document.offsetAt(range.start) + endOffset),
       );
 
       const config = await getCachedConfig(projectDir);
       const dictionaryPath = join(
         config.system.unmergedDictionariesDir,
-        `${word}.json`
+        `${word}.json`,
       );
 
       const dictionaries = await getCachedDictionary(dictionaryPath);
@@ -130,13 +130,13 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
         const sourceUri = Uri.file(absoluteSourcePath);
 
         const location = await findFieldLocation(absoluteSourcePath, [
-          'content',
+          "content",
         ]);
 
         const targetRange = location
           ? new Range(
               new VSCodePosition(location.line, location.character),
-              new VSCodePosition(location.line, location.character)
+              new VSCodePosition(location.line, location.character),
             )
           : new Range(new VSCodePosition(0, 0), new VSCodePosition(0, 0));
 

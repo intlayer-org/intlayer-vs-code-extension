@@ -1,12 +1,12 @@
 import { getIntlayerAPIProxy } from "@intlayer/api";
 import { pull } from "@intlayer/cli";
+import { FILE_EXTENSIONS } from "@intlayer/config/defaultValues";
 import { getConfiguration } from "@intlayer/config/node";
 import type { Dictionary } from "@intlayer/types";
 import { window } from "vscode";
 import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
-import { FILE_EXTENSIONS } from "@intlayer/config/defaultValues";
 
 export const pullCommand = async () => {
   let projectDir = findProjectRoot();
