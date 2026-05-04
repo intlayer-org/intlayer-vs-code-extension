@@ -40,6 +40,7 @@ export const activate = (context: ExtensionContext) => {
     { language: "vue", scheme: "file" },
     { language: "svelte", scheme: "file" },
     { language: "astro", scheme: "file" },
+    { language: "html", scheme: "file" },
     { language: "json", scheme: "file" },
     { language: "jsonc", scheme: "file" },
     { language: "json5", scheme: "file" },

@@ -12,7 +12,7 @@
     "internationalization",
     "vscode"
   ],
-  "version": "8.7.11",
+  "version": "8.7.13",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -87,12 +87,12 @@
           "group": "navigation@903"
         },
         {
-          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte || editorLangId == astro) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue|astro)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte || editorLangId == astro || editorLangId == html) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue|astro|html)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
           "command": "extension.createDictionaryFile",
           "group": "navigation@901"
         },
         {
-          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte || editorLangId == astro) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue|astro)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
+          "when": "(editorLangId == javascript || editorLangId == javascriptreact || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == vue || editorLangId == svelte || editorLangId == astro || editorLangId == html) && (resourceFilename =~ /\\.(js|jsx|mjs|cjs|ts|tsx|svelte|vue|astro|html)$/) && !(resourceFilename =~ /.*\\.content\\..*$/)",
           "command": "intlayer.extract",
           "group": "navigation@900"
         }
@@ -282,7 +282,8 @@
     "onLanguage:typescriptreact",
     "onLanguage:vue",
     "onLanguage:svelte",
-    "onLanguage:astro"
+    "onLanguage:astro",
+    "onLanguage:html"
   ],
   "scripts": {
     "pretest": "npm run compile && npm run lint",
@@ -303,18 +304,18 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@babel/parser": "7.29.2",
-    "@biomejs/biome": "2.4.13",
-    "@intlayer/api": "^8.7.11",
-    "@intlayer/babel": "^8.7.11",
-    "@intlayer/chokidar": "^8.7.11",
-    "@intlayer/cli": "^8.7.11",
-    "@intlayer/config": "^8.7.11",
-    "@intlayer/core": "^8.7.11",
-    "@intlayer/svelte-compiler": "^8.7.11",
-    "@intlayer/types": "^8.7.11",
-    "@intlayer/unmerged-dictionaries-entry": "^8.7.11",
-    "@intlayer/vue-compiler": "^8.7.11",
+    "@babel/parser": "7.29.3",
+    "@biomejs/biome": "2.4.14",
+    "@intlayer/api": "^8.7.12",
+    "@intlayer/babel": "^8.7.12",
+    "@intlayer/chokidar": "^8.7.12",
+    "@intlayer/cli": "^8.7.12",
+    "@intlayer/config": "^8.7.12",
+    "@intlayer/core": "^8.7.12",
+    "@intlayer/svelte-compiler": "^8.7.12",
+    "@intlayer/types": "^8.7.12",
+    "@intlayer/unmerged-dictionaries-entry": "^8.7.12",
+    "@intlayer/vue-compiler": "^8.7.12",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.6.0",
     "@types/vscode": "^1.96.0",

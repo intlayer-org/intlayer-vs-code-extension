@@ -165,8 +165,8 @@ export const resolveIntlayerPath = async (
     try {
       ast = parseCode(scriptContent);
     } catch {
-      // Unparseable file (e.g. syntax error in the editor) — bail silently.
-      return null;
+      // Unparseable file (e.g. syntax error in the editor or Svelte/Vue/Astro templates) — fallback to RegEx.
+      return regexResolveIntlayerPath(fileContent, document.offsetAt(position));
     }
 
     const program = ast.program;
@@ -176,7 +176,9 @@ export const resolveIntlayerPath = async (
     const offset = document.offsetAt(position);
     const node = findNodeAtOffset(program, offset);
 
-    if (!node) return null;
+    if (!node) {
+      return regexResolveIntlayerPath(fileContent, offset);
+    }
 
     // Hovering over a string literal (e.g. inside useIntlayer('key')) is not
     // actionable — we only care about identifiers and property accesses.
@@ -190,7 +192,9 @@ export const resolveIntlayerPath = async (
       parentMap,
     );
 
-    if (!rootIdentifier) return null;
+    if (!rootIdentifier) {
+      return regexResolveIntlayerPath(fileContent, offset);
+    }
 
     // Strip the Svelte reactive `$` prefix
     // if present (e.g. `$content`).
@@ -261,7 +265,9 @@ export const resolveIntlayerPath = async (
       }
     }
 
-    if (!declaration) return null;
+    if (!declaration) {
+      return regexResolveIntlayerPath(fileContent, offset);
+    }
 
     let dictionaryKey: string | null = null;
     let initialPath: string[] = [];
@@ -518,4 +524,89 @@ const getModuleSource = (program: any, functionName: string): string | null => {
     }
   }
   return null;
+};
+
+/**
+ * Fallback resolver using regular expressions to support Vue/Svelte/Astro/Angular templates
+ * where AST parsing might fail due to syntax differences or stripped script blocks.
+ */
+function regexResolveIntlayerPath(
+  fileContent: string,
+  offset: number,
+): IntlayerOrigin | null {
+  // 1. Find the hook call to get the dictionary key and variable declarations
+  let dictionaryKey: string | null = null;
+  let rootVarName: string | null = null;
+  let destructuredKeys: string[] = [];
+
+  const hookRegex =
+    /(?:const|let|var)\s+(?:([a-zA-Z0-9_$]+)|\{\s*([^}]+)\s*\})\s*=\s*(?:await\s+)?(?:useIntlayer|getIntlayer|useDictionary)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+
+  let match;
+  while ((match = hookRegex.exec(fileContent)) !== null) {
+    if (match[1]) {
+      rootVarName = match[1];
+    } else if (match[2]) {
+      destructuredKeys = match[2].split(",").map((s) => s.split(":")[0].trim());
+    }
+    dictionaryKey = match[3];
+    // If we find one, we use the first one for simplicity
+    break;
+  }
+
+  if (!dictionaryKey) {
+    // Maybe no variable assignment, just useIntlayer('key') or IntlayerClient get
+    const simpleHookRegex =
+      /(?:useIntlayer|getIntlayer|useDictionary)\s*\(\s*['"]([^'"]+)['"]\s*\)/;
+    const simpleMatch = simpleHookRegex.exec(fileContent);
+    if (simpleMatch) {
+      dictionaryKey = simpleMatch[1];
+    } else {
+      return null;
+    }
+  }
+
+  // 2. Find the property chain at the cursor
+  let start = offset;
+  // allow $ for svelte store prefix
+  while (start > 0 && /[a-zA-Z0-9_.$]/.test(fileContent[start - 1])) {
+    start--;
+  }
+  let end = offset;
+  while (end < fileContent.length && /[a-zA-Z0-9_.]/.test(fileContent[end])) {
+    end++;
+  }
+
+  const chainStr = fileContent.slice(start, end);
+  if (!chainStr) return null;
+
+  const parts = chainStr.split(".");
+  const firstPart = parts[0].replace(/^\$/, ""); // strip svelte $
+
+  let fieldPath: string[] = [];
+
+  if (
+    rootVarName &&
+    (firstPart === rootVarName || firstPart === rootVarName + "Store")
+  ) {
+    fieldPath = parts.slice(1);
+  } else if (destructuredKeys.includes(firstPart)) {
+    fieldPath = parts;
+  } else {
+    // If we can't tie it to a declaration perfectly, it might be an Angular class property
+    // or a direct usage. Let's just assume the first part is the root if there's >1 part.
+    if (parts.length > 1 && (firstPart === "content" || firstPart === "dictionary")) {
+      fieldPath = parts.slice(1);
+    } else if (parts.length > 0) {
+      fieldPath = parts; // guess that it's destructured
+    } else {
+      return null;
+    }
+  }
+
+  return {
+    dictionaryKey,
+    fieldPath,
+    moduleSource: null,
+  };
 };
