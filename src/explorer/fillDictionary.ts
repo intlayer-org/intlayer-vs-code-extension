@@ -4,6 +4,8 @@ import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
+import { getConfiguration } from "@intlayer/config/node";
+import { prepareIntlayer } from "@intlayer/chokidar/cli";
 
 export const fillDictionary = async (element?: unknown) => {
   const node = element as {
@@ -30,6 +32,9 @@ export const fillDictionary = async (element?: unknown) => {
 
   try {
     const configOptions = await getConfigurationOptions(projectDir);
+    const configuration = getConfiguration(configOptions);
+
+    await prepareIntlayer(configuration, { clean: false });
 
     await window.showInformationMessage(
       `${prefix}Filling ${dirname(node.filePath)}…`,
@@ -37,6 +42,7 @@ export const fillDictionary = async (element?: unknown) => {
     await fill({
       configOptions,
       file: node.filePath,
+      build: false,
     });
     await window.showInformationMessage(`${prefix}Filled ${node.filePath}`);
   } catch (error) {

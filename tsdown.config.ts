@@ -44,7 +44,7 @@ export default defineConfig({
   target: "node20",
   clean: true,
   platform: "node",
-  minify: true,
+  minify: false,
   treeshake: true,
   sourcemap: false,
 
@@ -60,6 +60,7 @@ export default defineConfig({
       "vscode",
       "esbuild",
       "picocolors",
+      "@intlayer/ai",
       "fsevents",
       "node:fs",
       "node:fs/promises",
@@ -73,7 +74,6 @@ export default defineConfig({
     "@intlayer/config/built": resolve("src/config-built.ts"),
     // Redirect alias to local if used directly in source
     "utils:asset": resolve("src/utils/assets.ts"),
-    "@vercel/oidc": resolve("src/utils/mock-oidc.ts"),
   },
 
   plugins: [

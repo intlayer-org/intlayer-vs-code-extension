@@ -1,5 +1,5 @@
 import { relative } from "node:path";
-import { listDictionaries } from "@intlayer/chokidar/cli";
+import { listDictionaries, prepareIntlayer } from "@intlayer/chokidar/cli";
 import { fill } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";
@@ -74,12 +74,15 @@ export const fillCommand = async (dictionariesPath?: string[]) => {
       selectedDictionariesPath = selectedDictionaries.map(({ label }) => label);
     }
 
+    await prepareIntlayer(configuration, { clean: false });
+
     for (const dictionary of selectedDictionariesPath) {
       await window.showInformationMessage(`${prefix}Filling ${dictionary}…`);
 
       await fill({
         configOptions,
         keys: dictionary,
+        build: false,
       });
     }
 

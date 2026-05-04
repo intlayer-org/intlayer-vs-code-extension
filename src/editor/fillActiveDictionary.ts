@@ -4,6 +4,8 @@ import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
+import { getConfiguration } from "@intlayer/config/node";
+import { prepareIntlayer } from "@intlayer/chokidar/cli";
 
 export const fillActiveDictionary = async () => {
   const editor = window.activeTextEditor;
@@ -25,10 +27,14 @@ export const fillActiveDictionary = async () => {
   }
 
   const configOptions = await getConfigurationOptions(projectDir);
+  const configuration = getConfiguration(configOptions);
+
+  await prepareIntlayer(configuration, { clean: false });
 
   await fill({
     configOptions,
     file: filePath,
+    build: false,
   });
 
   const fileName = basename(filePath);
