@@ -14,7 +14,6 @@ const getActiveFilePath = () => window.activeTextEditor?.document.uri.fsPath;
  * are resolved correctly even when intlayer is hoisted to the workspace root.
  */
 export const findProjectRoot = (startPath?: string): string | undefined => {
-  const repoDir = workspace.workspaceFolders?.[0]?.uri.fsPath;
   const resolvedPath = startPath ?? getActiveFilePath();
 
   if (!resolvedPath) {
@@ -33,7 +32,7 @@ export const findProjectRoot = (startPath?: string): string | undefined => {
     return dirname(configurationFilePath);
   }
 
-  return repoDir;
+  return undefined;
 };
 
 /**
