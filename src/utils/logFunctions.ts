@@ -22,17 +22,17 @@ export const logFunctions = {
     window.showInformationMessage(formatMessage(message));
   },
   info: (...message: Parameters<typeof console.log>) => {
-    console.log(message);
+    console.info(message);
 
     window.showInformationMessage(formatMessage(message));
   },
   error: (...message: Parameters<typeof console.log>) => {
-    console.log(message);
+    console.error(message);
 
     window.showErrorMessage(formatMessage(message));
   },
   warn: (...message: Parameters<typeof console.log>) => {
-    console.log(message);
+    console.warn(message);
 
     window.showWarningMessage(formatMessage(message));
   },

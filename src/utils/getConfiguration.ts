@@ -129,7 +129,7 @@ export const getConfigurationOptions = async (
         prefix,
       },
     },
-    additionalEnvVars,
+    ...(additionalEnvVars && { additionalEnvVars }),
     require: projectRequire,
     cache: false,
   };
