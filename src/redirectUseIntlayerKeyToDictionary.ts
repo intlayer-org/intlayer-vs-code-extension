@@ -18,10 +18,13 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       return null;
     }
 
-    const lineText = document.lineAt(position.line).text;
-    if (
-      !(lineText.includes("useIntlayer") || lineText.includes("getIntlayer"))
-    ) {
+    // Check all text preceding the opening quote so multi-line calls like
+    //   useIntlayer(
+    //     "my-key"
+    //   )
+    // are handled correctly (the function name may be on a different line).
+    const textBefore = document.getText(new Range(new Position(0, 0), range.start));
+    if (!/(?:useIntlayer|getIntlayer)\s*\(\s*$/.test(textBefore)) {
       return null;
     }
 
