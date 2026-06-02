@@ -46,6 +46,8 @@ export const activate = (context: ExtensionContext) => {
     { language: "json", scheme: "file" },
     { language: "jsonc", scheme: "file" },
     { language: "json5", scheme: "file" },
+    { language: "yaml", scheme: "file" },
+    { language: "markdown", scheme: "file" },
   ];
 
   // String keys (useIntlayer(->'my-key'<-)

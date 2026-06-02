@@ -28,10 +28,12 @@ export const startLSPClient = (context: ExtensionContext): void => {
       { scheme: "file", language: "svelte" },
       { scheme: "file", language: "astro" },
       { scheme: "file", language: "html" },
+      { scheme: "file", language: "yaml" },
+      { scheme: "file", language: "markdown" },
     ],
     synchronize: {
       fileEvents: workspace.createFileSystemWatcher(
-        "**/*.content.{ts,tsx,js,jsx,json,jsonc,json5}",
+        "**/*.content.{ts,tsx,js,jsx,json,jsonc,json5,yaml,yml,md,mdx}",
       ),
     },
   };

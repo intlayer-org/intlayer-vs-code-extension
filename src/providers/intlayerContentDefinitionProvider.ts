@@ -86,12 +86,13 @@ const getTargetKeyAndPathFromDocument = async (
 ): Promise<{ dictionaryKey: string; clickedField: string } | null> => {
   const text = document.getText();
 
-  // Extract 'key': 'app'
-  const keyMatch = /key\s*:\s*(["'])(.*?)\1/.exec(text);
+  // Extract key: "app" | key: 'app' | key: `app` | key: app (YAML/Markdown)
+  const keyMatch =
+    /key\s*:\s*(?:(['"`])(.*?)\1|([^\s'"`{},\r\n]+))/.exec(text);
   if (!keyMatch) {
     return null;
   }
-  const dictionaryKey = keyMatch[2];
+  const dictionaryKey = keyMatch[2] ?? keyMatch[3];
 
   const range = document.getWordRangeAtPosition(position);
   if (!range) {
