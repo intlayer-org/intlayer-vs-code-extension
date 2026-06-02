@@ -30,66 +30,70 @@ async function copyPackageAssets(
   } catch (error) {
     console.warn(
       `! Could not copy assets for ${pkgName} (it might not have any):`,
-      error.message,
+      (error as Error).message,
     );
   }
 }
 
-export default defineConfig({
-  entry: {
-    extension: "./src/extension.ts",
-  },
-  format: "cjs",
-  outExtensions: () => ({ js: ".js" }),
-  target: "node20",
-  clean: true,
-  platform: "node",
-  minify: false,
-  treeshake: true,
-  sourcemap: false,
+const sharedDeps = {
+  alwaysBundle: [/(.*)/],
+  onlyBundle: false as const,
+  neverBundle: [
+    "vscode",
+    "esbuild",
+    "picocolors",
+    "@intlayer/ai",
+    "fsevents",
+    "node:fs",
+    "node:fs/promises",
+    "node:path",
+    "node:module",
+    "node:child_process",
+  ],
+};
 
-  deps: {
-    // Bundle everything
-    alwaysBundle: [/(.*)/],
+const sharedAlias = {
+  "@intlayer/config/built": resolve("src/config-built.ts"),
+  // @intlayer/config has no bare "." export — redirect to /node (Node.js env).
+  // Needed by @intlayer/lsp which imports the bare specifier.
+  "@intlayer/config": resolve(
+    "node_modules/@intlayer/config/dist/esm/node.mjs",
+  ),
+  "utils:asset": resolve("src/utils/assets.ts"),
+};
 
-    // Disable the hint since bundling node_modules is intentional
-    onlyAllowBundle: false,
+export default defineConfig([
+  // ── Extension host process ────────────────────────────────────────────────
+  {
+    entry: {
+      extension: "./src/extension.ts",
+    },
+    format: "cjs",
+    outExtensions: () => ({ js: ".js" }),
+    target: "node20",
+    clean: true,
+    platform: "node",
+    minify: false,
+    treeshake: true,
+    sourcemap: false,
 
-    // Externalize ALL bare imports (i.e., all packages)
-    neverBundle: [
-      "vscode",
-      "esbuild",
-      "picocolors",
-      "@intlayer/ai",
-      "fsevents",
-      "node:fs",
-      "node:fs/promises",
-      "node:path",
-      "node:module",
-      "node:child_process",
-    ],
-  },
+    deps: sharedDeps,
+    alias: sharedAlias,
 
-  alias: {
-    "@intlayer/config/built": resolve("src/config-built.ts"),
-    // Redirect alias to local if used directly in source
-    "utils:asset": resolve("src/utils/assets.ts"),
-  },
+    plugins: [
+      /**
+       * PLUGIN: Asset Loader Patch
+       * Intercepts the internal virtual module used by @intlayer packages.
+       * Injects a "Smart Search" readAsset function.
+       */
+      {
+        name: "patch-asset-loader",
+        transform(_code, id) {
+          // Match the virtual file path used inside @intlayer dependencies
+          if (/[\\/]_virtual[\\/]_utils_asset\.(mjs|cjs|js)$/.test(id)) {
+            console.log(`⚡ Patching asset loader in: ${basename(id)}`);
 
-  plugins: [
-    /**
-     * PLUGIN 1: Asset Loader Patch
-     * Intercepts the internal virtual module used by @intlayer packages.
-     * Injects a "Smart Search" readAsset function.
-     */
-    {
-      name: "patch-asset-loader",
-      transform(code, id) {
-        // Match the virtual file path used inside @intlayer dependencies
-        if (/[\\/]_virtual[\\/]_utils_asset\.(mjs|cjs|js)$/.test(id)) {
-          console.log(`⚡ Patching asset loader in: ${basename(id)}`);
-
-          return `
+            return `
             import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
             import { join, basename } from 'node:path';
 
@@ -129,31 +133,51 @@ export default defineConfig({
               return readFileSync(foundPath, encoding);
             };
           `;
-        }
-        return null;
+          }
+          return null;
+        },
       },
-    },
 
-    /**
-     * PLUGIN 2: Explicit Copy
-     * Copies known dependency assets to dist/assets/SUBFOLDER
-     */
-    {
-      name: "copy-dependency-assets",
-      async writeBundle() {
-        const destRoot = resolve("dist/assets");
+      /**
+       * PLUGIN 2: Explicit Copy
+       * Copies known dependency assets to dist/assets/SUBFOLDER
+       */
+      {
+        name: "copy-dependency-assets",
+        async writeBundle() {
+          const destRoot = resolve("dist/assets");
 
-        // Copy your local HTML (not flattened, stays in dist root as per your request)
-        await cp(
-          resolve("src/explorer/searchInput.html"),
-          resolve("dist/searchInput.html"),
-        ).catch(() => {});
+          // Copy your local HTML (not flattened, stays in dist root as per your request)
+          await cp(
+            resolve("src/explorer/searchInput.html"),
+            resolve("dist/searchInput.html"),
+          ).catch(() => {});
 
-        // Copy dependencies into namespaced folders to avoid collisions
-        await copyPackageAssets("@intlayer/chokidar", "chokidar", destRoot);
-        await copyPackageAssets("@intlayer/cli", "cli", destRoot);
-        await copyPackageAssets("@intlayer/ai", "ai", destRoot);
+          // Copy dependencies into namespaced folders to avoid collisions
+          await copyPackageAssets("@intlayer/chokidar", "chokidar", destRoot);
+          await copyPackageAssets("@intlayer/cli", "cli", destRoot);
+          await copyPackageAssets("@intlayer/ai", "ai", destRoot);
+        },
       },
-    },
-  ],
-});
+    ],
+  },
+
+  // LSP server process
+  // Bundled separately so it can run as a forked child process.
+  // treeshake is disabled because @intlayer/lsp declares "sideEffects: false"
+  // even though the server runs entirely through top-level side effects
+  // (connection.listen(), documents.listen(), …).
+  {
+    entry: { "lsp-server": "./src/lsp-server.ts" },
+    format: "cjs",
+    outExtensions: () => ({ js: ".js" }),
+    target: "node20",
+    clean: false,
+    platform: "node",
+    minify: false,
+    treeshake: false,
+    sourcemap: false,
+    deps: sharedDeps,
+    alias: sharedAlias,
+  },
+]);

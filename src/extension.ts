@@ -24,6 +24,7 @@ import { intlayerDecorationProvider } from "./providers/intlayerDecoration";
 import { intlayerDefinitionProvider } from "./providers/intlayerDefinitionProvider";
 import { intlayerHoverProvider } from "./providers/intlayerHoverProvider";
 import { intlayerUnusedDecorationProvider } from "./providers/intlayerUnusedDecoration";
+import { startLSPClient } from "./lsp/client";
 import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDictionary";
 import { initializeEnvironmentStore } from "./utils/envStore";
 import { findProjectRoot } from "./utils/findProjectRoot";
@@ -31,6 +32,7 @@ import { getConfigurationOptions } from "./utils/getConfiguration";
 
 export const activate = (context: ExtensionContext) => {
   initializeEnvironmentStore(context);
+  startLSPClient(context);
 
   const selector = [
     { language: "javascript", scheme: "file" },

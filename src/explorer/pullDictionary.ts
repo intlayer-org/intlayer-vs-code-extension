@@ -12,7 +12,7 @@ export const pullDictionary = async (element?: unknown) => {
   };
 
   // Pull can only be made for merged dictionaries (dictionary nodes without filePath)
-  if (!node || node.type !== "dictionary" || !node.projectDir || !node.key) {
+  if (node?.type !== "dictionary" || !node.projectDir || !node.key) {
     window.showWarningMessage(
       `${prefix}Pull is only available for merged dictionaries.`,
     );

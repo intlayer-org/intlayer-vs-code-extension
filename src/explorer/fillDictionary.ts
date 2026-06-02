@@ -15,7 +15,7 @@ export const fillDictionary = async (element?: unknown) => {
   };
 
   // Fill can only be made for unmerged dictionaries (file nodes with filePath)
-  if (!node || node.type !== "file" || !node.projectDir || !node.filePath) {
+  if (node?.type !== "file" || !node.projectDir || !node.filePath) {
     window.showWarningMessage(
       `${prefix}Fill is only available for unmerged dictionary files.`,
     );

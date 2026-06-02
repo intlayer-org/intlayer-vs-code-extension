@@ -51,8 +51,8 @@ type FileNode = {
 export type IntlayerTreeNode = EnvironmentNode | DictionaryNode | FileNode;
 
 export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTreeNode> {
-  private readonly changeEmitter = new EventEmitter<IntlayerTreeNode | void>();
-  readonly onDidChangeTreeData: Event<IntlayerTreeNode | void> =
+  private readonly changeEmitter = new EventEmitter<IntlayerTreeNode | undefined>();
+  readonly onDidChangeTreeData: Event<IntlayerTreeNode | undefined> =
     this.changeEmitter.event;
 
   private searchQuery: string | undefined;

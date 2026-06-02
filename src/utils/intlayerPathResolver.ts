@@ -542,16 +542,14 @@ function regexResolveIntlayerPath(
   const hookRegex =
     /(?:const|let|var)\s+(?:([a-zA-Z0-9_$]+)|\{\s*([^}]+)\s*\})\s*=\s*(?:await\s+)?(?:useIntlayer|getIntlayer|useDictionary)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 
-  let match;
-  while ((match = hookRegex.exec(fileContent)) !== null) {
+  const match = hookRegex.exec(fileContent);
+  if (match !== null) {
     if (match[1]) {
       rootVarName = match[1];
     } else if (match[2]) {
       destructuredKeys = match[2].split(",").map((s) => s.split(":")[0].trim());
     }
     dictionaryKey = match[3];
-    // If we find one, we use the first one for simplicity
-    break;
   }
 
   if (!dictionaryKey) {
@@ -587,7 +585,7 @@ function regexResolveIntlayerPath(
 
   if (
     rootVarName &&
-    (firstPart === rootVarName || firstPart === rootVarName + "Store")
+    (firstPart === rootVarName || firstPart === `${rootVarName}Store`)
   ) {
     fieldPath = parts.slice(1);
   } else if (destructuredKeys.includes(firstPart)) {

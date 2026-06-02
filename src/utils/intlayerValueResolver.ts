@@ -36,7 +36,7 @@ export const resolveIntlayerNode = (node: any, locale: string): any => {
   ) {
     const localizedValue =
       current.translation[locale] ??
-      current.translation["en"] ?? // Try English fallback
+      current.translation.en ?? // Try English fallback
       Object.values(current.translation)[0]; // Fallback to first available
     return resolveIntlayerNode(localizedValue, locale);
   }

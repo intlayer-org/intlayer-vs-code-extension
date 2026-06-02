@@ -65,12 +65,12 @@ const extractAstroScript = (text: string): string => {
 
   const firstDelim = result.indexOf("---");
   if (firstDelim !== -1) {
-    result = result.slice(0, firstDelim) + "   " + result.slice(firstDelim + 3);
+    result = `${result.slice(0, firstDelim)}   ${result.slice(firstDelim + 3)}`;
 
     const secondDelim = result.indexOf("---", firstDelim + 3);
     if (secondDelim !== -1) {
       result =
-        result.slice(0, secondDelim) + "   " + result.slice(secondDelim + 3);
+        `${result.slice(0, secondDelim)}   ${result.slice(secondDelim + 3)}`;
     }
   }
 
