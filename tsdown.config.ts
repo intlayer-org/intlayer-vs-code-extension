@@ -53,13 +53,21 @@ const sharedDeps = {
 };
 
 const sharedAlias = {
-  "@intlayer/config/built": resolve("src/config-built.ts"),
   // @intlayer/config has no bare "." export — redirect to /node (Node.js env).
   // Needed by @intlayer/lsp which imports the bare specifier.
   "@intlayer/config": resolve(
     "node_modules/@intlayer/config/dist/esm/node.mjs",
   ),
   "utils:asset": resolve("src/utils/assets.ts"),
+};
+
+// Extension-only alias: redirect @intlayer/config/built to the VS Code–aware
+// implementation (uses the vscode API to load config per active editor).
+// Must NOT be applied to the LSP server build, which runs in a plain Node
+// process where `vscode` is unavailable.
+const extensionAlias = {
+  ...sharedAlias,
+  "@intlayer/config/built": resolve("src/config-built.ts"),
 };
 
 export default defineConfig([
@@ -78,7 +86,7 @@ export default defineConfig([
     sourcemap: false,
 
     deps: sharedDeps,
-    alias: sharedAlias,
+    alias: extensionAlias,
 
     plugins: [
       /**
