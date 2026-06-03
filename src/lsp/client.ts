@@ -22,7 +22,7 @@ export const startLSPClient = (context: ExtensionContext): void => {
   // Named output channel — visible in VS Code's Output panel drop-down as
   // "Intlayer LSP". All connection.console.log() calls from the server process
   // arrive here. Open it with: View → Output → select "Intlayer LSP".
-  const outputChannel = window.createOutputChannel("Intlayer LSP");
+  const outputChannel = window.createOutputChannel("Intlayer LSP", { log: true });
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [

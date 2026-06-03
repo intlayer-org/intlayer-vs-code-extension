@@ -1,4 +1,4 @@
-import { dirname, join } from "node:path";
+import { dirname, extname, join } from "node:path";
 import { findKeyAtOffset } from "@intlayer/lsp/utils";
 import {
   type DefinitionLink,
@@ -10,15 +10,20 @@ import {
 import { findFieldLocation } from "./utils/findFieldLocation";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "./utils/intlayerCache";
+import { extractScriptContent } from "./utils/extractScript";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
   provideDefinition: async (document, position) => {
-    // Use the Oxc-based AST parser to find the Intlayer dictionary key at the
-    // cursor position. This correctly handles multi-line calls, TypeScript
-    // generics, comments, and template literals without regex edge cases.
+    // For Vue / Svelte / Astro files, pass only the script block content to the
+    // AST parser. The raw SFC text contains template HTML that confuses oxc
+    // (e.g. Vue's <script setup> attributes, Svelte control-flow tags).
+    // extractScriptContent replaces non-script content with spaces so byte
+    // offsets remain valid and findKeyAtOffset still works correctly.
     const text = document.getText();
+    const extension = extname(document.uri.fsPath).toLowerCase();
+    const scriptContent = extractScriptContent(text, extension);
     const offset = document.offsetAt(position);
-    const word = findKeyAtOffset(text, offset);
+    const word = findKeyAtOffset(scriptContent, offset);
 
     if (!word) {
       return null;

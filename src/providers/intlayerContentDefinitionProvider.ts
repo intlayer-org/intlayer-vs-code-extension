@@ -4,9 +4,10 @@ import {
   findKeyInContentFile,
 } from "@intlayer/lsp/utils";
 import {
+  type DefinitionLink,
   type DefinitionProvider,
-  Location,
   type Position,
+  Range,
   type TextDocument,
 } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
@@ -30,12 +31,12 @@ export const intlayerContentDefinitionProvider: DefinitionProvider = {
       return null;
     }
 
-    const target = await getTargetKeyAndPathFromDocument(document, position);
+    const target = await getTargetFromDocument(document, position);
     if (!target) {
       return null;
     }
 
-    const { dictionaryKey, clickedField } = target;
+    const { dictionaryKey, clickedField, originSelectionRange } = target;
 
     // --- Cache Lookup ---
     const cacheKey = `${projectDir}:${dictionaryKey}`;
@@ -54,47 +55,94 @@ export const intlayerContentDefinitionProvider: DefinitionProvider = {
       return null;
     }
 
-    const locations: Location[] = [];
+    const links: DefinitionLink[] = [];
 
     for (const usage of usages) {
-      // 1. Clicked the main key: show where the dictionary is instantiated
+      // Clicked the main key: show where the dictionary is instantiated
       if (clickedField === "key") {
-        locations.push(new Location(usage.uri, usage.range));
+        links.push({
+          originSelectionRange,
+          targetUri: usage.uri,
+          targetRange: usage.range,
+          targetSelectionRange: usage.range,
+        });
         continue;
       }
 
-      // 2. Clicked a specific field (e.g. 'title')
-
-      // Check for precise locations first
+      // Clicked a specific content field (e.g. 'title')
       const preciseRanges = usage.keyLocations.get(clickedField);
 
       if (preciseRanges && preciseRanges.length > 0) {
-        // Add all specific property accesses (e.g. content.title)
-        preciseRanges.forEach((range) => {
-          locations.push(new Location(usage.uri, range));
+        for (const range of preciseRanges) {
+          links.push({
+            originSelectionRange,
+            targetUri: usage.uri,
+            targetRange: range,
+            targetSelectionRange: range,
+          });
+        }
+      } else if (usage.keysUsed.has("__ALL__")) {
+        links.push({
+          originSelectionRange,
+          targetUri: usage.uri,
+          targetRange: usage.range,
+          targetSelectionRange: usage.range,
         });
-      }
-      // Fallback: if we know the key is used via __ALL__ (spread/pass-through) but have no specific location
-      else if (usage.keysUsed.has("__ALL__")) {
-        locations.push(new Location(usage.uri, usage.range));
       }
     }
 
-    return locations.length > 0 ? locations : null;
+    return links.length > 0 ? links : null;
   },
 };
 
-const getTargetKeyAndPathFromDocument = async (
+/**
+ * Determines the origin selection range at `position`.
+ * Tries a quoted-string pattern first (handles hyphenated keys like
+ * 'locale-switcher' without the default word splitter breaking on `-`),
+ * then falls back to a bare identifier pattern for YAML bare values.
+ */
+const getOriginSelectionRange = (
   document: TextDocument,
   position: Position,
-): Promise<{ dictionaryKey: string; clickedField: string } | null> => {
+): Range => {
+  const quotedRange = document.getWordRangeAtPosition(
+    position,
+    /["'`][^"'`\r\n]+["'`]/,
+  );
+  if (quotedRange) {
+    // Strip the surrounding quote characters
+    return new Range(
+      quotedRange.start.translate(0, 1),
+      quotedRange.end.translate(0, -1),
+    );
+  }
+
+  // Bare values in YAML: `key: locale-switcher` — allow hyphens mid-word
+  return (
+    document.getWordRangeAtPosition(position, /\w[\w-]*/) ??
+    new Range(position, position)
+  );
+};
+
+const getTargetFromDocument = async (
+  document: TextDocument,
+  position: Position,
+): Promise<{
+  dictionaryKey: string;
+  clickedField: string;
+  originSelectionRange: Range;
+} | null> => {
   const text = document.getText();
   const offset = document.offsetAt(position);
   const ext = extname(document.uri.fsPath);
 
   const clickedKey = findKeyInContentFile(text, offset);
   if (clickedKey) {
-    return { dictionaryKey: clickedKey, clickedField: "key" };
+    return {
+      dictionaryKey: clickedKey,
+      clickedField: "key",
+      originSelectionRange: getOriginSelectionRange(document, position),
+    };
   }
 
   const contentField = findContentFieldAtOffset(text, offset, ext);
@@ -102,6 +150,7 @@ const getTargetKeyAndPathFromDocument = async (
     return {
       dictionaryKey: contentField.dictionaryKey,
       clickedField: contentField.fieldName,
+      originSelectionRange: getOriginSelectionRange(document, position),
     };
   }
 

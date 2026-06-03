@@ -1,75 +1,34 @@
 import { promises as fs } from "node:fs";
 import { extname } from "node:path";
-import { parse as babelParse } from "@babel/parser";
-
-export interface ASTNode {
-  type?: string;
-  loc?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
-  name?: string;
-  value?: unknown;
-  body?: ASTNode[];
-  declarations?: ASTNode[];
-  id?: ASTNode;
-  key?: ASTNode;
-  expression?: ASTNode;
-  declaration?: ASTNode;
-  init?: ASTNode;
-  arguments?: ASTNode[];
-  properties?: ASTNode[];
-  [key: string]: unknown;
-}
-
-const parseCode = (code: string): ASTNode =>
-  babelParse(code, {
-    sourceType: "module",
-    strictMode: false,
-    allowImportExportEverywhere: true,
-    allowReturnOutsideFunction: true,
-    plugins: ["typescript", "jsx", "estree"],
-    ranges: true,
-  }) as unknown as ASTNode;
+import {
+  getPropertyKeyName,
+  nodeStart,
+  type OxcNode,
+  offsetToLineCol,
+  parseFile,
+} from "./oxcParser";
 
 const findVariableDeclarator = (
-  program: ASTNode,
+  program: OxcNode,
   name: string,
-): ASTNode | null => {
-  if (!program.body) return null;
-  for (const stmt of program.body) {
-    if (stmt.type === "VariableDeclaration" && stmt.declarations) {
-      for (const decl of stmt.declarations) {
-        if (decl.id?.type === "Identifier" && decl.id.name === name) {
-          return decl;
-        }
-      }
+): OxcNode | null => {
+  for (const stmt of (program["body"] as OxcNode[]) ?? []) {
+    if (stmt["type"] !== "VariableDeclaration") continue;
+    for (const decl of (stmt["declarations"] as OxcNode[]) ?? []) {
+      const id = decl["id"] as OxcNode | undefined;
+      if (id?.["type"] === "Identifier" && id["name"] === name) return decl;
     }
   }
   return null;
 };
 
-const getPropertyKey = (prop: ASTNode): string => {
-  const key = prop.key;
+const getPropertyKey = (prop: OxcNode): string =>
+  getPropertyKeyName(prop["key"] as OxcNode);
 
-  if (!key) return "";
-
-  if (key.type === "Identifier" && typeof key.name === "string")
-    return key.name;
-
-  if (key.type === "Literal") return String(key.value);
-  return "";
-};
-
-const unwrapExpression = (
-  node: ASTNode | undefined | null,
-): ASTNode | undefined | null => {
-  if (
-    node?.type === "TSSatisfiesExpression" ||
-    node?.type === "TSAsExpression"
-  ) {
-    return node.expression;
-  }
+const unwrapExpression = (node: OxcNode | undefined | null): OxcNode | undefined | null => {
+  const t = node?.["type"] as string | undefined;
+  if (t === "TSSatisfiesExpression" || t === "TSAsExpression")
+    return node!["expression"] as OxcNode;
   return node;
 };
 
@@ -85,53 +44,45 @@ export const findFieldLocation = async (
       return findLocationInJson(fileContent, keyPath);
     }
 
-    let ast: ASTNode;
-    try {
-      ast = parseCode(fileContent);
-    } catch {
-      return null;
-    }
-    const program = ast.program as ASTNode;
+    const program = parseFile(fileContent);
+    if (!program) return null;
 
-    let rootObject: ASTNode | undefined | null;
+    const body = program["body"] as OxcNode[] | undefined;
+    if (!body) return null;
 
-    if (!program?.body) return null;
+    let rootObject: OxcNode | undefined | null;
 
-    const exportDefault = program.body.find(
-      (n: ASTNode) => n.type === "ExportDefaultDeclaration",
+    const exportDefault = body.find(
+      (n) => n["type"] === "ExportDefaultDeclaration",
     );
 
     if (exportDefault) {
-      const decl = unwrapExpression(exportDefault.declaration);
+      const decl = unwrapExpression(exportDefault["declaration"] as OxcNode);
 
-      if (decl?.type === "ObjectExpression") {
+      if (decl?.["type"] === "ObjectExpression") {
         rootObject = decl;
-      } else if (decl?.type === "Identifier" && typeof decl.name === "string") {
-        const varDecl = findVariableDeclarator(program, decl.name);
-
+      } else if (
+        decl?.["type"] === "Identifier" &&
+        typeof decl["name"] === "string"
+      ) {
+        const varDecl = findVariableDeclarator(program, decl["name"] as string);
         if (varDecl) {
-          const init = unwrapExpression(varDecl.init);
-
-          if (init?.type === "ObjectExpression") {
-            rootObject = init;
-          }
+          const init = unwrapExpression(varDecl["init"] as OxcNode | undefined);
+          if (init?.["type"] === "ObjectExpression") rootObject = init;
         }
       }
     }
 
-    if (!rootObject) {
-      return null;
-    }
+    if (!rootObject) return null;
 
-    let currentNode: ASTNode | undefined | null = rootObject;
-    let lastFoundNode: ASTNode | undefined | null = null;
+    let currentNode: OxcNode | undefined | null = rootObject;
+    let lastFoundNode: OxcNode | undefined | null = null;
 
     for (const key of keyPath) {
-      if (currentNode?.type !== "ObjectExpression") {
-        if (currentNode?.type === "CallExpression") {
-          const args = currentNode.arguments as ASTNode[] | undefined;
-
-          if (args && args.length > 0 && args[0].type === "ObjectExpression") {
+      if (currentNode?.["type"] !== "ObjectExpression") {
+        if (currentNode?.["type"] === "CallExpression") {
+          const args = currentNode["arguments"] as OxcNode[] | undefined;
+          if (args?.length && args[0]["type"] === "ObjectExpression") {
             currentNode = args[0];
           } else {
             break;
@@ -141,26 +92,29 @@ export const findFieldLocation = async (
         }
       }
 
-      if (currentNode?.type === "ObjectExpression") {
-        const properties = currentNode.properties as ASTNode[] | undefined;
+      if (currentNode?.["type"] === "ObjectExpression") {
+        const properties = currentNode["properties"] as OxcNode[] | undefined;
         const prop = properties?.find(
-          (p: ASTNode) => p.type === "Property" && getPropertyKey(p) === key,
+          (p) =>
+            (p["type"] === "Property" || p["type"] === "ObjectProperty") &&
+            getPropertyKey(p) === key,
         );
 
         if (!prop) break;
 
         lastFoundNode = prop;
-        currentNode = prop.value as ASTNode | undefined | null;
+        currentNode = prop["value"] as OxcNode | undefined | null;
       }
     }
 
-    if (lastFoundNode?.type === "Property") {
-      const keyNode = lastFoundNode.key as ASTNode | undefined;
-      if (keyNode?.loc) {
-        return {
-          line: keyNode.loc.start.line - 1,
-          character: keyNode.loc.start.column,
-        };
+    if (
+      lastFoundNode &&
+      (lastFoundNode["type"] === "Property" ||
+        lastFoundNode["type"] === "ObjectProperty")
+    ) {
+      const keyNode = lastFoundNode["key"] as OxcNode | undefined;
+      if (keyNode) {
+        return offsetToLineCol(fileContent, nodeStart(keyNode));
       }
     }
 
@@ -184,9 +138,8 @@ const findLocationInJson = (
     regex.lastIndex = currentIndex;
     const match = regex.exec(content);
 
-    if (!match) {
-      return null;
-    }
+    if (!match) return null;
+
     currentIndex = match.index + match[0].length;
 
     const contentUpToMatch = content.substring(0, match.index);

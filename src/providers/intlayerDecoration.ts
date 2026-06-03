@@ -1,5 +1,4 @@
 import { dirname, extname, join } from "node:path";
-import { parse as babelParse } from "@babel/parser";
 import { DEFAULT_LOCALE } from "@intlayer/config/defaultValues";
 import {
   type DecorationOptions,
@@ -13,6 +12,17 @@ import { extractScriptContent } from "../utils/extractScript";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
 import { getValueFromPath } from "../utils/intlayerValueResolver";
+import {
+  buildParentMap,
+  findAllOfType,
+  getPropertyKeyName,
+  getStringValue,
+  isIntlayerCall,
+  isStringLiteral,
+  nodeEnd,
+  type OxcNode,
+  parseFile,
+} from "../utils/oxcParser";
 
 // Configuration
 const DEBOUNCE_DELAY = 500;
@@ -28,77 +38,6 @@ const translationDecorationType = window.createTextEditorDecorationType({
   rangeBehavior: 1, // ClosedOpen
 });
 
-const parseCode = (code: string): any =>
-  babelParse(code, {
-    sourceType: "module",
-    strictMode: false,
-    allowImportExportEverywhere: true,
-    allowReturnOutsideFunction: true,
-    plugins: ["typescript", "jsx", "estree"],
-    ranges: true,
-  });
-
-const buildParentMap = (root: any): Map<any, any> => {
-  const parentMap = new Map<any, any>();
-  const walk = (node: any, parent: any) => {
-    if (!node || typeof node !== "object") return;
-
-    if (Array.isArray(node)) {
-      node.forEach((child) => {
-        walk(child, parent);
-      });
-      return;
-    }
-
-    if (!node.type) return;
-
-    parentMap.set(node, parent);
-
-    for (const key of Object.keys(node)) {
-      if (key === "parent" || key === "tokens" || key === "comments") continue;
-      walk(node[key], node);
-    }
-  };
-  walk(root, null);
-  return parentMap;
-};
-
-const findAllOfType = (root: any, type: string): any[] => {
-  const results: any[] = [];
-  const walk = (node: any) => {
-    if (!node || typeof node !== "object") return;
-
-    if (Array.isArray(node)) {
-      node.forEach(walk);
-      return;
-    }
-
-    if (!node.type) return;
-
-    if (node.type === type) results.push(node);
-
-    for (const key of Object.keys(node)) {
-      if (key === "parent" || key === "tokens" || key === "comments") continue;
-      walk(node[key]);
-    }
-  };
-  walk(root);
-  return results;
-};
-
-const isStringLiteral = (node: any): boolean =>
-  node?.type === "Literal" && typeof node.value === "string";
-
-const isNoSubTemplateLiteral = (node: any): boolean =>
-  node?.type === "TemplateLiteral" && node.expressions.length === 0;
-
-const getLiteralText = (node: any): string => {
-  if (node?.type === "Literal") return String(node.value);
-
-  if (node?.type === "TemplateLiteral")
-    return node.quasis[0]?.value?.cooked ?? "";
-  return "";
-};
 
 export const intlayerDecorationProvider = (): Disposable[] => {
   let activeEditor = window.activeTextEditor;
@@ -173,14 +112,9 @@ const updateDecorations = async (editor: TextEditor) => {
 
   const scriptContent = extractScriptContent(document.getText(), extension);
 
-  let ast: any;
-  try {
-    ast = parseCode(scriptContent);
-  } catch {
-    return;
-  }
+  const program = parseFile(scriptContent);
+  if (!program) return;
 
-  const program = ast.program;
   const parentMap = buildParentMap(program);
 
   const translationDecorations: DecorationOptions[] = [];
@@ -248,7 +182,7 @@ const updateDecorations = async (editor: TextEditor) => {
       }
       label += `)`;
 
-      const endOffset = callExpr.range[1];
+      const endOffset = nodeEnd(callExpr as OxcNode);
       const position = document.positionAt(endOffset);
       const range = new Range(position, position);
 
@@ -276,7 +210,7 @@ const updateDecorations = async (editor: TextEditor) => {
       });
 
       const references = identifiers.filter((id) => {
-        const idText = id.name;
+        const idText = id["name"] as string;
 
         if (idText !== variableName && idText !== `$${variableName}`) {
           return false;
@@ -309,7 +243,7 @@ const updateDecorations = async (editor: TextEditor) => {
             continue;
           }
 
-          const nodeEndPos = rangeNode.range[1];
+          const nodeEndPos = nodeEnd(rangeNode as OxcNode);
           const position = document.positionAt(nodeEndPos);
           const lineIndex = position.line;
 
@@ -592,96 +526,59 @@ const extractTextFromReactNode = (node: any): string => {
 };
 
 const analyzeUseIntlayerCall = (
-  callExpr: any,
-  parentMap: Map<any, any>,
+  callExpr: OxcNode,
+  parentMap: Map<OxcNode, OxcNode>,
 ): {
   dictionaryKey: string | null;
-  variables: {
-    variableName: string;
-    path: string[];
-    declarationNode?: any;
-  }[];
+  variables: { variableName: string; path: string[]; declarationNode?: OxcNode }[];
 } => {
-  const callee = callExpr.callee;
+  if (!isIntlayerCall(callExpr)) return { dictionaryKey: null, variables: [] };
 
-  if (callee?.type !== "Identifier") {
-    return { dictionaryKey: null, variables: [] };
-  }
+  const args = callExpr["arguments"] as OxcNode[] | undefined;
+  if (!args?.length) return { dictionaryKey: null, variables: [] };
 
-  const funcName = callee.name;
+  const firstArg = args[0]!;
+  const dictionaryKey = isStringLiteral(firstArg) ? getStringValue(firstArg) : null;
 
-  if (funcName !== "useIntlayer" && funcName !== "getIntlayer") {
-    return { dictionaryKey: null, variables: [] };
-  }
-
-  const args = callExpr.arguments;
-
-  if (args.length === 0) {
-    return { dictionaryKey: null, variables: [] };
-  }
-
-  let dictionaryKey: string | null = null;
-  const firstArg = args[0];
-
-  if (isStringLiteral(firstArg) || isNoSubTemplateLiteral(firstArg)) {
-    dictionaryKey = getLiteralText(firstArg);
-  }
-
-  const variables: {
-    variableName: string;
-    path: string[];
-    declarationNode?: any;
-  }[] = [];
+  const variables: { variableName: string; path: string[]; declarationNode?: OxcNode }[] = [];
 
   const callParent = parentMap.get(callExpr);
   const varDecl =
-    callParent?.type === "VariableDeclarator" && callParent.init === callExpr
+    callParent?.["type"] === "VariableDeclarator" && callParent["init"] === callExpr
       ? callParent
       : null;
   const propDecl =
-    callParent?.type === "PropertyDefinition" && callParent.value === callExpr
+    callParent?.["type"] === "PropertyDefinition" && callParent["value"] === callExpr
       ? callParent
       : null;
 
   if (varDecl) {
-    const pattern = varDecl.id;
+    const pattern = varDecl["id"] as OxcNode;
 
-    if (pattern.type === "ObjectPattern") {
-      for (const element of pattern.properties) {
-        if (element.type !== "Property") continue;
+    if (pattern["type"] === "ObjectPattern") {
+      for (const element of (pattern["properties"] as OxcNode[]) ?? []) {
+        // oxc uses "Property" for both object literals and patterns; also "ObjectProperty"
+        if (element["type"] !== "Property" && element["type"] !== "ObjectProperty") continue;
 
-        const dictionaryField = element.shorthand
-          ? element.key.name
-          : element.key.type === "Identifier"
-            ? element.key.name
-            : getLiteralText(element.key);
+        const keyNode = element["key"] as OxcNode;
+        const valueNode = element["value"] as OxcNode | undefined;
+        const dictionaryField = element["shorthand"]
+          ? (keyNode["name"] as string)
+          : getPropertyKeyName(keyNode);
         const variableName =
-          element.value?.type === "Identifier" ? element.value.name : "";
+          valueNode?.["type"] === "Identifier" ? (valueNode["name"] as string) : "";
 
         if (!variableName) continue;
 
-        variables.push({
-          variableName,
-          path: [dictionaryField],
-          declarationNode: element.value,
-        });
+        variables.push({ variableName, path: [dictionaryField], declarationNode: valueNode });
       }
-    } else if (pattern.type === "Identifier") {
-      variables.push({
-        variableName: pattern.name,
-        path: [],
-        declarationNode: pattern,
-      });
+    } else if (pattern["type"] === "Identifier") {
+      variables.push({ variableName: pattern["name"] as string, path: [], declarationNode: pattern });
     }
   } else if (propDecl) {
-    const nameNode = propDecl.key;
-
-    if (nameNode?.type === "Identifier") {
-      variables.push({
-        variableName: nameNode.name,
-        path: [],
-        declarationNode: nameNode,
-      });
+    const nameNode = propDecl["key"] as OxcNode | undefined;
+    if (nameNode?.["type"] === "Identifier") {
+      variables.push({ variableName: nameNode["name"] as string, path: [], declarationNode: nameNode });
     }
   }
 
@@ -689,59 +586,51 @@ const analyzeUseIntlayerCall = (
 };
 
 const isDeclarationIdentifier = (
-  id: any,
-  parentMap: Map<any, any>,
+  id: OxcNode,
+  parentMap: Map<OxcNode, OxcNode>,
 ): boolean => {
   const parent = parentMap.get(id);
-
   if (!parent) return false;
 
-  if (parent.type === "VariableDeclarator" && parent.id === id) return true;
+  if (parent["type"] === "VariableDeclarator" && parent["id"] === id) return true;
 
   if (
-    parent.type === "Property" &&
-    parentMap.get(parent)?.type === "ObjectPattern"
+    (parent["type"] === "Property" || parent["type"] === "ObjectProperty") &&
+    parentMap.get(parent)?.["type"] === "ObjectPattern"
   )
     return true;
 
-  if (parent.type === "PropertyDefinition") return true;
+  if (parent["type"] === "PropertyDefinition") return true;
 
   if (
-    [
-      "FunctionDeclaration",
-      "FunctionExpression",
-      "ArrowFunctionExpression",
-    ].includes(parent.type)
+    ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(
+      parent["type"] as string,
+    )
   )
     return true;
 
   if (
-    parent.type === "Property" &&
-    parent.key === id &&
-    parentMap.get(parent)?.type === "ObjectExpression"
+    (parent["type"] === "Property" || parent["type"] === "ObjectProperty") &&
+    parent["key"] === id &&
+    parentMap.get(parent)?.["type"] === "ObjectExpression"
   )
     return true;
 
   return false;
 };
 
-const isPropertyAccessName = (id: any, parentMap: Map<any, any>): boolean => {
+const isPropertyAccessName = (id: OxcNode, parentMap: Map<OxcNode, OxcNode>): boolean => {
   const parent = parentMap.get(id);
-
   if (!parent) return false;
-
-  if (parent.type === "MemberExpression" && parent.property === id) return true;
-
-  if (parent.type === "JSXMemberExpression" && parent.property === id)
-    return true;
-
+  if (parent["type"] === "MemberExpression" && parent["property"] === id) return true;
+  if (parent["type"] === "JSXMemberExpression" && parent["property"] === id) return true;
   return false;
 };
 
 const resolvePropertyAccess = (
-  startNode: any,
-  parentMap: Map<any, any>,
-): { fullPath: string[]; rangeNode: any } => {
+  startNode: OxcNode,
+  parentMap: Map<OxcNode, OxcNode>,
+): { fullPath: string[]; rangeNode: OxcNode } => {
   let current = startNode;
   const path: string[] = [];
 
@@ -749,13 +638,13 @@ const resolvePropertyAccess = (
     const parent = parentMap.get(current);
 
     if (
-      parent?.type === "MemberExpression" &&
-      !parent.computed &&
-      parent.object === current
+      parent?.["type"] === "MemberExpression" &&
+      !parent["computed"] &&
+      parent["object"] === current
     ) {
-      path.push(parent.property.name ?? "");
+      path.push((parent["property"] as OxcNode)["name"] as string ?? "");
       current = parent;
-    } else if (parent?.type === "CallExpression" && parent.callee === current) {
+    } else if (parent?.["type"] === "CallExpression" && parent["callee"] === current) {
       current = parent;
     } else {
       break;

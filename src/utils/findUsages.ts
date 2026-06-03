@@ -1,173 +1,20 @@
 import { extname, resolve } from "node:path";
-import { parse as babelParse } from "@babel/parser";
 import fg from "fast-glob";
 import { Range, Uri, workspace } from "vscode";
 import { extractScriptContent } from "./extractScript";
 import { getCachedConfig } from "./intlayerCache";
-
-export interface ASTNode {
-  type?: string;
-  loc?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
-  name?: string;
-  value?: unknown;
-  quasis?: { value?: { cooked?: string } }[];
-  expressions?: ASTNode[];
-  callee?: ASTNode;
-  arguments?: ASTNode[];
-  properties?: ASTNode[];
-  key?: ASTNode;
-  init?: ASTNode;
-  id?: ASTNode;
-  computed?: boolean;
-  object?: ASTNode;
-  property?: ASTNode;
-  shorthand?: boolean;
-  [key: string]: unknown;
-}
-
-/**
- * Parses the given TypeScript or JavaScript code into an AST (Abstract Syntax Tree).
- *
- * @param code - The string content of the code to parse.
- * @returns The generated AST node representation.
- */
-const parseCode = (code: string): ASTNode =>
-  babelParse(code, {
-    sourceType: "module",
-    strictMode: false,
-    allowImportExportEverywhere: true,
-    allowReturnOutsideFunction: true,
-    plugins: ["typescript", "jsx", "estree"],
-    ranges: true,
-  }) as unknown as ASTNode;
-
-/**
- * Builds a Map linking each AST node to its parent node.
- * This is useful to traverse upwards in the AST.
- *
- * @param root - The root AST node to start traversal from.
- * @returns A Map where the keys are child nodes and values are their parent nodes.
- */
-const buildParentMap = (root: ASTNode): Map<ASTNode, ASTNode> => {
-  const parentMap = new Map<ASTNode, ASTNode>();
-
-  const walk = (node: unknown, parent: ASTNode | null) => {
-    if (!node || typeof node !== "object") return;
-
-    if (Array.isArray(node)) {
-      node.forEach((child) => {
-        walk(child, parent);
-      });
-      return;
-    }
-
-    const astNode = node as ASTNode;
-    if (!astNode.type) return;
-
-    if (parent) {
-      parentMap.set(astNode, parent);
-    }
-
-    for (const key of Object.keys(astNode)) {
-      if (key === "parent" || key === "tokens" || key === "comments") continue;
-      walk(astNode[key], astNode);
-    }
-  };
-
-  walk(root, null);
-  return parentMap;
-};
-
-/**
- * Finds all AST nodes of a specific type recursively.
- *
- * @param root - The root AST node to start searching from.
- * @param type - The AST node type string to look for (e.g., 'CallExpression').
- * @returns An array of AST nodes matching the specified type.
- */
-const findAllOfType = (root: ASTNode, type: string): ASTNode[] => {
-  const results: ASTNode[] = [];
-
-  const walk = (n: unknown) => {
-    if (!n || typeof n !== "object") return;
-
-    if (Array.isArray(n)) {
-      n.forEach(walk);
-      return;
-    }
-
-    const astNode = n as ASTNode;
-    if (!astNode.type) return;
-
-    if (astNode.type === type) results.push(astNode);
-
-    for (const key of Object.keys(astNode)) {
-      if (key === "parent" || key === "tokens" || key === "comments") continue;
-      walk(astNode[key]);
-    }
-  };
-
-  walk(root);
-  return results;
-};
-
-/**
- * Checks if an AST node is a string literal.
- *
- * @param node - The AST node to check.
- * @returns True if the node is a literal with a string value.
- */
-const isStringLiteral = (node: ASTNode): boolean =>
-  node?.type === "Literal" && typeof node.value === "string";
-
-/**
- * Checks if an AST node is a template literal without substitutions.
- *
- * @param node - The AST node to check.
- * @returns True if the node is a template literal with no expressions.
- */
-const isNoSubTemplateLiteral = (node: ASTNode): boolean =>
-  node?.type === "TemplateLiteral" &&
-  Array.isArray(node.expressions) &&
-  node.expressions.length === 0;
-
-/**
- * Extracts the literal string text from an AST node if possible.
- *
- * @param node - The AST node.
- * @returns The extracted string value, or an empty string if not a relevant literal.
- */
-const getLiteralText = (node: ASTNode): string => {
-  if (node?.type === "Literal") return String(node.value);
-  if (node?.type === "TemplateLiteral") {
-    const quasis = node.quasis as
-      | Array<{ value?: { cooked?: string } }>
-      | undefined;
-    return quasis?.[0]?.value?.cooked ?? "";
-  }
-  return "";
-};
-
-/**
- * Converts an AST node's location into a VS Code Range.
- *
- * @param node - The AST Node to get location from.
- * @returns The converted Range object.
- */
-const nodeToRange = (node: ASTNode): Range => {
-  if (!node.loc) {
-    return new Range(0, 0, 0, 0); // Graceful fallback
-  }
-  return new Range(
-    node.loc.start.line - 1,
-    node.loc.start.column,
-    node.loc.end.line - 1,
-    node.loc.end.column,
-  );
-};
+import {
+  buildParentMap,
+  findAllOfType,
+  getStringValue,
+  isIntlayerCall,
+  isStringLiteral,
+  nodeEnd,
+  nodeStart,
+  type OxcNode,
+  offsetToLineCol,
+  parseFile,
+} from "./oxcParser";
 
 export interface UsageLocation {
   uri: Uri;
@@ -179,10 +26,6 @@ export interface UsageLocation {
 /**
  * Extracts script content from a given file text, with special handling for Angular templates
  * when the file is a TypeScript component.
- *
- * @param text - The full source code text of the file.
- * @param extension - The extension of the file.
- * @returns The sanitized script content to parse.
  */
 const extractScriptContentWithAngular = (
   text: string,
@@ -210,19 +53,16 @@ const extractScriptContentWithAngular = (
         for (const interpolationMatch of content.matchAll(/{{([\s\S]*?)}}/g)) {
           expressions.push(sanitize(interpolationMatch[1]));
         }
-
         for (const bindingMatch of content.matchAll(
           /(?:\[.*?\]|bind-.*?)\s*=\s*(["'])(.*?)\1/g,
         )) {
           expressions.push(sanitize(bindingMatch[2]));
         }
-
         for (const structMatch of content.matchAll(
           /\*\w+\s*=\s*(["'])(.*?)\1/g,
         )) {
           expressions.push(sanitize(structMatch[2]));
         }
-
         for (const controlFlowMatch of content.matchAll(/@\w+\s*\((.*?)\)/g)) {
           expressions.push(sanitize(controlFlowMatch[1]));
         }
@@ -235,20 +75,12 @@ const extractScriptContentWithAngular = (
   return processedText;
 };
 
-/**
- * Analyzes files in a project directory to discover all usages of a specific translation dictionary key.
- *
- * @param projectDir - The absolute path to the project directory to traverse.
- * @param dictionaryKey - The translation key string being searched for.
- * @returns An array of locations detailing where the key was used.
- */
 export const findUsagesOfDictionary = async (
   projectDir: string,
   dictionaryKey: string,
 ): Promise<UsageLocation[]> => {
   const config = await getCachedConfig(projectDir);
 
-  // Build include/exclude patterns from config — respects .next, dist, build, etc.
   const traversePatterns = (config.build.traversePattern ?? []) as string[];
   const compilerPatterns: string[] = config.compiler.transformPattern
     ? ((Array.isArray(config.compiler.transformPattern)
@@ -261,14 +93,10 @@ export const findUsagesOfDictionary = async (
   );
   const includePatterns = allPatterns.filter((p) => !p.startsWith("!"));
   const excludePatterns = [
-    ...allPatterns
-      .filter((pattern) => pattern.startsWith("!"))
-      .map((p) => p.slice(1)),
-    // Also exclude content declaration files from component search
+    ...allPatterns.filter((p) => p.startsWith("!")).map((p) => p.slice(1)),
     ...(config.content.fileExtensions ?? []).map((ext) => `**/*${ext}`),
   ];
 
-  // Deduplicate roots (handles monorepo with multiple codeDir entries)
   const allRoots = [config.system.baseDir, ...(config.content.codeDir ?? [])];
   const uniqueRoots = [...new Set(allRoots.map((d) => resolve(d)))];
 
@@ -291,7 +119,6 @@ export const findUsagesOfDictionary = async (
   }
 
   const usageLocations: UsageLocation[] = [];
-
   const CONCURRENCY_LIMIT = 10;
   const chunks: Uri[][] = [];
 
@@ -309,20 +136,12 @@ export const findUsagesOfDictionary = async (
           if (!text.includes(dictionaryKey)) return;
 
           const extension = extname(fileUri.fsPath).toLowerCase();
-          const scriptContent = extractScriptContentWithAngular(
-            text,
-            extension,
-          );
+          const scriptContent = extractScriptContentWithAngular(text, extension);
 
-          let ast: ASTNode;
-          try {
-            ast = parseCode(scriptContent);
-          } catch {
-            return;
-          }
+          const program = parseFile(scriptContent);
+          if (!program) return;
 
-          const programNode = ast.program as ASTNode;
-          const fileUsages = analyzeFileForUsages(programNode, dictionaryKey);
+          const fileUsages = analyzeFileForUsages(program, dictionaryKey, scriptContent);
 
           if (fileUsages.length > 0) {
             const { keys, locations } = mergeUsageData(fileUsages);
@@ -343,10 +162,6 @@ export const findUsagesOfDictionary = async (
   return usageLocations;
 };
 
-/**
- * Consolidates usage data across multiple references to avoid duplicates
- * and merge ranges correctly.
- */
 const mergeUsageData = (
   usages: { keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[],
 ) => {
@@ -354,11 +169,9 @@ const mergeUsageData = (
   const locations = new Map<string, Range[]>();
 
   for (const usage of usages) {
-    usage.keysUsed.forEach((key) => {
-      keys.add(key);
-    });
+    usage.keysUsed.forEach((key) => keys.add(key));
     usage.keyLocations.forEach((ranges, key) => {
-      const existing = locations.get(key) || [];
+      const existing = locations.get(key) ?? [];
       locations.set(key, [...existing, ...ranges]);
     });
   }
@@ -366,71 +179,47 @@ const mergeUsageData = (
   return { keys, locations };
 };
 
-/**
- * Deeply analyzes an AST to trace local usages and references of a specific dictionary key.
- *
- * @param program - The root AST program node.
- * @param targetKey - The key to look for.
- * @returns The gathered keys and ranges tracking exact usage locations.
- */
 const analyzeFileForUsages = (
-  program: ASTNode,
+  program: OxcNode,
   targetKey: string,
-): {
-  range: Range;
-  keysUsed: Set<string>;
-  keyLocations: Map<string, Range[]>;
-}[] => {
-  const results: {
-    range: Range;
-    keysUsed: Set<string>;
-    keyLocations: Map<string, Range[]>;
-  }[] = [];
+  text: string,
+): { range: Range; keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[] => {
+  const results: { range: Range; keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[] = [];
+
+  const nodeToRange = (node: OxcNode): Range => {
+    const s = offsetToLineCol(text, nodeStart(node));
+    const e = offsetToLineCol(text, nodeEnd(node));
+    return new Range(s.line, s.character, e.line, e.character);
+  };
 
   const parentMap = buildParentMap(program);
   const calls = findAllOfType(program, "CallExpression");
 
   for (const call of calls) {
-    const callee = call.callee;
+    if (!isIntlayerCall(call)) continue;
 
-    if (callee?.type !== "Identifier") continue;
+    const args = call["arguments"] as OxcNode[] | undefined;
+    if (!args?.length) continue;
 
-    const funcName = callee.name;
+    const firstArg = args[0]!;
+    if (!isStringLiteral(firstArg)) continue;
 
-    if (funcName !== "useIntlayer" && funcName !== "getIntlayer") continue;
-
-    const args = call.arguments;
-
-    if (args?.length === 0) continue;
-
-    const firstArg = args?.[0];
-    let argText = "";
-
-    if (
-      firstArg &&
-      (isStringLiteral(firstArg) || isNoSubTemplateLiteral(firstArg))
-    ) {
-      argText = getLiteralText(firstArg);
-    }
-
+    const argText = getStringValue(firstArg);
     if (argText !== targetKey) continue;
 
     const keysUsed = new Set<string>();
     const keyLocations = new Map<string, Range[]>();
     const declarationRange = nodeToRange(call);
 
-    const addLocation = (key: string, node: ASTNode) => {
+    const addLocation = (key: string, node: OxcNode) => {
       const cleanKey = key.replace(/\.(value|raw)$/, "");
       keysUsed.add(cleanKey);
-
       const parts = cleanKey.split(".");
-
       for (let i = 1; i < parts.length; i++) {
         keysUsed.add(parts.slice(0, i).join("."));
       }
-
       const r = nodeToRange(node);
-      const list = keyLocations.get(cleanKey) || [];
+      const list = keyLocations.get(cleanKey) ?? [];
       list.push(r);
       keyLocations.set(cleanKey, list);
     };
@@ -438,60 +227,58 @@ const analyzeFileForUsages = (
     const traceUsages = (varName: string, prefix = "") => {
       const allIdentifiers = findAllOfType(program, "Identifier");
       const refs = allIdentifiers.filter((id) => {
-        const name = id.name;
-
+        const name = id["name"] as string;
         if (name !== varName && name !== `$${varName}`) return false;
 
         const parent = parentMap.get(id);
-
         if (!parent) return true;
 
-        if (parent.type === "VariableDeclarator" && parent.id === id)
+        if (parent["type"] === "VariableDeclarator" && parent["id"] === id)
           return false;
 
+        const grandParent = parentMap.get(parent);
         if (
-          parent.type === "Property" &&
-          parentMap.get(parent)?.type === "ObjectPattern"
+          (parent["type"] === "Property" || parent["type"] === "ObjectProperty") &&
+          grandParent?.["type"] === "ObjectPattern"
         )
           return false;
 
-        if (parent.type === "PropertyDefinition" && parent.key === id)
+        if (parent["type"] === "PropertyDefinition" && parent["key"] === id)
           return false;
 
         return true;
       });
 
       for (const ref of refs) {
-        let current: ASTNode = ref;
+        let current: OxcNode = ref;
         const path: string[] = [];
 
         while (true) {
           const parent = parentMap.get(current);
 
           if (
-            parent?.type === "MemberExpression" &&
-            !parent.computed &&
-            parent.object === current
+            parent?.["type"] === "MemberExpression" &&
+            !parent["computed"] &&
+            parent["object"] === current
           ) {
-            path.push(parent.property?.name ?? "");
+            path.push(((parent["property"] as OxcNode)["name"] as string) ?? "");
             current = parent;
           } else if (
-            parent?.type === "MemberExpression" &&
-            parent.computed &&
-            parent.object === current
+            parent?.["type"] === "MemberExpression" &&
+            parent["computed"] &&
+            parent["object"] === current
           ) {
-            const arg = parent.property;
-
-            if (arg && (isStringLiteral(arg) || isNoSubTemplateLiteral(arg))) {
-              path.push(getLiteralText(arg));
+            const prop = parent["property"] as OxcNode;
+            if (isStringLiteral(prop)) {
+              path.push(getStringValue(prop));
               current = parent;
             } else {
               keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
               break;
             }
           } else if (
-            parent?.type === "CallExpression" &&
-            parent.callee === current
+            parent?.["type"] === "CallExpression" &&
+            parent["callee"] === current
           ) {
             current = parent;
           } else {
@@ -500,9 +287,7 @@ const analyzeFileForUsages = (
         }
 
         if (path.length > 0) {
-          const fullKey = prefix
-            ? `${prefix}.${path.join(".")}`
-            : path.join(".");
+          const fullKey = prefix ? `${prefix}.${path.join(".")}` : path.join(".");
           addLocation(fullKey, current);
         } else {
           keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
@@ -512,11 +297,11 @@ const analyzeFileForUsages = (
 
     const callParent = parentMap.get(call);
     const varDecl =
-      callParent?.type === "VariableDeclarator" && callParent.init === call
+      callParent?.["type"] === "VariableDeclarator" && callParent["init"] === call
         ? callParent
         : null;
     const propDecl =
-      callParent?.type === "PropertyDefinition" && callParent.value === call
+      callParent?.["type"] === "PropertyDefinition" && callParent["value"] === call
         ? callParent
         : null;
 
@@ -527,42 +312,40 @@ const analyzeFileForUsages = (
     }
 
     if (varDecl) {
-      const nameNode = varDecl.id;
+      const nameNode = varDecl["id"] as OxcNode;
 
-      if (nameNode?.type === "ObjectPattern") {
-        for (const element of nameNode.properties || []) {
-          if (element.type !== "Property") continue;
+      if (nameNode["type"] === "ObjectPattern") {
+        for (const element of (nameNode["properties"] as OxcNode[]) ?? []) {
+          if (element["type"] !== "Property" && element["type"] !== "ObjectProperty") continue;
 
-          const elementKey = element.key as ASTNode | undefined;
-          const elementValue = element.value as ASTNode | undefined;
+          const elementKey = element["key"] as OxcNode | undefined;
+          const elementValue = element["value"] as OxcNode | undefined;
 
-          const key = element.shorthand
-            ? elementKey?.name
-            : elementKey?.type === "Identifier"
-              ? elementKey?.name
+          const key = element["shorthand"]
+            ? (elementKey?.["name"] as string | undefined)
+            : elementKey?.["type"] === "Identifier"
+              ? (elementKey["name"] as string)
               : elementKey
-                ? getLiteralText(elementKey)
+                ? getStringValue(elementKey)
                 : "";
           const varName =
-            elementValue?.type === "Identifier" ? elementValue.name : "";
+            elementValue?.["type"] === "Identifier"
+              ? (elementValue["name"] as string)
+              : "";
 
-          if (!varName || typeof varName !== "string") continue;
+          if (!varName) continue;
 
-          const finalKey = key || "";
-
-          if (elementKey) {
-            addLocation(finalKey, elementKey);
-          }
+          const finalKey = key ?? "";
+          if (elementKey) addLocation(finalKey, elementKey);
           traceUsages(varName, finalKey);
         }
-      } else if (nameNode?.type === "Identifier" && nameNode.name) {
-        traceUsages(nameNode.name);
+      } else if (nameNode["type"] === "Identifier" && nameNode["name"]) {
+        traceUsages(nameNode["name"] as string);
       }
     } else if (propDecl) {
-      const nameNode = propDecl.key;
-
-      if (nameNode?.type === "Identifier" && nameNode.name) {
-        traceUsages(nameNode.name);
+      const nameNode = propDecl["key"] as OxcNode | undefined;
+      if (nameNode?.["type"] === "Identifier" && nameNode["name"]) {
+        traceUsages(nameNode["name"] as string);
       }
     }
 

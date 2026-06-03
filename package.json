@@ -12,7 +12,7 @@
     "internationalization",
     "vscode"
   ],
-  "version": "8.11.4",
+  "version": "8.12.0",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -304,19 +304,18 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@babel/parser": "7.29.7",
     "@biomejs/biome": "2.4.16",
-    "@intlayer/api": "^8.11.3",
-    "@intlayer/babel": "^8.11.3",
-    "@intlayer/chokidar": "^8.11.3",
-    "@intlayer/cli": "^8.11.3",
-    "@intlayer/config": "^8.11.3",
-    "@intlayer/core": "^8.11.3",
+    "@intlayer/api": "^8.12.0",
+    "@intlayer/babel": "^8.12.0",
+    "@intlayer/chokidar": "^8.12.0",
+    "@intlayer/cli": "^8.12.0",
+    "@intlayer/config": "^8.12.0",
+    "@intlayer/core": "^8.12.0",
     "@intlayer/lsp": "^8.11.4",
-    "@intlayer/svelte-compiler": "^8.11.3",
-    "@intlayer/types": "^8.11.3",
-    "@intlayer/unmerged-dictionaries-entry": "^8.11.3",
-    "@intlayer/vue-compiler": "^8.11.3",
+    "@intlayer/svelte-compiler": "^8.12.0",
+    "@intlayer/types": "^8.12.0",
+    "@intlayer/unmerged-dictionaries-entry": "^8.12.0",
+    "@intlayer/vue-compiler": "^8.12.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.9.1",
     "@types/vscode": "^1.96.0",
@@ -331,7 +330,8 @@
     "tsdown": "0.22.1",
     "typescript": "^6.0.3",
     "vsce": "^1.96.0",
-    "vscode-languageclient": "^9.0.1"
+    "oxc-parser": "0.134.0",
+    "vscode-languageclient": "^10.0.0"
   },
   "dependencies": {
     "esbuild": "0.28.0",

@@ -35,8 +35,11 @@ export const extractScriptContent = (
   );
 
   if (extension === ".svelte") {
-    // Svelte block tags like {#if}, {/if}, {:else}, {@html} break Babel.
-    processedText = processedText.replace(/\{[#/:@][a-z0-9]*/gi, (match) =>
+    // Replace entire Svelte control-flow and special-tag blocks with spaces so
+    // their contents don't produce stray tokens that break the JS/TS parser.
+    // Pattern covers: {#if …} {#each … as …} {:else} {/each} {@html …} {@const …}
+    // Normal Svelte expressions like {$app.title} are NOT matched (no #/:/@).
+    processedText = processedText.replace(/\{[#/:@][^}]*\}/gi, (match) =>
       " ".repeat(match.length),
     );
   }

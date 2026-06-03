@@ -1,5 +1,4 @@
 import { dirname, extname, join } from "node:path";
-import { parse as babelParse } from "@babel/parser";
 import {
   type DecorationOptions,
   type Disposable,
@@ -15,40 +14,16 @@ import {
   type UsageLocation,
 } from "../utils/findUsages";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
+import {
+  findAllOfType,
+  getPropertyKeyName,
+  nodeEnd,
+  nodeStart,
+  type OxcNode,
+  parseFile,
+} from "../utils/oxcParser";
 
 const DEBOUNCE_DELAY = 1000;
-
-const parseCode = (code: string): any =>
-  babelParse(code, {
-    sourceType: "module",
-    strictMode: false,
-    allowImportExportEverywhere: true,
-    allowReturnOutsideFunction: true,
-    plugins: ["typescript", "jsx", "estree"],
-    ranges: true,
-  });
-
-const findAllOfType = (root: any, type: string): any[] => {
-  const results: any[] = [];
-  const walk = (node: any) => {
-    if (!node || typeof node !== "object") return;
-
-    if (Array.isArray(node)) {
-      node.forEach(walk);
-      return;
-    }
-
-    if (!node.type) return;
-
-    if (node.type === type) results.push(node);
-    for (const key of Object.keys(node)) {
-      if (key === "parent" || key === "tokens" || key === "comments") continue;
-      walk(node[key]);
-    }
-  };
-  walk(root);
-  return results;
-};
 
 // --- Caching Strategy ---
 const usageCache = new Map<
@@ -109,34 +84,29 @@ export const intlayerUnusedDecorationProvider = (): Disposable[] => {
 };
 
 const getKeysFromObject = (
-  obj: any,
+  obj: OxcNode,
   prefix = "",
-): { key: string; node: any }[] => {
-  const keys: { key: string; node: any }[] = [];
-  for (const prop of obj.properties) {
-    if (prop.type !== "Property") continue;
+): { key: string; node: OxcNode }[] => {
+  const keys: { key: string; node: OxcNode }[] = [];
+  for (const prop of (obj["properties"] as OxcNode[]) ?? []) {
+    if (prop["type"] !== "Property" && prop["type"] !== "ObjectProperty")
+      continue;
 
-    const nameNode = prop.key;
-    const name =
-      nameNode.type === "Identifier"
-        ? nameNode.name
-        : nameNode.type === "Literal"
-          ? String(nameNode.value).replace(/['"]/g, "")
-          : "";
+    const nameNode = prop["key"] as OxcNode;
+    const name = getPropertyKeyName(nameNode);
     const fullKey = prefix ? `${prefix}.${name}` : name;
 
-    const initializer = prop.value;
+    const initializer = prop["value"] as OxcNode | undefined;
 
-    if (initializer?.type === "CallExpression") {
-      const callee = initializer.callee;
-
-      if (callee?.type === "Identifier" && callee.name === "t") {
+    if (initializer?.["type"] === "CallExpression") {
+      const callee = initializer["callee"] as OxcNode | undefined;
+      if (callee?.["type"] === "Identifier" && callee["name"] === "t") {
         keys.push({ key: fullKey, node: nameNode });
         continue;
       }
     }
 
-    if (initializer?.type === "ObjectExpression") {
+    if (initializer?.["type"] === "ObjectExpression") {
       keys.push({ key: fullKey, node: nameNode });
       keys.push(...getKeysFromObject(initializer, fullKey));
     } else {
@@ -327,52 +297,44 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
     }
   }
 
-  let ast: any;
-  try {
-    ast = parseCode(scriptContent);
-  } catch {
+  const program = parseFile(scriptContent);
+  if (!program) {
     editor.setDecorations(strikeDecorationType, strikeDecorations);
     editor.setDecorations(unusedTextDecorationType, unusedTextDecorations);
     editor.setDecorations(unusedTextDecorationType, duplicateDecorations);
     return;
   }
 
-  const program = ast.program;
-
   const dictionaryObj = findAllOfType(program, "ObjectExpression").find(
-    (obj: any) => {
-      const propNames = obj.properties
-        .filter((prop: any) => prop.type === "Property")
-        .map((prop: any) =>
-          prop.key?.type === "Identifier"
-            ? prop.key.name
-            : String(prop.key?.value ?? ""),
-        );
+    (obj) => {
+      const propNames = (obj["properties"] as OxcNode[])
+        .filter(
+          (p) => p["type"] === "Property" || p["type"] === "ObjectProperty",
+        )
+        .map((p) => getPropertyKeyName(p["key"] as OxcNode));
       return propNames.includes("key") && propNames.includes("content");
     },
   );
 
   if (dictionaryObj) {
-    const contentProp = dictionaryObj.properties.find(
-      (prop: any) =>
-        prop.type === "Property" &&
-        (prop.key?.name === "content" || String(prop.key?.value) === "content"),
+    const contentProp = (dictionaryObj["properties"] as OxcNode[]).find(
+      (p) =>
+        (p["type"] === "Property" || p["type"] === "ObjectProperty") &&
+        getPropertyKeyName(p["key"] as OxcNode) === "content",
     );
 
-    if (contentProp?.type === "Property") {
-      const contentValue = contentProp.value;
+    if (contentProp) {
+      const contentValue = contentProp["value"] as OxcNode | undefined;
 
-      if (contentValue?.type === "ObjectExpression") {
+      if (contentValue?.["type"] === "ObjectExpression") {
         const allKeys = getKeysFromObject(contentValue);
 
         for (const { key: rawKey, node } of allKeys) {
-          if (!isDictionaryUsed) {
-            continue;
-          }
+          if (!isDictionaryUsed) continue;
 
           if (!usedKeys.has(rawKey) && !usedKeys.has("__ALL__")) {
-            const startPos = document.positionAt(node.range[0]);
-            const endPos = document.positionAt(node.range[1]);
+            const startPos = document.positionAt(nodeStart(node));
+            const endPos = document.positionAt(nodeEnd(node));
 
             addUnused(
               new Range(startPos, endPos),
