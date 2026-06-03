@@ -1,4 +1,8 @@
-import { dirname } from "node:path";
+import { dirname, extname } from "node:path";
+import {
+  findContentFieldAtOffset,
+  findKeyInContentFile,
+} from "@intlayer/lsp/utils";
 import {
   type DefinitionProvider,
   Location,
@@ -85,35 +89,21 @@ const getTargetKeyAndPathFromDocument = async (
   position: Position,
 ): Promise<{ dictionaryKey: string; clickedField: string } | null> => {
   const text = document.getText();
+  const offset = document.offsetAt(position);
+  const ext = extname(document.uri.fsPath);
 
-  // Extract key: "app" | key: 'app' | key: `app` | key: app (YAML/Markdown)
-  const keyMatch =
-    /key\s*:\s*(?:(['"`])(.*?)\1|([^\s'"`{},\r\n]+))/.exec(text);
-  if (!keyMatch) {
-    return null;
-  }
-  const dictionaryKey = keyMatch[2] ?? keyMatch[3];
-
-  const range = document.getWordRangeAtPosition(position);
-  if (!range) {
-    return null;
-  }
-  let clickedWord = document.getText(range);
-
-  // Strip quotes if the user clicked on a quoted key "title" or 'title'
-  // (Fixing this ensures navigation works when clicking directly on the key string)
-  clickedWord = clickedWord.replace(/^['"]|['"]$/g, "");
-
-  // If clicked directly on the dictionary key value
-  if (clickedWord === dictionaryKey) {
-    return { dictionaryKey, clickedField: "key" };
+  const clickedKey = findKeyInContentFile(text, offset);
+  if (clickedKey) {
+    return { dictionaryKey: clickedKey, clickedField: "key" };
   }
 
-  // If clicked on 'key' property name
-  if (clickedWord === "key") {
-    return { dictionaryKey, clickedField: "key" };
+  const contentField = findContentFieldAtOffset(text, offset, ext);
+  if (contentField) {
+    return {
+      dictionaryKey: contentField.dictionaryKey,
+      clickedField: contentField.fieldName,
+    };
   }
 
-  // Otherwise assume it's a content field
-  return { dictionaryKey, clickedField: clickedWord };
+  return null;
 };

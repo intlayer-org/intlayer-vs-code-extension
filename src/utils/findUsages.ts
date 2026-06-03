@@ -1,9 +1,9 @@
-import { extname } from "node:path";
+import { extname, resolve } from "node:path";
 import { parse as babelParse } from "@babel/parser";
-import { getConfiguration } from "@intlayer/config/node";
-import { Range, RelativePattern, type Uri, workspace } from "vscode";
+import fg from "fast-glob";
+import { Range, Uri, workspace } from "vscode";
 import { extractScriptContent } from "./extractScript";
-import { getConfigurationOptions } from "./getConfiguration";
+import { getCachedConfig } from "./intlayerCache";
 
 export interface ASTNode {
   type?: string;
@@ -246,23 +246,54 @@ export const findUsagesOfDictionary = async (
   projectDir: string,
   dictionaryKey: string,
 ): Promise<UsageLocation[]> => {
-  const configOptions = await getConfigurationOptions(projectDir);
-  getConfiguration(configOptions);
+  const config = await getCachedConfig(projectDir);
 
-  const searchPattern = new RelativePattern(
-    projectDir,
-    "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}",
-  );
+  // Build include/exclude patterns from config — respects .next, dist, build, etc.
+  const traversePatterns = (config.build.traversePattern ?? []) as string[];
+  const compilerPatterns: string[] = config.compiler.transformPattern
+    ? ((Array.isArray(config.compiler.transformPattern)
+        ? config.compiler.transformPattern
+        : [config.compiler.transformPattern]) as string[])
+    : [];
 
-  const relevantFiles = await workspace.findFiles(
-    searchPattern,
-    "**/node_modules/**",
+  const allPatterns = [...traversePatterns, ...compilerPatterns].filter(
+    (p): p is string => typeof p === "string",
   );
+  const includePatterns = allPatterns.filter((p) => !p.startsWith("!"));
+  const excludePatterns = [
+    ...allPatterns
+      .filter((pattern) => pattern.startsWith("!"))
+      .map((p) => p.slice(1)),
+    // Also exclude content declaration files from component search
+    ...(config.content.fileExtensions ?? []).map((ext) => `**/*${ext}`),
+  ];
+
+  // Deduplicate roots (handles monorepo with multiple codeDir entries)
+  const allRoots = [config.system.baseDir, ...(config.content.codeDir ?? [])];
+  const uniqueRoots = [...new Set(allRoots.map((d) => resolve(d)))];
+
+  const seenPaths = new Set<string>();
+  const relevantFiles: Uri[] = [];
+
+  for (const root of uniqueRoots) {
+    const files = await fg(includePatterns, {
+      cwd: root,
+      ignore: excludePatterns,
+      absolute: true,
+      dot: false,
+    });
+    for (const f of files) {
+      if (!seenPaths.has(f)) {
+        seenPaths.add(f);
+        relevantFiles.push(Uri.file(f));
+      }
+    }
+  }
 
   const usageLocations: UsageLocation[] = [];
 
   const CONCURRENCY_LIMIT = 10;
-  const chunks: (typeof relevantFiles)[] = [];
+  const chunks: Uri[][] = [];
 
   for (let i = 0; i < relevantFiles.length; i += CONCURRENCY_LIMIT) {
     chunks.push(relevantFiles.slice(i, i + CONCURRENCY_LIMIT));
@@ -322,11 +353,11 @@ const mergeUsageData = (
   const keys = new Set<string>();
   const locations = new Map<string, Range[]>();
 
-  for (const u of usages) {
-    u.keysUsed.forEach((k) => {
-      keys.add(k);
+  for (const usage of usages) {
+    usage.keysUsed.forEach((key) => {
+      keys.add(key);
     });
-    u.keyLocations.forEach((ranges, key) => {
+    usage.keyLocations.forEach((ranges, key) => {
       const existing = locations.get(key) || [];
       locations.set(key, [...existing, ...ranges]);
     });

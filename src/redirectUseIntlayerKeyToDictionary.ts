@@ -1,4 +1,5 @@
 import { dirname, join } from "node:path";
+import { findKeyAtOffset } from "@intlayer/lsp/utils";
 import {
   type DefinitionLink,
   type DefinitionProvider,
@@ -12,29 +13,26 @@ import { getCachedConfig, getCachedDictionary } from "./utils/intlayerCache";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
   provideDefinition: async (document, position) => {
-    // 1. Fast Regex Check (Safe: Does not trigger recursive Definition lookups)
-    const range = document.getWordRangeAtPosition(position, /["'][^"']+["']/);
-    if (!range) {
+    // Use the Oxc-based AST parser to find the Intlayer dictionary key at the
+    // cursor position. This correctly handles multi-line calls, TypeScript
+    // generics, comments, and template literals without regex edge cases.
+    const text = document.getText();
+    const offset = document.offsetAt(position);
+    const word = findKeyAtOffset(text, offset);
+
+    if (!word) {
       return null;
     }
 
-    // Check all text preceding the opening quote so multi-line calls like
-    //   useIntlayer(
-    //     "my-key"
-    //   )
-    // are handled correctly (the function name may be on a different line).
-    const textBefore = document.getText(new Range(new Position(0, 0), range.start));
-    if (!/(?:useIntlayer|getIntlayer)\s*\(\s*$/.test(textBefore)) {
-      return null;
-    }
-
-    const word = document.getText(range).replace(/["']/g, "");
-
-    // Calculate the selection range for the visual highlight
-    const originSelectionRange = new Range(
-      range.start.translate(0, 1),
-      range.end.translate(0, -1),
-    );
+    // Compute the origin selection range (the key string without its quotes)
+    // so VS Code highlights just the key text in the editor.
+    const wordRange = document.getWordRangeAtPosition(position, /["'`][^"'`]+["'`]/);
+    const originSelectionRange = wordRange
+      ? new Range(
+          wordRange.start.translate(0, 1),
+          wordRange.end.translate(0, -1),
+        )
+      : new Range(position, position);
 
     const fileDir = dirname(document.uri.fsPath);
     const projectDir = findProjectRoot(fileDir);
@@ -43,7 +41,7 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       return null;
     }
 
-    // 2. Get Config (Cached)
+    // Load configuration (cached)
     const config = await getCachedConfig(projectDir);
 
     const dictionaryPath = join(
@@ -51,7 +49,7 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       `${word}.json`,
     );
 
-    // 3. Get Dictionary (Cached)
+    // Load the unmerged dictionary (cached)
     const dictionaries = await getCachedDictionary(dictionaryPath);
 
     if (!dictionaries) {
@@ -60,7 +58,6 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
 
     const links: DefinitionLink[] = [];
 
-    // 4. Map dictionaries to specific file locations
     for (const dictionary of dictionaries) {
       if (!dictionary.filePath) {
         continue;
@@ -69,8 +66,7 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       const absoluteSourcePath = join(projectDir, dictionary.filePath);
       const sourceUri = Uri.file(absoluteSourcePath);
 
-      // Attempt to find the specific 'content' field in the source file
-      // to jump directly to the data, rather than just the top of the file.
+      // Jump directly to the `content` field in the source file if possible.
       const location = await findFieldLocation(absoluteSourcePath, ["content"]);
 
       const targetRange = location
@@ -83,7 +79,7 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       links.push({
         originSelectionRange,
         targetUri: sourceUri,
-        targetRange: targetRange,
+        targetRange,
         targetSelectionRange: targetRange,
       });
     }

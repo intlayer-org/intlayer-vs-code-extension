@@ -95,7 +95,10 @@ export const getCachedDictionary = async (
 
     return data;
   } catch (error) {
-    console.warn(`Failed to load dictionary: ${filePath}`, error);
+    // ENOENT just means the dictionary hasn't been built yet — expected and silent.
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.warn(`Failed to load dictionary: ${filePath}`, error);
+    }
     return null;
   }
 };

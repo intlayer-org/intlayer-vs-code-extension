@@ -44,6 +44,12 @@ const sharedDeps = {
     "picocolors",
     "@intlayer/ai",
     "fsevents",
+    // oxc-parser ships platform-specific native binaries — cannot be inlined
+    "oxc-parser",
+    "@oxc-parser/binding-darwin-arm64",
+    "@oxc-parser/binding-darwin-x64",
+    "@oxc-parser/binding-linux-x64-gnu",
+    "@oxc-parser/binding-win32-x64-msvc",
     "node:fs",
     "node:fs/promises",
     "node:path",
@@ -57,6 +63,11 @@ const sharedAlias = {
   // Needed by @intlayer/lsp which imports the bare specifier.
   "@intlayer/config": resolve(
     "node_modules/@intlayer/config/dist/esm/node.mjs",
+  ),
+  // Point @intlayer/lsp/utils to the local monorepo source so the extension
+  // host picks up the Oxc-based AST helpers without requiring a publish.
+  "@intlayer/lsp/utils": resolve(
+    "node_modules/@intlayer/lsp/dist/esm/utils.mjs",
   ),
   "utils:asset": resolve("src/utils/assets.ts"),
 };
@@ -81,7 +92,7 @@ export default defineConfig([
     target: "node20",
     clean: true,
     platform: "node",
-    minify: false,
+    minify: true,
     treeshake: true,
     sourcemap: false,
 
@@ -182,7 +193,7 @@ export default defineConfig([
     target: "node20",
     clean: false,
     platform: "node",
-    minify: false,
+    minify: true,
     treeshake: false,
     sourcemap: false,
     deps: sharedDeps,

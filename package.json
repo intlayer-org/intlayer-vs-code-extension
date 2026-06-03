@@ -12,7 +12,7 @@
     "internationalization",
     "vscode"
   ],
-  "version": "8.11.3",
+  "version": "8.11.4",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -312,7 +312,7 @@
     "@intlayer/cli": "^8.11.3",
     "@intlayer/config": "^8.11.3",
     "@intlayer/core": "^8.11.3",
-    "@intlayer/lsp": "^8.11.3",
+    "@intlayer/lsp": "^8.11.4",
     "@intlayer/svelte-compiler": "^8.11.3",
     "@intlayer/types": "^8.11.3",
     "@intlayer/unmerged-dictionaries-entry": "^8.11.3",
@@ -335,6 +335,7 @@
   },
   "dependencies": {
     "esbuild": "0.28.0",
+    "fast-glob": "^3.3.3",
     "picocolors": "^1.1.1"
   }
 }

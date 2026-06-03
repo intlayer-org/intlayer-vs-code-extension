@@ -1,9 +1,10 @@
 import { join } from "node:path";
 import type { ExtensionContext } from "vscode";
-import { workspace } from "vscode";
+import { window, workspace } from "vscode";
 import {
   LanguageClient,
   type LanguageClientOptions,
+  RevealOutputChannelOn,
   type ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
@@ -17,6 +18,11 @@ export const startLSPClient = (context: ExtensionContext): void => {
     run: { module: serverModule, transport: TransportKind.stdio },
     debug: { module: serverModule, transport: TransportKind.stdio },
   };
+
+  // Named output channel — visible in VS Code's Output panel drop-down as
+  // "Intlayer LSP". All connection.console.log() calls from the server process
+  // arrive here. Open it with: View → Output → select "Intlayer LSP".
+  const outputChannel = window.createOutputChannel("Intlayer LSP");
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
@@ -36,6 +42,9 @@ export const startLSPClient = (context: ExtensionContext): void => {
         "**/*.content.{ts,tsx,js,jsx,json,jsonc,json5,yaml,yml,md,mdx}",
       ),
     },
+    outputChannel,
+    // Never auto-reveal — user opens it manually when needed.
+    revealOutputChannelOn: RevealOutputChannelOn.Never,
   };
 
   client = new LanguageClient(

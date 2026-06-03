@@ -7,7 +7,7 @@ import {
 } from "@intlayer/config/node";
 import { getSelectedEnvironment } from "./envStore";
 import { loadEnvFromWorkspace } from "./loadEnvFromWorkspace";
-import { logFunctions, prefix } from "./logFunctions";
+import { prefix } from "./logFunctions";
 
 // --- Cache Definition ---
 interface EnvCacheEntry {
@@ -52,7 +52,6 @@ export const getConfigurationOptionsSync = (
 
   const configOptions: GetConfigurationOptions = {
     baseDir: projectDir,
-    logFunctions,
     override: {
       log: {
         prefix,
@@ -123,7 +122,6 @@ export const getConfigurationOptions = async (
 
   const configOptions: GetConfigurationOptions = {
     baseDir: projectDir,
-    logFunctions,
     override: {
       log: {
         prefix,
