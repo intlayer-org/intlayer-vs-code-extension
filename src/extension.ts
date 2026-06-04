@@ -29,6 +29,8 @@ import { redirectUseIntlayerKeyToDictionary } from "./redirectUseIntlayerKeyToDi
 import { initializeEnvironmentStore } from "./utils/envStore";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getConfigurationOptions } from "./utils/getConfiguration";
+import { contentFileSaveWatcher } from "./watchers/contentFileSaveWatcher";
+import { FILE_EXTENSIONS } from "@intlayer/config/defaultValues";
 
 export const activate = (context: ExtensionContext) => {
   initializeEnvironmentStore(context);
@@ -210,14 +212,8 @@ export const activate = (context: ExtensionContext) => {
               false,
             );
             const configuration = getConfiguration(configOptions);
-            const fileExtensions = configuration.content?.fileExtensions ?? [
-              ".content.ts",
-              ".content.tsx",
-              ".content.js",
-              ".content.cjs",
-              ".content.mjs",
-              ".content.json",
-            ];
+            const fileExtensions =
+              configuration.content?.fileExtensions ?? FILE_EXTENSIONS;
 
             const isContentFile = fileExtensions.some((ext) =>
               activeFilePath.endsWith(ext),
@@ -255,6 +251,8 @@ export const activate = (context: ExtensionContext) => {
   );
 
   context.subscriptions.push(activeEditorDisposable);
+
+  context.subscriptions.push(contentFileSaveWatcher());
 
   // Quick create dictionary command with format selection
   context.subscriptions.push(
