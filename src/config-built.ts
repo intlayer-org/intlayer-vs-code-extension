@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getConfiguration } from "@intlayer/config/node";
 import { getAlias } from "@intlayer/config/utils";
@@ -43,8 +44,13 @@ const loadConfig = () => {
       formatter: (path) => join(projectDir, path),
     });
 
+    const configFilePath = configDirPath["@intlayer/config/built"];
+    if (!existsSync(configFilePath)) {
+      return {};
+    }
+
     const projectRequire = createRequire(join(projectDir, "package.json"));
-    const result = projectRequire(configDirPath["@intlayer/config/built"]);
+    const result = projectRequire(configFilePath);
 
     cachedConfig = result;
     lastProjectDir = projectDir;

@@ -18,15 +18,19 @@ export const extractScriptContent = (
     return extractAstroScript(text);
   }
 
-  let processedText = text;
-
-  if (extension === ".vue") {
-    // Strip <template> and <style> blocks entirely so Vue-specific syntax
-    // (@click, :class, v-for, CSS) doesn't break Babel JSX parsing.
-    // Offset preservation: every char is replaced 1-for-1 with a space.
-    processedText = stripBlockContent(processedText, "template");
-    processedText = stripBlockContent(processedText, "style");
+  if (extension === ".svelte") {
+    // Svelte SFCs have Svelte-specific template syntax (class:name, on:event,
+    // {#each}, etc.) that is not valid JSX and causes oxc to produce a broken
+    // AST when the template is present. Strip everything outside <script> blocks
+    // (same strategy Vue uses for <template> and <style>).
+    return extractSvelteScript(text);
   }
+
+  // Vue: strip <template> and <style> blocks so Vue-specific syntax
+  // (@click, :class, v-for, CSS) doesn't break the JS/TS parser.
+  // Offset preservation: every char is replaced 1-for-1 with a space.
+  let processedText = stripBlockContent(text, "template");
+  processedText = stripBlockContent(processedText, "style");
 
   // Replace <script> / </script> tags with spaces (keep the script body).
   const scriptTagRegex = /(<script\b[^>]*>)|(<\/script>)/gi;
@@ -34,17 +38,30 @@ export const extractScriptContent = (
     " ".repeat(match.length),
   );
 
-  if (extension === ".svelte") {
-    // Replace entire Svelte control-flow and special-tag blocks with spaces so
-    // their contents don't produce stray tokens that break the JS/TS parser.
-    // Pattern covers: {#if …} {#each … as …} {:else} {/each} {@html …} {@const …}
-    // Normal Svelte expressions like {$app.title} are NOT matched (no #/:/@).
-    processedText = processedText.replace(/\{[#/:@][^}]*\}/gi, (match) =>
-      " ".repeat(match.length),
-    );
+  return processedText;
+};
+
+/**
+ * Svelte: keep only the content of <script>...</script> blocks, replace
+ * everything else (template, style, Svelte directives) with spaces.
+ *
+ * Byte offsets are preserved because replacements are always 1-for-1 spaces.
+ * The opening/closing <script> tags also become spaces; only the body remains.
+ *
+ * Offset formula: body starts at  match.index + 7 (for "<script") + attrs.length + 1 (for ">")
+ */
+const extractSvelteScript = (text: string): string => {
+  let result = " ".repeat(text.length);
+
+  for (const match of text.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attrs = match[1]!;
+    const body = match[2]!;
+    // "<script" = 7 chars, attrs captured, ">" = 1 char → body starts here
+    const bodyStart = match.index! + 7 + attrs.length + 1;
+    result = result.slice(0, bodyStart) + body + result.slice(bodyStart + body.length);
   }
 
-  return processedText;
+  return result;
 };
 
 /** Replace an entire <tagName>...</tagName> block with spaces (preserves length). */

@@ -349,6 +349,14 @@ const analyzeFileForUsages = (
       }
     }
 
+    // If the binding was found but no specific field usages were detected, the
+    // usages are likely in a template section that was stripped for parsing
+    // (Svelte / Vue). Fall back to __ALL__ so that no content fields are falsely
+    // decorated as unused.
+    if (keysUsed.size === 0 && keyLocations.size === 0) {
+      keysUsed.add("__ALL__");
+    }
+
     results.push({ range: declarationRange, keysUsed, keyLocations });
   }
 
