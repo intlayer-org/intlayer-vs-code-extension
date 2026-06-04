@@ -14,6 +14,19 @@ import { extractScriptContent } from "./utils/extractScript";
 
 export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
   provideDefinition: async (document, position) => {
+    // Only activate when the cursor is on a quoted string — this ensures we
+    // trigger on the key argument ('my-key') and not on the function name
+    // (useIntlayer), which would conflict with the TypeScript "Go to Definition"
+    // for the imported symbol.
+    const wordRange = document.getWordRangeAtPosition(
+      position,
+      /["'`][^"'`]+["'`]/,
+    );
+
+    if (!wordRange) {
+      return null;
+    }
+
     // For Vue / Svelte / Astro files, pass only the script block content to the
     // AST parser. The raw SFC text contains template HTML that confuses oxc
     // (e.g. Vue's <script setup> attributes, Svelte control-flow tags).
@@ -29,15 +42,11 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       return null;
     }
 
-    // Compute the origin selection range (the key string without its quotes)
-    // so VS Code highlights just the key text in the editor.
-    const wordRange = document.getWordRangeAtPosition(position, /["'`][^"'`]+["'`]/);
-    const originSelectionRange = wordRange
-      ? new Range(
-          wordRange.start.translate(0, 1),
-          wordRange.end.translate(0, -1),
-        )
-      : new Range(position, position);
+    // Compute the origin selection range (the key string without its quotes).
+    const originSelectionRange = new Range(
+      wordRange.start.translate(0, 1),
+      wordRange.end.translate(0, -1),
+    );
 
     const fileDir = dirname(document.uri.fsPath);
     const projectDir = findProjectRoot(fileDir);
@@ -49,26 +58,55 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
     // Load configuration (cached)
     const config = await getCachedConfig(projectDir);
 
-    const dictionaryPath = join(
+    // Try unmerged dictionary first (has explicit filePath per source file).
+    // Fall back to the merged dictionary when the unmerged one hasn't been
+    // generated yet (project hasn't run `intlayer build`). The merged dict
+    // encodes source paths in `localIds` as "key::local::filePath".
+    let filePaths: string[] = [];
+
+    const unmergedPath = join(
       config.system.unmergedDictionariesDir,
       `${word}.json`,
     );
+    const unmergedDictionaries = await getCachedDictionary(unmergedPath);
 
-    // Load the unmerged dictionary (cached)
-    const dictionaries = await getCachedDictionary(dictionaryPath);
+    if (unmergedDictionaries) {
+      filePaths = unmergedDictionaries
+        .map((dictionary) => dictionary.filePath as string | undefined)
+        .filter((path): path is string => typeof path === "string");
+    } else {
+      const mergedPath = join(config.system.dictionariesDir, `${word}.json`);
+      const merged = await getCachedDictionary(mergedPath);
+      // Merged dict is a single object wrapped as an array by getCachedDictionary
+      // (it won't be, actually — it's a raw object). Read it directly.
+      if (merged) {
+        // getCachedDictionary parses the file as Dictionary[] but merged dicts
+        // are a single Dictionary object. Check both shapes.
+        const entries = Array.isArray(merged) ? merged : [merged];
+        for (const entry of entries) {
+          const localIds = (entry as Record<string, unknown>).localIds as
+            | string[]
+            | undefined;
+          if (localIds) {
+            for (const id of localIds) {
+              const parts = id.split("::local::");
+              if (parts.length === 2 && parts[1]) filePaths.push(parts[1]);
+            }
+          } else if (entry.filePath) {
+            filePaths.push(entry.filePath as string);
+          }
+        }
+      }
+    }
 
-    if (!dictionaries) {
+    if (!filePaths.length) {
       return null;
     }
 
     const links: DefinitionLink[] = [];
 
-    for (const dictionary of dictionaries) {
-      if (!dictionary.filePath) {
-        continue;
-      }
-
-      const absoluteSourcePath = join(projectDir, dictionary.filePath);
+    for (const filePath of filePaths) {
+      const absoluteSourcePath = join(projectDir, filePath);
       const sourceUri = Uri.file(absoluteSourcePath);
 
       // Jump directly to the `content` field in the source file if possible.
