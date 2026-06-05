@@ -55,10 +55,10 @@ export const contentFileSaveWatcher = (): Disposable => {
         // If the chokidar watcher or dev server already handled the save, the JSON
         // mtime will be >= saveTime and we skip the rebuild.
         let needsRebuild = false;
-        for (const dict of localeDictionaries) {
+        for (const localeDictionary of localeDictionaries) {
           const dictPath = join(
             config.system.dictionariesDir,
-            `${dict.key}.json`,
+            `${localeDictionary.key}.json`,
           );
           if (!existsSync(dictPath)) {
             needsRebuild = true;
@@ -79,13 +79,11 @@ export const contentFileSaveWatcher = (): Disposable => {
         );
         const updatedDictionaries = Object.values(
           dictionariesOutput?.mergedDictionaries ?? {},
-        ).map((d) => d.dictionary);
+        ).map((updatedDictionary) => updatedDictionary.dictionary);
 
         await createTypes(updatedDictionaries, config);
 
-        await window.showInformationMessage(
-          `${prefix}Dictionary rebuilt (watcher was not running).`,
-        );
+        await window.showInformationMessage(`${prefix}Dictionary rebuilt.`);
       } catch (error) {
         await window.showErrorMessage(
           `${prefix}Auto-rebuild failed: ${(error as Error).message}`,
