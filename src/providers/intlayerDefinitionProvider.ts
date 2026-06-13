@@ -61,7 +61,7 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
     const targets: DefinitionLink[] = [];
 
     for (const dict of dictionaries) {
-      if (dict.location !== "local" || !dict.filePath) {
+      if (!dict.filePath) {
         continue;
       }
 

@@ -199,10 +199,7 @@ const updateUnusedDecorations = async (editor: TextEditor) => {
           remoteDuplicates++;
         }
 
-        if (
-          (dict.location === "local" || dict.location === "local&remote") &&
-          dict.filePath
-        ) {
+        if (dict.filePath) {
           const dictAbsPath = join(projectDir, dict.filePath);
 
           if (dictAbsPath !== currentAbsPath) {
