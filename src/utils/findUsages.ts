@@ -1,20 +1,13 @@
-import { extname, resolve } from "node:path";
-import fg from "fast-glob";
-import { Range, Uri, workspace } from "vscode";
-import { extractScriptContent } from "./extractScript";
-import { getCachedConfig } from "./intlayerCache";
+import { extname, resolve } from 'node:path';
 import {
-  buildParentMap,
-  findAllOfType,
-  getStringValue,
-  isIntlayerCall,
-  isStringLiteral,
-  nodeEnd,
-  nodeStart,
-  type OxcNode,
-  offsetToLineCol,
-  parseFile,
-} from "./oxcParser";
+  collectCallerBindings,
+  collectMessageUsages,
+} from '@intlayer/lsp/utils';
+import fg from 'fast-glob';
+import { Range, Uri, workspace } from 'vscode';
+import { extractScriptContent } from './extractScript';
+import { getCachedConfig } from './intlayerCache';
+import { offsetToLineCol } from './oxcParser';
 
 export interface UsageLocation {
   uri: Uri;
@@ -29,11 +22,11 @@ export interface UsageLocation {
  */
 const extractScriptContentWithAngular = (
   text: string,
-  extension: string,
+  extension: string
 ): string => {
   let processedText = extractScriptContent(text, extension);
 
-  if (extension === ".ts" && text.includes("@Component")) {
+  if (extension === '.ts' && text.includes('@Component')) {
     const templateRegex = /template\s*:\s*(["'`])([\s\S]*?)\1/g;
 
     processedText = processedText.replace(
@@ -42,11 +35,11 @@ const extractScriptContentWithAngular = (
         const expressions: string[] = [];
         const sanitize = (e: string) => {
           let s = e;
-          s = s.replace(/;/g, ",");
-          s = s.replace(/\s+as\s+/g, ",");
-          s = s.replace(/\b\w+\s+of\s+/g, "");
-          s = s.replace(/\btrack\s+/g, "");
-          s = s.replace(/\blet\s+/g, "");
+          s = s.replace(/;/g, ',');
+          s = s.replace(/\s+as\s+/g, ',');
+          s = s.replace(/\b\w+\s+of\s+/g, '');
+          s = s.replace(/\btrack\s+/g, '');
+          s = s.replace(/\blet\s+/g, '');
           return s.trim();
         };
 
@@ -54,12 +47,12 @@ const extractScriptContentWithAngular = (
           expressions.push(sanitize(interpolationMatch[1]));
         }
         for (const bindingMatch of content.matchAll(
-          /(?:\[.*?\]|bind-.*?)\s*=\s*(["'])(.*?)\1/g,
+          /(?:\[.*?\]|bind-.*?)\s*=\s*(["'])(.*?)\1/g
         )) {
           expressions.push(sanitize(bindingMatch[2]));
         }
         for (const structMatch of content.matchAll(
-          /\*\w+\s*=\s*(["'])(.*?)\1/g,
+          /\*\w+\s*=\s*(["'])(.*?)\1/g
         )) {
           expressions.push(sanitize(structMatch[2]));
         }
@@ -67,8 +60,8 @@ const extractScriptContentWithAngular = (
           expressions.push(sanitize(controlFlowMatch[1]));
         }
 
-        return `template: [${expressions.join(", ")}]`;
-      },
+        return `template: [${expressions.join(', ')}]`;
+      }
     );
   }
 
@@ -77,7 +70,7 @@ const extractScriptContentWithAngular = (
 
 export const findUsagesOfDictionary = async (
   projectDir: string,
-  dictionaryKey: string,
+  dictionaryKey: string
 ): Promise<UsageLocation[]> => {
   const config = await getCachedConfig(projectDir);
 
@@ -89,11 +82,11 @@ export const findUsagesOfDictionary = async (
     : [];
 
   const allPatterns = [...traversePatterns, ...compilerPatterns].filter(
-    (p): p is string => typeof p === "string",
+    (p): p is string => typeof p === 'string'
   );
-  const includePatterns = allPatterns.filter((p) => !p.startsWith("!"));
+  const includePatterns = allPatterns.filter((p) => !p.startsWith('!'));
   const excludePatterns = [
-    ...allPatterns.filter((p) => p.startsWith("!")).map((p) => p.slice(1)),
+    ...allPatterns.filter((p) => p.startsWith('!')).map((p) => p.slice(1)),
     ...(config.content.fileExtensions ?? []).map((ext) => `**/*${ext}`),
   ];
 
@@ -131,234 +124,131 @@ export const findUsagesOfDictionary = async (
       chunk.map(async (fileUri) => {
         try {
           const content = await workspace.fs.readFile(fileUri);
-          const text = new TextDecoder("utf-8").decode(content);
+          const text = new TextDecoder('utf-8').decode(content);
 
           if (!text.includes(dictionaryKey)) return;
 
           const extension = extname(fileUri.fsPath).toLowerCase();
-          const scriptContent = extractScriptContentWithAngular(text, extension);
+          const scriptContent = extractScriptContentWithAngular(
+            text,
+            extension
+          );
 
-          const program = parseFile(scriptContent);
-          if (!program) return;
+          const fileUsage = analyzeFileForUsages(scriptContent, dictionaryKey);
 
-          const fileUsages = analyzeFileForUsages(program, dictionaryKey, scriptContent);
-
-          if (fileUsages.length > 0) {
-            const { keys, locations } = mergeUsageData(fileUsages);
-            usageLocations.push({
-              uri: fileUri,
-              range: fileUsages[0].range,
-              keysUsed: keys,
-              keyLocations: locations,
-            });
+          if (fileUsage) {
+            usageLocations.push({ uri: fileUri, ...fileUsage });
           }
         } catch (e) {
           console.error(`Error parsing ${fileUri.fsPath}`, e);
         }
-      }),
+      })
     );
   }
 
   return usageLocations;
 };
 
-const mergeUsageData = (
-  usages: { keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[],
-) => {
-  const keys = new Set<string>();
-  const locations = new Map<string, Range[]>();
-
-  for (const usage of usages) {
-    usage.keysUsed.forEach((key) => keys.add(key));
-    usage.keyLocations.forEach((ranges, key) => {
-      const existing = locations.get(key) ?? [];
-      locations.set(key, [...existing, ...ranges]);
-    });
-  }
-
-  return { keys, locations };
-};
-
+/**
+ * Analyse one file's script content for usages of `targetKey`, using the
+ * registry-driven analyzer from `@intlayer/lsp` (covers useIntlayer member
+ * chains and every compat form: t() calls, formatMessage, JSX components,
+ * lingui tagged templates).
+ *
+ * Returned markers:
+ *  - dotted field keys (+ parent prefixes) with precise ranges
+ *  - `__ALL__` when field usage cannot be fully tracked (variable escapes,
+ *    translator functions that may be forwarded or used in templates)
+ *  - `__EXISTENCE_CHECK__` when the dictionary is referenced without any
+ *    trackable binding (bare `getIntlayer('key')` call)
+ */
 const analyzeFileForUsages = (
-  program: OxcNode,
-  targetKey: string,
-  text: string,
-): { range: Range; keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[] => {
-  const results: { range: Range; keysUsed: Set<string>; keyLocations: Map<string, Range[]> }[] = [];
+  scriptContent: string,
+  targetKey: string
+): {
+  range: Range;
+  keysUsed: Set<string>;
+  keyLocations: Map<string, Range[]>;
+} | null => {
+  const usages = collectMessageUsages(scriptContent).filter(
+    (usage) => usage.dictionaryKey === targetKey
+  );
 
-  const nodeToRange = (node: OxcNode): Range => {
-    const s = offsetToLineCol(text, nodeStart(node));
-    const e = offsetToLineCol(text, nodeEnd(node));
-    return new Range(s.line, s.character, e.line, e.character);
+  if (usages.length === 0) return null;
+
+  const keysUsed = new Set<string>();
+  const keyLocations = new Map<string, Range[]>();
+
+  const offsetsToRange = (start: number, end: number): Range => {
+    const startPosition = offsetToLineCol(scriptContent, start);
+    const endPosition = offsetToLineCol(scriptContent, end);
+    return new Range(
+      startPosition.line,
+      startPosition.character,
+      endPosition.line,
+      endPosition.character
+    );
   };
 
-  const parentMap = buildParentMap(program);
-  const calls = findAllOfType(program, "CallExpression");
+  const addLocation = (dottedKey: string, start: number, end: number) => {
+    keysUsed.add(dottedKey);
 
-  for (const call of calls) {
-    if (!isIntlayerCall(call)) continue;
+    const parts = dottedKey.split('.');
+    for (let i = 1; i < parts.length; i++) {
+      keysUsed.add(parts.slice(0, i).join('.'));
+    }
 
-    const args = call["arguments"] as OxcNode[] | undefined;
-    if (!args?.length) continue;
+    const range = offsetsToRange(start, end);
+    const list = keyLocations.get(dottedKey) ?? [];
+    list.push(range);
+    keyLocations.set(dottedKey, list);
+  };
 
-    const firstArg = args[0]!;
-    if (!isStringLiteral(firstArg)) continue;
+  let hasFieldUsage = false;
 
-    const argText = getStringValue(firstArg);
-    if (argText !== targetKey) continue;
+  for (const usage of usages) {
+    if (usage.kind === 'namespace') continue;
 
-    const keysUsed = new Set<string>();
-    const keyLocations = new Map<string, Range[]>();
-    const declarationRange = nodeToRange(call);
-
-    const addLocation = (key: string, node: OxcNode) => {
-      const cleanKey = key.replace(/\.(value|raw)$/, "");
-      keysUsed.add(cleanKey);
-      const parts = cleanKey.split(".");
-      for (let i = 1; i < parts.length; i++) {
-        keysUsed.add(parts.slice(0, i).join("."));
-      }
-      const r = nodeToRange(node);
-      const list = keyLocations.get(cleanKey) ?? [];
-      list.push(r);
-      keyLocations.set(cleanKey, list);
-    };
-
-    const traceUsages = (varName: string, prefix = "") => {
-      const allIdentifiers = findAllOfType(program, "Identifier");
-      const refs = allIdentifiers.filter((id) => {
-        const name = id["name"] as string;
-        if (name !== varName && name !== `$${varName}`) return false;
-
-        const parent = parentMap.get(id);
-        if (!parent) return true;
-
-        if (parent["type"] === "VariableDeclarator" && parent["id"] === id)
-          return false;
-
-        const grandParent = parentMap.get(parent);
-        if (
-          (parent["type"] === "Property" || parent["type"] === "ObjectProperty") &&
-          grandParent?.["type"] === "ObjectPattern"
-        )
-          return false;
-
-        if (parent["type"] === "PropertyDefinition" && parent["key"] === id)
-          return false;
-
-        return true;
-      });
-
-      for (const ref of refs) {
-        let current: OxcNode = ref;
-        const path: string[] = [];
-
-        while (true) {
-          const parent = parentMap.get(current);
-
-          if (
-            parent?.["type"] === "MemberExpression" &&
-            !parent["computed"] &&
-            parent["object"] === current
-          ) {
-            path.push(((parent["property"] as OxcNode)["name"] as string) ?? "");
-            current = parent;
-          } else if (
-            parent?.["type"] === "MemberExpression" &&
-            parent["computed"] &&
-            parent["object"] === current
-          ) {
-            const prop = parent["property"] as OxcNode;
-            if (isStringLiteral(prop)) {
-              path.push(getStringValue(prop));
-              current = parent;
-            } else {
-              keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
-              break;
-            }
-          } else if (
-            parent?.["type"] === "CallExpression" &&
-            parent["callee"] === current
-          ) {
-            current = parent;
-          } else {
-            break;
-          }
-        }
-
-        if (path.length > 0) {
-          const fullKey = prefix ? `${prefix}.${path.join(".")}` : path.join(".");
-          addLocation(fullKey, current);
-        } else {
-          keysUsed.add(prefix ? `${prefix}.__ALL__` : "__ALL__");
-        }
-      }
-    };
-
-    const callParent = parentMap.get(call);
-    const varDecl =
-      callParent?.["type"] === "VariableDeclarator" && callParent["init"] === call
-        ? callParent
-        : null;
-    const propDecl =
-      callParent?.["type"] === "PropertyDefinition" && callParent["value"] === call
-        ? callParent
-        : null;
-
-    if (!varDecl && !propDecl) {
-      keysUsed.add("__EXISTENCE_CHECK__");
-      results.push({ range: declarationRange, keysUsed, keyLocations });
+    if (usage.fieldPath.length === 0) {
+      // Bare reference to the whole content object — the variable escapes,
+      // any field may be read.
+      keysUsed.add('__ALL__');
       continue;
     }
 
-    if (varDecl) {
-      const nameNode = varDecl["id"] as OxcNode;
+    hasFieldUsage = true;
 
-      if (nameNode["type"] === "ObjectPattern") {
-        for (const element of (nameNode["properties"] as OxcNode[]) ?? []) {
-          if (element["type"] !== "Property" && element["type"] !== "ObjectProperty") continue;
+    // Member chains anchor on the leaf property; other usages on their span.
+    const leafSpan = usage.fieldSpans?.[usage.fieldSpans.length - 1];
+    const start =
+      usage.kind === 'member' && leafSpan ? leafSpan.start : usage.start;
+    const end = usage.kind === 'member' && leafSpan ? leafSpan.end : usage.end;
 
-          const elementKey = element["key"] as OxcNode | undefined;
-          const elementValue = element["value"] as OxcNode | undefined;
-
-          const key = element["shorthand"]
-            ? (elementKey?.["name"] as string | undefined)
-            : elementKey?.["type"] === "Identifier"
-              ? (elementKey["name"] as string)
-              : elementKey
-                ? getStringValue(elementKey)
-                : "";
-          const varName =
-            elementValue?.["type"] === "Identifier"
-              ? (elementValue["name"] as string)
-              : "";
-
-          if (!varName) continue;
-
-          const finalKey = key ?? "";
-          if (elementKey) addLocation(finalKey, elementKey);
-          traceUsages(varName, finalKey);
-        }
-      } else if (nameNode["type"] === "Identifier" && nameNode["name"]) {
-        traceUsages(nameNode["name"] as string);
-      }
-    } else if (propDecl) {
-      const nameNode = propDecl["key"] as OxcNode | undefined;
-      if (nameNode?.["type"] === "Identifier" && nameNode["name"]) {
-        traceUsages(nameNode["name"] as string);
-      }
-    }
-
-    // If the binding was found but no specific field usages were detected, the
-    // usages are likely in a template section that was stripped for parsing
-    // (Svelte / Vue). Fall back to __ALL__ so that no content fields are falsely
-    // decorated as unused.
-    if (keysUsed.size === 0 && keyLocations.size === 0) {
-      keysUsed.add("__ALL__");
-    }
-
-    results.push({ range: declarationRange, keysUsed, keyLocations });
+    addLocation(usage.fieldPath.join('.'), start, end);
   }
 
-  return results;
+  const bindings = collectCallerBindings(scriptContent).filter(
+    (binding) => binding.dictionaryKey === targetKey
+  );
+
+  // Translator functions (t) may be forwarded, called with dynamic keys or
+  // used inside stripped template regions — stay conservative.
+  if (bindings.some((binding) => binding.bindingKind === 'translator')) {
+    keysUsed.add('__ALL__');
+  }
+
+  if (!hasFieldUsage && keysUsed.size === 0) {
+    // Content binding without any tracked field usage: the usages are likely
+    // in a stripped template region (Vue/Svelte) — don't flag fields unused.
+    // Without any binding at all, the call only proves the dictionary exists.
+    keysUsed.add(bindings.length > 0 ? '__ALL__' : '__EXISTENCE_CHECK__');
+  }
+
+  const firstUsage = usages[0]!;
+
+  return {
+    range: offsetsToRange(firstUsage.start, firstUsage.end),
+    keysUsed,
+    keyLocations,
+  };
 };

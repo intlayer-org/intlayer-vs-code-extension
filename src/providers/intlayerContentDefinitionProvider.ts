@@ -149,7 +149,9 @@ const getTargetFromDocument = async (
   if (contentField) {
     return {
       dictionaryKey: contentField.dictionaryKey,
-      clickedField: contentField.fieldName,
+      // Full dotted path — matches the keys of `UsageLocation.keyLocations`
+      // (nested fields and flat lingui keys included).
+      clickedField: contentField.fieldPath.join("."),
       originSelectionRange: getOriginSelectionRange(document, position),
     };
   }
