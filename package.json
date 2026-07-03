@@ -311,7 +311,7 @@
     "@intlayer/cli": "^9.0.0-canary.12",
     "@intlayer/config": "^9.0.0-canary.12",
     "@intlayer/core": "^9.0.0-canary.12",
-    "@intlayer/lsp": "^8.11.4",
+    "@intlayer/lsp": "^9.0.0-canary.12",
     "@intlayer/svelte-compiler": "^9.0.0-canary.12",
     "@intlayer/types": "^9.0.0-canary.12",
     "@intlayer/unmerged-dictionaries-entry": "^9.0.0-canary.12",
