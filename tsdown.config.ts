@@ -173,7 +173,7 @@ export default defineConfig([
           ).catch(() => {});
 
           // Copy dependencies into namespaced folders to avoid collisions
-          await copyPackageAssets("@intlayer/chokidar", "chokidar", destRoot);
+          await copyPackageAssets("@intlayer/engine", "engine", destRoot);
           await copyPackageAssets("@intlayer/cli", "cli", destRoot);
           await copyPackageAssets("@intlayer/ai", "ai", destRoot);
         },
