@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { cp, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { basename, dirname, resolve } from "node:path";
@@ -32,6 +33,45 @@ async function copyPackageAssets(
       `! Could not copy assets for ${pkgName} (it might not have any):`,
       (error as Error).message,
     );
+  }
+}
+
+/**
+ * Copy a package (plus the installed subset of its platform-specific
+ * optional dependencies) into dist/node_modules.
+ *
+ * These packages ship native binaries and cannot be inlined, so they stay
+ * external in the bundle. `vsce package` runs with `--no-dependencies` — it
+ * skips the npm/yarn dependency walk, which is unusable here since
+ * node_modules is installed by bun — so nothing outside dist/ is packaged.
+ * Placing them in dist/node_modules keeps `require("esbuild")` resolvable
+ * from dist/extension.js at runtime.
+ */
+async function copyRuntimeDependency(pkgName: string, destRoot: string) {
+  const pkgJsonPath = require.resolve(`${pkgName}/package.json`);
+  const pkgRoot = dirname(pkgJsonPath);
+
+  await mkdir(dirname(resolve(destRoot, pkgName)), { recursive: true });
+  await cp(pkgRoot, resolve(destRoot, pkgName), {
+    recursive: true,
+    dereference: true,
+  });
+  console.log(`✓ Copied runtime dep: ${pkgName} -> dist/node_modules`);
+
+  // Native bindings live in sibling optional packages; only the ones matching
+  // the current platform are installed.
+  const { optionalDependencies = {} } = require(pkgJsonPath);
+
+  for (const binding of Object.keys(optionalDependencies)) {
+    const bindingRoot = resolve("node_modules", binding);
+    if (!existsSync(bindingRoot)) continue;
+
+    await mkdir(dirname(resolve(destRoot, binding)), { recursive: true });
+    await cp(bindingRoot, resolve(destRoot, binding), {
+      recursive: true,
+      dereference: true,
+    });
+    console.log(`✓ Copied runtime dep: ${binding} -> dist/node_modules`);
   }
 }
 
@@ -176,6 +216,11 @@ export default defineConfig([
           await copyPackageAssets("@intlayer/engine", "engine", destRoot);
           await copyPackageAssets("@intlayer/cli", "cli", destRoot);
           await copyPackageAssets("@intlayer/ai", "ai", destRoot);
+
+          // Externals that must remain requireable from the packaged extension
+          const nodeModulesRoot = resolve("dist/node_modules");
+          await copyRuntimeDependency("esbuild", nodeModulesRoot);
+          await copyRuntimeDependency("oxc-parser", nodeModulesRoot);
         },
       },
     ],

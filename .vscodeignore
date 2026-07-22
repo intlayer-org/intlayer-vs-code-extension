@@ -10,15 +10,10 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 .env
 assets/**
+# Packaged with `vsce package --no-dependencies`: nothing outside dist/ ships.
+# Runtime externals (esbuild, oxc-parser + native bindings) are copied into
+# dist/node_modules by tsdown.config.ts.
 node_modules/**
-!node_modules/esbuild/**
-!node_modules/@esbuild/**
-!node_modules/picocolors/**
-!node_modules/@babel/parser/**
-!node_modules/oxc-parser/**
-!node_modules/@oxc-parser/**
-!node_modules/@oxc-project/**
-!node_modules/@intlayer/ai/**
 
 src/**
 !dist/**
