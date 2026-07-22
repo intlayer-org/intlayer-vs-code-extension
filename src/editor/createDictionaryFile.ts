@@ -1,20 +1,28 @@
 import { extname } from "node:path";
 import {
   type Extension,
-  type Format,
   getFormatFromExtension,
-} from "@intlayer/chokidar/utils";
+} from "@intlayer/engine/utils";
 import { window } from "vscode";
-import { generateDictionaryContent } from "../createDictionaryContent";
+import {
+  type ContentFileFormat,
+  generateDictionaryContent,
+} from "../createDictionaryContent";
 
 export const createDictionaryFile = async () => {
   const filePath = window.activeTextEditor?.document.uri.fsPath;
 
-  let format: Format;
+  let format: ContentFileFormat;
 
   if (filePath) {
     const extension = extname(filePath) as Extension;
-    format = getFormatFromExtension(extension);
+    const detected = getFormatFromExtension(extension);
+    // The command is only exposed on source files, so `md` / `yaml` cannot be
+    // detected here — fall back to `ts` rather than widening the scaffolder.
+    format =
+      detected === "md" || detected === "yaml"
+        ? "ts"
+        : (detected as ContentFileFormat);
   } else {
     format = await window
       .showQuickPick(
@@ -28,7 +36,7 @@ export const createDictionaryFile = async () => {
         ],
         { placeHolder: "Select content file format" },
       )
-      .then((choice) => choice?.value as Format);
+      .then((choice) => choice?.value as ContentFileFormat);
   }
 
   await generateDictionaryContent(format);

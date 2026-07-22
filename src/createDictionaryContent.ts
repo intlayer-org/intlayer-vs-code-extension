@@ -6,7 +6,7 @@ import { extractDictionaryInfo } from "@intlayer/babel";
 import {
   detectFormatCommand,
   getContentDeclarationFileTemplate,
-} from "@intlayer/chokidar/cli";
+} from "@intlayer/engine/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import {
   Position,
@@ -43,8 +43,20 @@ const getContentPosition = (content: string): Position => {
   return new Position(0, 0);
 };
 
+/**
+ * Formats the extension can scaffold a content file for. Narrower than
+ * `Format` from `@intlayer/engine/utils`, which also covers `md` / `yaml`.
+ */
+export type ContentFileFormat =
+  | "ts"
+  | "esm"
+  | "cjs"
+  | "json"
+  | "jsonc"
+  | "json5";
+
 export const generateDictionaryContent = async (
-  format: "ts" | "esm" | "cjs" | "json" | "jsonc" | "json5",
+  format: ContentFileFormat,
 ) => {
   const editor = window.activeTextEditor;
   if (!editor) {

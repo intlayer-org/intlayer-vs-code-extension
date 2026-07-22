@@ -5,7 +5,7 @@ import {
   buildDictionary,
   createTypes,
   loadLocalDictionaries,
-} from "@intlayer/chokidar/build";
+} from "@intlayer/engine/build";
 import { getConfiguration } from "@intlayer/config/node";
 import { type Disposable, window, workspace } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";

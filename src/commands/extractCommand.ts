@@ -17,7 +17,7 @@ import {
 } from "../utils/getConfiguration";
 import { clearIntlayerConfigCache } from "../utils/intlayerCache";
 
-export const extractCommand = async (resource?: Uri) => {
+export const extractCommand = async (resource?: Uri): Promise<void> => {
   // Resolve project root: prefer the resource URI, then the active editor, then ask the user.
   let projectDir = findProjectRoot(resource?.fsPath);
 

@@ -5,7 +5,7 @@ import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 import { getConfiguration } from "@intlayer/config/node";
-import { prepareIntlayer } from "@intlayer/chokidar/cli";
+import { prepareIntlayer } from "@intlayer/engine/cli";
 
 export const fillActiveDictionary = async () => {
   const editor = window.activeTextEditor;

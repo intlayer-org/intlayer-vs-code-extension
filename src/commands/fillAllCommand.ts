@@ -1,5 +1,5 @@
 import { relative } from "node:path";
-import { listDictionaries, prepareIntlayer } from "@intlayer/chokidar/cli";
+import { listDictionaries, prepareIntlayer } from "@intlayer/engine/cli";
 import { fill } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";

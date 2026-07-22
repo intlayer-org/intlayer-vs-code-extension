@@ -1,5 +1,5 @@
 import { join, relative } from "node:path";
-import { listDictionaries } from "@intlayer/chokidar/cli";
+import { listDictionaries } from "@intlayer/engine/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import { type QuickPickItem, window } from "vscode";
 import { getConfigurationOptions } from "./getConfiguration";

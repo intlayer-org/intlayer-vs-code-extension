@@ -3,7 +3,7 @@ import {
   buildDictionary,
   createTypes,
   loadLocalDictionaries,
-} from "@intlayer/chokidar/build";
+} from "@intlayer/engine/build";
 import { getConfiguration } from "@intlayer/config/node";
 import { window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";

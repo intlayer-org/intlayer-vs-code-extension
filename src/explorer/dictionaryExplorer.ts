@@ -5,7 +5,7 @@ import {
   readFileSync,
 } from "node:fs";
 import { basename, extname, join, relative, resolve, sep } from "node:path";
-import { listProjects } from "@intlayer/chokidar/cli";
+import { listProjects } from "@intlayer/engine/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import {
   type Event,
@@ -73,7 +73,7 @@ export class DictionaryTreeDataProvider implements TreeDataProvider<IntlayerTree
 
   refresh(): void {
     this.cachedEnvironments = undefined;
-    this.changeEmitter.fire();
+    this.changeEmitter.fire(undefined);
   }
 
   /**

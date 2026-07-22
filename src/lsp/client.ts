@@ -38,9 +38,17 @@ export const startLSPClient = (context: ExtensionContext): void => {
       { scheme: "file", language: "markdown" },
     ],
     synchronize: {
-      fileEvents: workspace.createFileSystemWatcher(
-        "**/*.content.{ts,tsx,js,jsx,json,jsonc,json5,yaml,yml,md,mdx}",
-      ),
+      fileEvents: [
+        workspace.createFileSystemWatcher(
+          "**/*.content.{ts,tsx,js,jsx,json,jsonc,json5,yaml,yml,md,mdx}",
+        ),
+        // The server answers from the built dictionaries, so a rebuild
+        // triggered outside the extension (CLI, dev server) must invalidate
+        // its caches too — otherwise diagnostics stay stale.
+        workspace.createFileSystemWatcher(
+          "**/.intlayer/unmerged_dictionary/*.json",
+        ),
+      ],
     },
     outputChannel,
     // Never auto-reveal — user opens it manually when needed.

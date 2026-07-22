@@ -1,4 +1,4 @@
-import { loadContentDeclarations } from "@intlayer/chokidar/build";
+import { loadContentDeclarations } from "@intlayer/engine/build";
 import { push } from "@intlayer/cli";
 import { getConfiguration } from "@intlayer/config/node";
 import type { Dictionary } from "@intlayer/types";

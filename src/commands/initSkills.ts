@@ -9,7 +9,7 @@ import {
   SKILLS,
   SKILLS_METADATA,
   type Skill,
-} from "@intlayer/chokidar/cli";
+} from "@intlayer/engine/cli";
 import { type QuickPickItem, window } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { formatResult } from "../utils/formatResult";

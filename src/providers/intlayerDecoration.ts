@@ -21,6 +21,9 @@ import { getValueFromPath } from '../utils/intlayerValueResolver';
 const DEBOUNCE_DELAY = 500;
 const TRUNCATE_LENGTH = 60;
 
+// Built unmerged dictionaries — the source the previews below are read from.
+const DICTIONARY_OUTPUT_GLOB = "**/.intlayer/unmerged_dictionary/*.json";
+
 // Decoration Style: Appears at the end of the line (Translation Preview)
 const translationDecorationType = window.createTextEditorDecorationType({
   after: {
@@ -50,6 +53,13 @@ export const intlayerDecorationProvider = (): Disposable[] => {
     triggerUpdate();
   }
 
+  // The previews are read from the built dictionaries, not from the source
+  // content files — without this the active editor keeps showing stale (or no)
+  // previews until it is edited or reopened.
+  const dictionaryWatcher = workspace.createFileSystemWatcher(
+    DICTIONARY_OUTPUT_GLOB
+  );
+
   return [
     window.onDidChangeActiveTextEditor((editor) => {
       activeEditor = editor;
@@ -63,6 +73,10 @@ export const intlayerDecorationProvider = (): Disposable[] => {
         triggerUpdate();
       }
     }),
+    dictionaryWatcher,
+    dictionaryWatcher.onDidCreate(triggerUpdate),
+    dictionaryWatcher.onDidChange(triggerUpdate),
+    dictionaryWatcher.onDidDelete(triggerUpdate),
   ];
 };
 
