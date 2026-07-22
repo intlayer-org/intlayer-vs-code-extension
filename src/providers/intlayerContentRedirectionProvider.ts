@@ -9,6 +9,7 @@ import {
   Uri,
   Position as VSCodePosition,
 } from "vscode";
+import { dedupeDefinitionLinks } from "../utils/dedupeDefinitionLinks";
 import { findFieldLocation } from "../utils/findFieldLocation";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "../utils/intlayerCache";
@@ -148,7 +149,9 @@ export const intlayerContentRedirectionProvider: DefinitionProvider = {
         });
       }
 
-      return links.length ? links : null;
+      const uniqueLinks = dedupeDefinitionLinks(links);
+
+      return uniqueLinks.length ? uniqueLinks : null;
     }
 
     return null;

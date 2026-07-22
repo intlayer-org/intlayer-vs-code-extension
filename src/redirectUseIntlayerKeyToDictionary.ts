@@ -7,6 +7,8 @@ import {
   Range,
   Uri,
 } from "vscode";
+import { isDefinitionHandledByLSPServer } from "./lsp/lspCoverage";
+import { dedupeDefinitionLinks } from "./utils/dedupeDefinitionLinks";
 import { findFieldLocation } from "./utils/findFieldLocation";
 import { findProjectRoot } from "./utils/findProjectRoot";
 import { getCachedConfig, getCachedDictionary } from "./utils/intlayerCache";
@@ -24,6 +26,19 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
     );
 
     if (!wordRange) {
+      return null;
+    }
+
+    const fileDir = dirname(document.uri.fsPath);
+    const projectDir = findProjectRoot(fileDir);
+
+    if (!projectDir) {
+      return null;
+    }
+
+    // The LSP server resolves the same key from the same text. Answering here
+    // too would list the dictionary twice.
+    if (await isDefinitionHandledByLSPServer(document, projectDir)) {
       return null;
     }
 
@@ -47,13 +62,6 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       wordRange.start.translate(0, 1),
       wordRange.end.translate(0, -1),
     );
-
-    const fileDir = dirname(document.uri.fsPath);
-    const projectDir = findProjectRoot(fileDir);
-
-    if (!projectDir) {
-      return null;
-    }
 
     // Load configuration (cached)
     const config = await getCachedConfig(projectDir);
@@ -127,6 +135,8 @@ export const redirectUseIntlayerKeyToDictionary: DefinitionProvider = {
       });
     }
 
-    return links.length ? links : null;
+    const uniqueLinks = dedupeDefinitionLinks(links);
+
+    return uniqueLinks.length ? uniqueLinks : null;
   },
 };

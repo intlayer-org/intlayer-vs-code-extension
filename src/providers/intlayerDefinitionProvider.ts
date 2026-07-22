@@ -8,6 +8,8 @@ import {
   Range,
   Uri,
 } from "vscode";
+import { isDefinitionHandledByLSPServer } from "../lsp/lspCoverage";
+import { dedupeDefinitionLinks } from "../utils/dedupeDefinitionLinks";
 import { findFieldLocation } from "../utils/findFieldLocation";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
@@ -16,6 +18,18 @@ import { resolveIntlayerPath } from "../utils/intlayerPathResolver";
 
 export const intlayerDefinitionProvider: DefinitionProvider = {
   provideDefinition: async (document, position) => {
+    const fileDir = dirname(document.uri.fsPath);
+    const projectDir = findProjectRoot(fileDir);
+    if (!projectDir) {
+      return null;
+    }
+
+    // The LSP server resolves the same field usages from the same text.
+    // Answering here too would list the target twice.
+    if (await isDefinitionHandledByLSPServer(document, projectDir)) {
+      return null;
+    }
+
     // Pass 'false' to allowRemoteLookup.
     // This prevents the provider from triggering "Go to Definition" recursively.
     const origin = await resolveIntlayerPath(document, position);
@@ -37,12 +51,6 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
     // ---------------------------------------------------------
 
     // 2. Load Configuration
-    const fileDir = dirname(document.uri.fsPath);
-    const projectDir = findProjectRoot(fileDir);
-    if (!projectDir) {
-      return null;
-    }
-
     const config = getConfiguration(await getConfigurationOptions(projectDir));
 
     // 3. Load Unmerged Dictionary
@@ -92,6 +100,8 @@ export const intlayerDefinitionProvider: DefinitionProvider = {
       });
     }
 
-    return targets.length > 0 ? targets : null;
+    const links = dedupeDefinitionLinks(targets);
+
+    return links.length > 0 ? links : null;
   },
 };

@@ -12,10 +12,17 @@ import {
   window,
   workspace,
 } from 'vscode';
-import { extractScriptContent } from '../utils/extractScript';
+import {
+  extractScriptContent,
+  findTemplateBlock,
+} from '../utils/extractScript';
 import { findProjectRoot } from '../utils/findProjectRoot';
 import { getCachedConfig, getCachedDictionary } from '../utils/intlayerCache';
-import { getValueFromPath } from '../utils/intlayerValueResolver';
+import {
+  collectNestedDictionaryKeys,
+  getValueFromPath,
+  resolveIntlayerNode,
+} from '../utils/intlayerValueResolver';
 
 // Configuration
 const DEBOUNCE_DELAY = 500;
@@ -156,6 +163,53 @@ const updateDecorations = async (editor: TextEditor) => {
     return localDictionary?.content ?? null;
   };
 
+  /** Content of an already loaded dictionary — for `nest()` resolution. */
+  const getLoadedDictionaryContent = (dictionaryKey: string): any | null =>
+    localDictionaryCache
+      .get(dictionaryKey)
+      ?.find((dictionary) => dictionary.content)?.content ?? null;
+
+  /** Load the dictionaries a `nest()` chain points at, so previews resolve. */
+  const preloadNestedDictionaries = async (
+    node: any,
+    depth = 0
+  ): Promise<void> => {
+    if (depth > 2) return;
+
+    for (const nestedKey of collectNestedDictionaryKeys(node)) {
+      if (localDictionaryCache.has(nestedKey)) continue;
+
+      await getDictionaries(nestedKey);
+
+      const nestedContent = getLoadedDictionaryContent(nestedKey);
+
+      if (nestedContent) {
+        await preloadNestedDictionaries(nestedContent, depth + 1);
+      }
+    }
+  };
+
+  /** The preview text for a field, or null when there is nothing to show. */
+  const resolveDisplayText = async (
+    dictionaryContent: any,
+    fieldPath: string[]
+  ): Promise<string | null> => {
+    const rawNode = getValueFromPath(
+      dictionaryContent,
+      fieldPath,
+      defaultLocale,
+      false
+    );
+
+    if (rawNode === null || rawNode === undefined) return null;
+
+    await preloadNestedDictionaries(rawNode);
+
+    return parseContentValue(
+      resolveIntlayerNode(rawNode, defaultLocale, getLoadedDictionaryContent)
+    );
+  };
+
   const addTranslationDecoration = (endOffset: number, displayText: string) => {
     const position = document.positionAt(endOffset);
     const lineIndex = position.line;
@@ -211,17 +265,26 @@ const updateDecorations = async (editor: TextEditor) => {
         }
         label += `)`;
 
-        const position = document.positionAt(usage.end);
-        const range = new Range(position, position);
+        // Anchored at the end of the line, not at the end of the call node —
+        // otherwise the label lands inside the expression, e.g. before the
+        // `as any` of `const plans = useIntlayer('pricing') as any;`.
+        const lineIndex = document.positionAt(usage.end).line;
+
+        if (processedLines.has(lineIndex)) {
+          continue;
+        }
+
+        const lineEnd = document.lineAt(lineIndex).range.end;
 
         duplicateDecorations.push({
-          range,
+          range: new Range(lineEnd, lineEnd),
           renderOptions: {
             after: {
               contentText: label,
             },
           },
         });
+        processedLines.add(lineIndex);
       }
       continue;
     }
@@ -235,15 +298,10 @@ const updateDecorations = async (editor: TextEditor) => {
 
     if (!dictionaryContent) continue;
 
-    const rawValue = getValueFromPath(
+    const displayText = await resolveDisplayText(
       dictionaryContent,
-      usage.fieldPath,
-      defaultLocale
+      usage.fieldPath
     );
-
-    if (!rawValue) continue;
-
-    const displayText = parseContentValue(rawValue);
 
     if (!displayText) continue;
 
@@ -302,15 +360,10 @@ const updateDecorations = async (editor: TextEditor) => {
             : [];
           const contentPath = [...binding.basePath, ...pathPrefix, ...keys];
 
-          const rawValue = getValueFromPath(
+          const displayText = await resolveDisplayText(
             dictionaryContent,
-            contentPath,
-            defaultLocale
+            contentPath
           );
-
-          if (!rawValue) continue;
-
-          const displayText = parseContentValue(rawValue);
 
           if (!displayText) continue;
 
@@ -338,15 +391,10 @@ const updateDecorations = async (editor: TextEditor) => {
       for (const callMatch of templateContent.matchAll(callRegex)) {
         const contentPath = [...binding.basePath, ...callMatch[1]!.split('.')];
 
-        const rawValue = getValueFromPath(
+        const displayText = await resolveDisplayText(
           dictionaryContent,
-          contentPath,
-          defaultLocale
+          contentPath
         );
-
-        if (!rawValue) continue;
-
-        const displayText = parseContentValue(rawValue);
 
         if (!displayText) continue;
 
@@ -372,14 +420,10 @@ const updateDecorations = async (editor: TextEditor) => {
 
   // Vue <template> block (stripped from the parsed script, searched here)
   if (extension === '.vue') {
-    const rawText = document.getText();
-    const templateBlockMatch =
-      /(<template\b[^>]*>)([\s\S]*?)(<\/template>)/i.exec(rawText);
+    const templateBlock = findTemplateBlock(document.getText());
 
-    if (templateBlockMatch) {
-      const templateStart =
-        templateBlockMatch.index + templateBlockMatch[1].length;
-      await decorateTemplate(templateStart, templateBlockMatch[2]);
+    if (templateBlock) {
+      await decorateTemplate(templateBlock.start, templateBlock.content);
     }
   }
 
@@ -391,6 +435,12 @@ const updateDecorations = async (editor: TextEditor) => {
 
 // Content Parsing Helpers
 
+/**
+ * Turn a resolved value into the inline preview text. Leaves are shown as-is
+ * (insertion placeholders such as `{{name}}` included); arrays, branch maps
+ * (enu / plural / cond / gender) and objects are shown as JSON, so the
+ * preview mirrors what the content file declares.
+ */
 const parseContentValue = (value: any): string | null => {
   if (value === null || value === undefined) {
     return null;
@@ -400,15 +450,13 @@ const parseContentValue = (value: any): string | null => {
 
   if (typeof value === 'string') {
     text = value;
-  } else if (typeof value === 'number') {
+  } else if (typeof value === 'number' || typeof value === 'boolean') {
     text = String(value);
   } else if (typeof value === 'object') {
-    if (Array.isArray(value)) {
-      text = value.map(parseContentValue).join('');
-    } else if (isValidElementLike(value)) {
+    if (isValidElementLike(value)) {
       text = extractTextFromReactNode(value);
     } else {
-      return null;
+      text = stringifyStructure(value);
     }
   }
 
@@ -422,6 +470,21 @@ const parseContentValue = (value: any): string | null => {
     return `${text.substring(0, TRUNCATE_LENGTH)}...`;
   }
   return text;
+};
+
+/**
+ * JSON for arrays and objects, with React elements flattened to their text so
+ * they do not serialise as `{}`.
+ */
+const stringifyStructure = (value: any): string => {
+  try {
+    return JSON.stringify(value, (_key, entry) =>
+      isValidElementLike(entry) ? extractTextFromReactNode(entry) : entry
+    );
+  } catch {
+    // Cyclic or non-serialisable value — nothing meaningful to preview.
+    return '';
+  }
 };
 
 const isValidElementLike = (obj: any): boolean =>

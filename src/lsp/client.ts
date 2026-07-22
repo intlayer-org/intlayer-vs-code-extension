@@ -6,10 +6,33 @@ import {
   type LanguageClientOptions,
   RevealOutputChannelOn,
   type ServerOptions,
+  State,
   TransportKind,
 } from "vscode-languageclient/node";
 
 let client: LanguageClient | undefined;
+
+/**
+ * Languages the server is registered for. Kept in sync with the
+ * `documentSelector` below — the extension-side providers use it to know
+ * whether the server is answering for a given document.
+ */
+export const LSP_LANGUAGES = new Set([
+  "javascript",
+  "javascriptreact",
+  "typescript",
+  "typescriptreact",
+  "vue",
+  "svelte",
+  "astro",
+  "html",
+  "yaml",
+  "markdown",
+]);
+
+/** True once the server process is up and answering requests. */
+export const isLSPClientRunning = (): boolean =>
+  client?.state === State.Running;
 
 export const startLSPClient = (context: ExtensionContext): void => {
   const serverModule = context.asAbsolutePath(join("dist", "lsp-server.js"));
@@ -25,18 +48,10 @@ export const startLSPClient = (context: ExtensionContext): void => {
   const outputChannel = window.createOutputChannel("Intlayer LSP", { log: true });
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [
-      { scheme: "file", language: "javascript" },
-      { scheme: "file", language: "javascriptreact" },
-      { scheme: "file", language: "typescript" },
-      { scheme: "file", language: "typescriptreact" },
-      { scheme: "file", language: "vue" },
-      { scheme: "file", language: "svelte" },
-      { scheme: "file", language: "astro" },
-      { scheme: "file", language: "html" },
-      { scheme: "file", language: "yaml" },
-      { scheme: "file", language: "markdown" },
-    ],
+    documentSelector: [...LSP_LANGUAGES].map((language) => ({
+      scheme: "file",
+      language,
+    })),
     synchronize: {
       fileEvents: [
         workspace.createFileSystemWatcher(

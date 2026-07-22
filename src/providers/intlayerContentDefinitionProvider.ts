@@ -10,6 +10,7 @@ import {
   Range,
   type TextDocument,
 } from "vscode";
+import { dedupeDefinitionLinks } from "../utils/dedupeDefinitionLinks";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import {
   findUsagesOfDictionary,
@@ -91,7 +92,9 @@ export const intlayerContentDefinitionProvider: DefinitionProvider = {
       }
     }
 
-    return links.length > 0 ? links : null;
+    const uniqueLinks = dedupeDefinitionLinks(links);
+
+    return uniqueLinks.length > 0 ? uniqueLinks : null;
   },
 };
 

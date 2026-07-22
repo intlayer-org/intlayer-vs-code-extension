@@ -18,39 +18,24 @@ export const extractScriptContent = (
     return extractAstroScript(text);
   }
 
-  if (extension === ".svelte") {
-    // Svelte SFCs have Svelte-specific template syntax (class:name, on:event,
-    // {#each}, etc.) that is not valid JSX and causes oxc to produce a broken
-    // AST when the template is present. Strip everything outside <script> blocks
-    // (same strategy Vue uses for <template> and <style>).
-    return extractSvelteScript(text);
-  }
-
-  // Vue: strip <template> and <style> blocks so Vue-specific syntax
-  // (@click, :class, v-for, CSS) doesn't break the JS/TS parser.
-  // Offset preservation: every char is replaced 1-for-1 with a space.
-  let processedText = stripBlockContent(text, "template");
-  processedText = stripBlockContent(processedText, "style");
-
-  // Replace <script> / </script> tags with spaces (keep the script body).
-  const scriptTagRegex = /(<script\b[^>]*>)|(<\/script>)/gi;
-  processedText = processedText.replace(scriptTagRegex, (match) =>
-    " ".repeat(match.length),
-  );
-
-  return processedText;
+  // Vue and Svelte SFCs both carry template syntax (@click, :class, v-for,
+  // {#each}, class:name) that is not valid JS/JSX and breaks the parser.
+  // Keeping only the <script> blocks avoids having to match template/style
+  // blocks — which nest (`<template v-for>`, `<template #slot>`) and so cannot
+  // be delimited by a non-greedy regex.
+  return extractScriptBlocks(text);
 };
 
 /**
- * Svelte: keep only the content of <script>...</script> blocks, replace
- * everything else (template, style, Svelte directives) with spaces.
+ * Keep only the content of <script>...</script> blocks, replacing everything
+ * else (template, style, directives) with spaces.
  *
  * Byte offsets are preserved because replacements are always 1-for-1 spaces.
  * The opening/closing <script> tags also become spaces; only the body remains.
  *
  * Offset formula: body starts at  match.index + 7 (for "<script") + attrs.length + 1 (for ">")
  */
-const extractSvelteScript = (text: string): string => {
+const extractScriptBlocks = (text: string): string => {
   let result = " ".repeat(text.length);
 
   for (const match of text.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
@@ -62,6 +47,48 @@ const extractSvelteScript = (text: string): string => {
   }
 
   return result;
+};
+
+/**
+ * Span of the outermost `<template>` block of an SFC, tracking nesting so
+ * inner `<template v-for>` / `<template #slot>` tags do not end the block.
+ *
+ * @returns Offsets of the block body (tags excluded), or null when absent.
+ */
+export const findTemplateBlock = (
+  text: string,
+): { start: number; end: number; content: string } | null => {
+  const tagRegex = /<template\b[^>]*?(\/?)>|<\/template\s*>/gi;
+
+  let depth = 0;
+  let bodyStart = -1;
+
+  for (const match of text.matchAll(tagRegex)) {
+    const isClosingTag = match[0].startsWith("</");
+    const isSelfClosing = match[1] === "/";
+
+    if (isSelfClosing) continue;
+
+    if (!isClosingTag) {
+      if (depth === 0) {
+        bodyStart = match.index + match[0].length;
+      }
+      depth++;
+      continue;
+    }
+
+    depth--;
+
+    if (depth === 0 && bodyStart !== -1) {
+      return {
+        start: bodyStart,
+        end: match.index,
+        content: text.slice(bodyStart, match.index),
+      };
+    }
+  }
+
+  return null;
 };
 
 /** Replace an entire <tagName>...</tagName> block with spaces (preserves length). */
