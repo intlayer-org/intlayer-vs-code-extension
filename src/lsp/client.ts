@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { ExtensionContext } from "vscode";
-import { window, workspace } from "vscode";
+import { type LocationLink, window, workspace } from "vscode";
 import {
   LanguageClient,
   type LanguageClientOptions,
@@ -9,6 +9,7 @@ import {
   State,
   TransportKind,
 } from "vscode-languageclient/node";
+import { getKeyOriginRange } from "../utils/getKeyOriginRange";
 
 let client: LanguageClient | undefined;
 
@@ -68,6 +69,38 @@ export const startLSPClient = (context: ExtensionContext): void => {
     outputChannel,
     // Never auto-reveal — user opens it manually when needed.
     revealOutputChannelOn: RevealOutputChannelOn.Never,
+    middleware: {
+      // The server answers `onDefinition` with plain `Location`s, which carry
+      // no origin range. Without one, VS Code derives the Ctrl+click underline
+      // from the JS/TS word pattern, which splits on `-` — so a hyphenated key
+      // like `chatbot-modal` shows up as two separate clickable tokens.
+      // Convert the results to `LocationLink`s spanning the whole key.
+      provideDefinition: async (document, position, token, next) => {
+        const result = await next(document, position, token);
+        if (!result) {
+          return result;
+        }
+
+        const originSelectionRange = getKeyOriginRange(document, position);
+        const locations = Array.isArray(result) ? result : [result];
+
+        return locations.map<LocationLink>((location) =>
+          "targetUri" in location
+            ? // Already a LocationLink — just ensure it has an origin range.
+              {
+                ...location,
+                originSelectionRange:
+                  location.originSelectionRange ?? originSelectionRange,
+              }
+            : {
+                targetUri: location.uri,
+                targetRange: location.range,
+                targetSelectionRange: location.range,
+                originSelectionRange,
+              },
+        );
+      },
+    },
   };
 
   client = new LanguageClient(

@@ -7,7 +7,7 @@ import {
   type DefinitionLink,
   type DefinitionProvider,
   type Position,
-  Range,
+  type Range,
   type TextDocument,
 } from "vscode";
 import { dedupeDefinitionLinks } from "../utils/dedupeDefinitionLinks";
@@ -16,6 +16,7 @@ import {
   findUsagesOfDictionary,
   type UsageLocation,
 } from "../utils/findUsages";
+import { getKeyOriginRange } from "../utils/getKeyOriginRange";
 
 const usageCache = new Map<
   string,
@@ -98,35 +99,6 @@ export const intlayerContentDefinitionProvider: DefinitionProvider = {
   },
 };
 
-/**
- * Determines the origin selection range at `position`.
- * Tries a quoted-string pattern first (handles hyphenated keys like
- * 'locale-switcher' without the default word splitter breaking on `-`),
- * then falls back to a bare identifier pattern for YAML bare values.
- */
-const getOriginSelectionRange = (
-  document: TextDocument,
-  position: Position,
-): Range => {
-  const quotedRange = document.getWordRangeAtPosition(
-    position,
-    /["'`][^"'`\r\n]+["'`]/,
-  );
-  if (quotedRange) {
-    // Strip the surrounding quote characters
-    return new Range(
-      quotedRange.start.translate(0, 1),
-      quotedRange.end.translate(0, -1),
-    );
-  }
-
-  // Bare values in YAML: `key: locale-switcher` — allow hyphens mid-word
-  return (
-    document.getWordRangeAtPosition(position, /\w[\w-]*/) ??
-    new Range(position, position)
-  );
-};
-
 const getTargetFromDocument = async (
   document: TextDocument,
   position: Position,
@@ -144,7 +116,7 @@ const getTargetFromDocument = async (
     return {
       dictionaryKey: clickedKey,
       clickedField: "key",
-      originSelectionRange: getOriginSelectionRange(document, position),
+      originSelectionRange: getKeyOriginRange(document, position),
     };
   }
 
@@ -155,7 +127,7 @@ const getTargetFromDocument = async (
       // Full dotted path — matches the keys of `UsageLocation.keyLocations`
       // (nested fields and flat lingui keys included).
       clickedField: contentField.fieldPath.join("."),
-      originSelectionRange: getOriginSelectionRange(document, position),
+      originSelectionRange: getKeyOriginRange(document, position),
     };
   }
 
