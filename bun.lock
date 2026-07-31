@@ -12,17 +12,17 @@
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.6",
-        "@intlayer/api": "^9.1.0",
-        "@intlayer/babel": "^9.1.0",
-        "@intlayer/cli": "^9.1.0",
-        "@intlayer/config": "^9.1.0",
-        "@intlayer/core": "^9.1.0",
-        "@intlayer/engine": "^9.1.0",
-        "@intlayer/lsp": "^9.1.0",
-        "@intlayer/svelte-compiler": "^9.1.0",
-        "@intlayer/types": "^9.1.0",
-        "@intlayer/unmerged-dictionaries-entry": "^9.1.0",
-        "@intlayer/vue-compiler": "^9.1.0",
+        "@intlayer/api": "^9.1.1",
+        "@intlayer/babel": "^9.1.1",
+        "@intlayer/cli": "^9.1.1",
+        "@intlayer/config": "^9.1.1",
+        "@intlayer/core": "^9.1.1",
+        "@intlayer/engine": "^9.1.1",
+        "@intlayer/lsp": "^9.1.1",
+        "@intlayer/svelte-compiler": "^9.1.1",
+        "@intlayer/types": "^9.1.1",
+        "@intlayer/unmerged-dictionaries-entry": "^9.1.1",
+        "@intlayer/vue-compiler": "^9.1.1",
         "@types/mocha": "^10.0.10",
         "@types/node": "26.1.2",
         "@types/vscode": "^1.96.0",
@@ -189,31 +189,31 @@
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
 
-    "@intlayer/api": ["@intlayer/api@9.1.0", "", { "dependencies": { "@intlayer/config": "9.1.0", "@intlayer/types": "9.1.0", "defu": "6.1.7" } }, "sha512-wXrk0ZT+/i4b25IBxOnAGf/QcEUxm2PLKGoHqC20CKYaI4CBhkLn6C2foJC2JDs/vcF9fLspXIkSrFn9d5mOmw=="],
+    "@intlayer/api": ["@intlayer/api@9.1.1", "", { "dependencies": { "@intlayer/config": "9.1.1", "@intlayer/types": "9.1.1", "defu": "6.1.7" } }, "sha512-GKkWsF8wz34MAIu1iGvdKU3ISdoT4Ow9htjE+Wpg7fKtMBtYlkbZzEjSW1IcGAikbb0Zf5ZWR7MGxAxR3Dau3g=="],
 
-    "@intlayer/babel": ["@intlayer/babel@9.1.0", "", { "dependencies": { "@babel/core": "8.0.1", "@babel/generator": "8.0.0", "@babel/parser": "8.0.4", "@babel/plugin-syntax-jsx": "8.0.1", "@babel/traverse": "8.0.4", "@babel/types": "8.0.4", "@intlayer/config": "9.1.0", "@intlayer/core": "9.1.0", "@intlayer/dictionaries-entry": "9.1.0", "@intlayer/engine": "9.1.0", "@intlayer/types": "9.1.0", "@intlayer/unmerged-dictionaries-entry": "9.1.0" }, "peerDependencies": { "@intlayer/svelte-compiler": "9.1.0", "@intlayer/vue-compiler": "9.1.0" }, "optionalPeers": ["@intlayer/svelte-compiler", "@intlayer/vue-compiler"] }, "sha512-28R1fUIM7o/pLeg9uw0dv2ZaPrg5d2CAhYbDLZMAIEm621czbwIrRi2g8ZCVe/g+OEplq49Miy8mY87wLnJpJg=="],
+    "@intlayer/babel": ["@intlayer/babel@9.1.1", "", { "dependencies": { "@babel/core": "8.0.1", "@babel/generator": "8.0.0", "@babel/parser": "8.0.4", "@babel/plugin-syntax-jsx": "8.0.1", "@babel/traverse": "8.0.4", "@babel/types": "8.0.4", "@intlayer/config": "9.1.1", "@intlayer/core": "9.1.1", "@intlayer/dictionaries-entry": "9.1.1", "@intlayer/engine": "9.1.1", "@intlayer/types": "9.1.1", "@intlayer/unmerged-dictionaries-entry": "9.1.1" }, "peerDependencies": { "@intlayer/svelte-compiler": "9.1.1", "@intlayer/vue-compiler": "9.1.1" }, "optionalPeers": ["@intlayer/svelte-compiler", "@intlayer/vue-compiler"] }, "sha512-I4NujSSGqgQGKI7/DVP1/hN9T2bvNRY/uHMiAGUW4x/wWFkCWYGwYimsZzjYzECryVdgMuI6hc3QqCNa1ta5rw=="],
 
-    "@intlayer/cli": ["@intlayer/cli@9.1.0", "", { "dependencies": { "@clack/prompts": "0.11.0", "@intlayer/api": "9.1.0", "@intlayer/babel": "9.1.0", "@intlayer/config": "9.1.0", "@intlayer/core": "9.1.0", "@intlayer/dictionaries-entry": "9.1.0", "@intlayer/engine": "9.1.0", "@intlayer/remote-dictionaries-entry": "9.1.0", "@intlayer/types": "9.1.0", "@intlayer/unmerged-dictionaries-entry": "9.1.0", "commander": "15.0.0", "enquirer": "2.4.1", "eventsource": "4.1.0", "fast-glob": "3.3.3" }, "peerDependencies": { "@intlayer/ai": "9.1.0" }, "optionalPeers": ["@intlayer/ai"] }, "sha512-LN1nb7bss8FLks5mw27G5aDTpsYe8mvpyTRz+G+a6M/W9xgDRDLrwDf60onaXS6a54rN1BoG+g/iXU2yxNbH6g=="],
+    "@intlayer/cli": ["@intlayer/cli@9.1.1", "", { "dependencies": { "@clack/prompts": "0.11.0", "@intlayer/api": "9.1.1", "@intlayer/babel": "9.1.1", "@intlayer/config": "9.1.1", "@intlayer/core": "9.1.1", "@intlayer/dictionaries-entry": "9.1.1", "@intlayer/engine": "9.1.1", "@intlayer/remote-dictionaries-entry": "9.1.1", "@intlayer/types": "9.1.1", "@intlayer/unmerged-dictionaries-entry": "9.1.1", "commander": "15.0.0", "enquirer": "2.4.1", "eventsource": "4.1.0", "fast-glob": "3.3.3" }, "peerDependencies": { "@intlayer/ai": "9.1.1" }, "optionalPeers": ["@intlayer/ai"] }, "sha512-KM7ELzzYVD4l3/+XZ8PL26WTmC3K6PaUE9AkXmTyZX+KZSrX9lQKAIbSEfCfNxL/Nn3iKjQxKziabWNR8rYSOA=="],
 
-    "@intlayer/config": ["@intlayer/config@9.1.0", "", { "dependencies": { "@intlayer/types": "9.1.0", "defu": "6.1.7", "dotenv": "17.4.2", "esbuild": "0.28.1", "json5": "2.2.3", "zod": "4.4.3" }, "peerDependencies": { "react": ">=16.0.0" }, "optionalPeers": ["react"] }, "sha512-9xQJvNerI+ChMU3PWykEU9KV1NvdCWVr6NnzO2iqLAs4LbfmFVwYSXvM0FGW4DTC5/JEvhGxvhoQXui6D/P8Zg=="],
+    "@intlayer/config": ["@intlayer/config@9.1.1", "", { "dependencies": { "@intlayer/types": "9.1.1", "defu": "6.1.7", "dotenv": "17.4.2", "esbuild": "0.28.1", "json5": "2.2.3", "zod": "4.4.3" }, "peerDependencies": { "react": ">=16.0.0" }, "optionalPeers": ["react"] }, "sha512-hIfpvtDDpsdHX5rJQUTsMg8VxdgivX/P866YIsg4VKVdgptzroSVSGlxAC0PUXThzKEQgCAZUz/SdRj7bDJEzQ=="],
 
-    "@intlayer/core": ["@intlayer/core@9.1.0", "", { "dependencies": { "@intlayer/api": "9.1.0", "@intlayer/config": "9.1.0", "@intlayer/dictionaries-entry": "9.1.0", "@intlayer/types": "9.1.0", "@intlayer/unmerged-dictionaries-entry": "9.1.0", "defu": "6.1.7" } }, "sha512-nMeMtRcgqaCREsrszsYDbn+DNNXRo6Cd/lStTQOAmL5L2XXJi5063w44i7jyLAa/xpQs6EJKY8Bn0NlxRyxv3w=="],
+    "@intlayer/core": ["@intlayer/core@9.1.1", "", { "dependencies": { "@intlayer/api": "9.1.1", "@intlayer/config": "9.1.1", "@intlayer/dictionaries-entry": "9.1.1", "@intlayer/types": "9.1.1", "@intlayer/unmerged-dictionaries-entry": "9.1.1", "defu": "6.1.7" } }, "sha512-R69qklsQkIyRbzKNPouDzp/T+O+MdTreDWziSOG8PsTuyBspmPGns8HGqm9vchR6XsGFWgtD0oKmxZs90hcNkA=="],
 
-    "@intlayer/dictionaries-entry": ["@intlayer/dictionaries-entry@9.1.0", "", { "dependencies": { "@intlayer/config": "9.1.0" } }, "sha512-3xU/xY34/RYfKQ5JodUAtLJuThUbntqaSr6IuCDyN8/n/Y7KpAhXtBFQEZ4iR3o3sMn8HtKIMcWLF523R5YklQ=="],
+    "@intlayer/dictionaries-entry": ["@intlayer/dictionaries-entry@9.1.1", "", { "dependencies": { "@intlayer/config": "9.1.1" } }, "sha512-y1yQoNwwGIXWxuEpMjPiNf++Ef9sCycBdI+hbygkX3S7I8vvpXnqtKzHqtODMaul4kfXlpmF5dDT8/ougTDo/g=="],
 
-    "@intlayer/engine": ["@intlayer/engine@9.1.0", "", { "dependencies": { "@intlayer/api": "9.1.0", "@intlayer/config": "9.1.0", "@intlayer/core": "9.1.0", "@intlayer/dictionaries-entry": "9.1.0", "@intlayer/remote-dictionaries-entry": "9.1.0", "@intlayer/types": "9.1.0", "@intlayer/unmerged-dictionaries-entry": "9.1.0", "@parcel/watcher": "2.6.0", "defu": "6.1.7", "fast-glob": "3.3.3", "recast": "0.23.14", "simple-git": "3.36.0", "zod-to-ts": "2.1.0" }, "peerDependencies": { "@intlayer/babel": "9.1.0" }, "optionalPeers": ["@intlayer/babel"] }, "sha512-4bOc+ZcarB5gVolSGqprHnlcoybKJ8phiRadwjVTH4JHm5x3Fqiz4vf+XKfwyg9FHX/IANWfPJLXXQbmR6lgAw=="],
+    "@intlayer/engine": ["@intlayer/engine@9.1.1", "", { "dependencies": { "@intlayer/api": "9.1.1", "@intlayer/config": "9.1.1", "@intlayer/core": "9.1.1", "@intlayer/dictionaries-entry": "9.1.1", "@intlayer/remote-dictionaries-entry": "9.1.1", "@intlayer/types": "9.1.1", "@intlayer/unmerged-dictionaries-entry": "9.1.1", "@parcel/watcher": "2.6.0", "defu": "6.1.7", "fast-glob": "3.3.3", "recast": "0.23.14", "simple-git": "3.36.0", "zod-to-ts": "2.1.0" }, "peerDependencies": { "@intlayer/babel": "9.1.1" }, "optionalPeers": ["@intlayer/babel"] }, "sha512-ixCzBKfMa4aoto/u9XP+APZttlshzOpv4gxqJci2R+N+JwKTmFcyC/fUBbOvbCOIRwmtE1KHvHny1f6o4BU/Zw=="],
 
-    "@intlayer/lsp": ["@intlayer/lsp@9.1.0", "", { "dependencies": { "@intlayer/config": "9.1.0", "@intlayer/engine": "9.1.0", "@intlayer/types": "9.1.0", "@intlayer/unmerged-dictionaries-entry": "9.1.0", "oxc-parser": "0.142.0", "vscode-languageserver": "10.1.0", "vscode-languageserver-textdocument": "1.0.12" }, "bin": { "intlayer-lsp": "dist/esm/index.mjs" } }, "sha512-lTaxZdo3mkRyLKX14ixPi3QmyBJM8VMhoMFSi1SDrjjnPX2PZDHBN84CjsiKzrct9XsJsof1RBvJGqyfpPT9uw=="],
+    "@intlayer/lsp": ["@intlayer/lsp@9.1.1", "", { "dependencies": { "@intlayer/config": "9.1.1", "@intlayer/engine": "9.1.1", "@intlayer/types": "9.1.1", "@intlayer/unmerged-dictionaries-entry": "9.1.1", "oxc-parser": "0.142.0", "vscode-languageserver": "10.1.0", "vscode-languageserver-textdocument": "1.0.12" }, "bin": { "intlayer-lsp": "dist/esm/index.mjs" } }, "sha512-tTpCEJqbf2CJMFpYzWQMAlyK/zb10xH9t7JeJzWyXSDw6LIdgGQ3ZxVsF5UtDHgbEpncB8RAqfaTE2Hi8IeDBA=="],
 
-    "@intlayer/remote-dictionaries-entry": ["@intlayer/remote-dictionaries-entry@9.1.0", "", { "dependencies": { "@intlayer/config": "9.1.0" } }, "sha512-q0k2n9G8rIZFw1v5MJknNvBroPV2gGAik1rQh+E5cDtvbJPaZOw1IOB96cyto2EEW0gtvloc5AysQodRYmwy/A=="],
+    "@intlayer/remote-dictionaries-entry": ["@intlayer/remote-dictionaries-entry@9.1.1", "", { "dependencies": { "@intlayer/config": "9.1.1" } }, "sha512-Tk8LZ1yO7E1YH549Zl4bdj6AJ9RzsInQxblRTPl1b8V1lloKkTLiKHu4R6M8ouIcqMvR8BB4kTfrrOv0xUmbzQ=="],
 
-    "@intlayer/svelte-compiler": ["@intlayer/svelte-compiler@9.1.0", "", { "dependencies": { "@babel/core": "8.0.1", "@intlayer/types": "9.1.0", "fast-glob": "3.3.3", "magic-string": "1.1.0" }, "peerDependencies": { "svelte": ">=4.0.0 || >=5.0.0", "vite": ">=4.0.0" }, "optionalPeers": ["svelte"] }, "sha512-cwsvFpFpeaUwVg4BGyxj20o3512dGw/gXB50XYDiYV9xLmgRReVQlGk5lj4UOJo0WNk4bk+ZLVMHkLcc5OpGSA=="],
+    "@intlayer/svelte-compiler": ["@intlayer/svelte-compiler@9.1.1", "", { "dependencies": { "@babel/core": "8.0.1", "@intlayer/types": "9.1.1", "fast-glob": "3.3.3", "magic-string": "1.1.0" }, "peerDependencies": { "svelte": ">=4.0.0 || >=5.0.0", "vite": ">=4.0.0" }, "optionalPeers": ["svelte"] }, "sha512-dqZVDk05wdZhRngQHqeflMRQnWxNj1XgMfjRBgu70TEBoqay/y9Obl9veqiurjZIw+76F7ihau6W8d4qxSNeDA=="],
 
-    "@intlayer/types": ["@intlayer/types@9.1.0", "", {}, "sha512-2C6nYtKtFVl5u/bze/h2uJsY7Q1dAem109Xxfd/TAlwxZRv0gNc7GaHkDgrOQbh7xFpR5tCySkb6a5gP/MEl+Q=="],
+    "@intlayer/types": ["@intlayer/types@9.1.1", "", {}, "sha512-xZryIPyZCugv9E3e7hsn9ZS9lGyiRUbncAV7sQODdrjA/ko3HZQqrJI4fweyVhvT5mJJfwibWHB959FkfiHdIw=="],
 
-    "@intlayer/unmerged-dictionaries-entry": ["@intlayer/unmerged-dictionaries-entry@9.1.0", "", { "dependencies": { "@intlayer/config": "9.1.0" } }, "sha512-GRH47BTcqYdPONd1nqMvUA2ojOIPMh1QiWIuDVBy1LSVXTpO8sGfnMl+TcOQ7g1Ty407e0iqUPQe/a3pYKELLw=="],
+    "@intlayer/unmerged-dictionaries-entry": ["@intlayer/unmerged-dictionaries-entry@9.1.1", "", { "dependencies": { "@intlayer/config": "9.1.1" } }, "sha512-b/KumDLgAau599JzQzV6yGWsIT78EQ8bRV9GGz8mvfcphL4Vxns9m4d9R/v6yDYSu4Fr8Dm/H9yjZ4w7DosSaA=="],
 
-    "@intlayer/vue-compiler": ["@intlayer/vue-compiler@9.1.0", "", { "dependencies": { "@babel/core": "8.0.1", "@intlayer/config": "9.1.0", "@intlayer/types": "9.1.0", "@vue/compiler-sfc": ">=3.0.0", "fast-glob": "3.3.3", "magic-string": "1.1.0" }, "peerDependencies": { "vite": ">=4.0.0" } }, "sha512-lVBHhjRL9w+sdyfQBtZxCHGHlmIPQuwrUZyy17nHiDksm6HtulRblGeXCKBKsYMdnOaeEtf/jxE030bACh4+ug=="],
+    "@intlayer/vue-compiler": ["@intlayer/vue-compiler@9.1.1", "", { "dependencies": { "@babel/core": "8.0.1", "@intlayer/config": "9.1.1", "@intlayer/types": "9.1.1", "@vue/compiler-sfc": ">=3.0.0", "fast-glob": "3.3.3", "magic-string": "1.1.0" }, "peerDependencies": { "vite": ">=4.0.0" } }, "sha512-yN0x4+jpJOhVEIvC90ag6AdM5xXkblCX9bQzPM5j1ezPvp7fST1TEi2A1cj1a/FrLcwK6HZ5feHL4Ng07RSW8Q=="],
 
     "@isaacs/cliui": ["@isaacs/cliui@8.0.2", "", { "dependencies": { "string-width": "^5.1.2", "string-width-cjs": "npm:string-width@^4.2.0", "strip-ansi": "^7.0.1", "strip-ansi-cjs": "npm:strip-ansi@^6.0.1", "wrap-ansi": "^8.1.0", "wrap-ansi-cjs": "npm:wrap-ansi@^7.0.0" } }, "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA=="],
 
