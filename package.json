@@ -12,7 +12,7 @@
     "internationalization",
     "vscode"
   ],
-  "version": "9.1.1",
+  "version": "9.1.2",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -304,18 +304,18 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.6",
-    "@intlayer/api": "^9.1.1",
-    "@intlayer/babel": "^9.1.1",
-    "@intlayer/engine": "^9.1.1",
-    "@intlayer/cli": "^9.1.1",
-    "@intlayer/config": "^9.1.1",
-    "@intlayer/core": "^9.1.1",
-    "@intlayer/lsp": "^9.1.1",
-    "@intlayer/svelte-compiler": "^9.1.1",
-    "@intlayer/types": "^9.1.1",
-    "@intlayer/unmerged-dictionaries-entry": "^9.1.1",
-    "@intlayer/vue-compiler": "^9.1.1",
+    "@biomejs/biome": "2.5.7",
+    "@intlayer/api": "^9.1.2",
+    "@intlayer/babel": "^9.1.2",
+    "@intlayer/engine": "^9.1.2",
+    "@intlayer/cli": "^9.1.2",
+    "@intlayer/config": "^9.1.2",
+    "@intlayer/core": "^9.1.2",
+    "@intlayer/lsp": "^9.1.2",
+    "@intlayer/svelte-compiler": "^9.1.2",
+    "@intlayer/types": "^9.1.2",
+    "@intlayer/unmerged-dictionaries-entry": "^9.1.2",
+    "@intlayer/vue-compiler": "^9.1.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "26.1.2",
     "@types/vscode": "^1.96.0",
@@ -335,16 +335,16 @@
   "dependencies": {
     "esbuild": "0.28.1",
     "fast-glob": "^3.3.3",
-    "oxc-parser": "^0.142.0",
+    "oxc-parser": "^0.143.0",
     "picocolors": "^1.1.1"
   },
   "optionalDependencies": {
-    "@oxc-parser/binding-darwin-arm64": "0.142.0",
-    "@oxc-parser/binding-darwin-x64": "0.142.0",
-    "@oxc-parser/binding-linux-x64-gnu": "0.142.0",
-    "@oxc-parser/binding-linux-x64-musl": "0.142.0",
-    "@oxc-parser/binding-linux-arm64-gnu": "0.142.0",
-    "@oxc-parser/binding-win32-x64-msvc": "0.142.0",
-    "@oxc-parser/binding-win32-arm64-msvc": "0.142.0"
+    "@oxc-parser/binding-darwin-arm64": "0.143.0",
+    "@oxc-parser/binding-darwin-x64": "0.143.0",
+    "@oxc-parser/binding-linux-x64-gnu": "0.143.0",
+    "@oxc-parser/binding-linux-x64-musl": "0.143.0",
+    "@oxc-parser/binding-linux-arm64-gnu": "0.143.0",
+    "@oxc-parser/binding-win32-x64-msvc": "0.143.0",
+    "@oxc-parser/binding-win32-arm64-msvc": "0.143.0"
   }
 }
