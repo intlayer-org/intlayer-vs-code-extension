@@ -1,6 +1,10 @@
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import {
+  DICTIONARIES_NOT_BUILT_NOTIFICATION,
+  type DictionariesNotBuiltParams,
+} from "@intlayer/lsp/utils";
 import type { ExtensionContext } from "vscode";
-import { type LocationLink, window, workspace } from "vscode";
+import { type LocationLink, ProgressLocation, window, workspace } from "vscode";
 import {
   LanguageClient,
   type LanguageClientOptions,
@@ -9,9 +13,45 @@ import {
   State,
   TransportKind,
 } from "vscode-languageclient/node";
+import { buildProjectDictionaries } from "../commands/buildAllCommand";
 import { getKeyOriginRange } from "../utils/getKeyOriginRange";
+import { prefix } from "../utils/logFunctions";
 
 let client: LanguageClient | undefined;
+
+/**
+ * Projects already built in response to the server, so a burst of notifications
+ * (or a project that genuinely declares no content) cannot loop the build.
+ */
+const autoBuiltProjects = new Set<string>();
+
+/**
+ * Build the dictionaries of a project the server reported as unbuilt.
+ *
+ * Unmerged dictionaries are only written by a dev build, so a project last
+ * built for production has none and the server cannot resolve any key. Running
+ * the build here restores them; the resulting files trip the server's watcher,
+ * which re-publishes diagnostics on its own.
+ */
+const buildUnbuiltProject = async ({
+  baseDir,
+}: DictionariesNotBuiltParams): Promise<void> => {
+  if (autoBuiltProjects.has(baseDir)) {
+    return;
+  }
+
+  autoBuiltProjects.add(baseDir);
+
+  await window.withProgress(
+    {
+      location: ProgressLocation.Window,
+      title: `${prefix}Building dictionaries in ${basename(baseDir)}...`,
+    },
+    async () => {
+      await buildProjectDictionaries(baseDir, { silent: true });
+    },
+  );
+};
 
 /**
  * Languages the server is registered for. Kept in sync with the
@@ -108,6 +148,16 @@ export const startLSPClient = (context: ExtensionContext): void => {
     "Intlayer Language Server",
     serverOptions,
     clientOptions,
+  );
+
+  // Registered before `start()` so the handler is attached to the connection
+  // as it opens — the server may report an unbuilt project on the very first
+  // document it sees.
+  context.subscriptions.push(
+    client.onNotification(
+      DICTIONARIES_NOT_BUILT_NOTIFICATION,
+      buildUnbuiltProject,
+    ),
   );
 
   client.start();
