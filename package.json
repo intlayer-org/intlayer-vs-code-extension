@@ -12,7 +12,7 @@
     "internationalization",
     "vscode"
   ],
-  "version": "9.1.3",
+  "version": "9.3.1",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -39,7 +39,7 @@
     "Formatters"
   ],
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.96.1"
   },
   "publisher": "intlayer",
   "main": "./dist/extension.js",
@@ -305,19 +305,19 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
-    "@intlayer/api": "^9.1.3",
-    "@intlayer/babel": "^9.1.3",
-    "@intlayer/engine": "^9.1.3",
-    "@intlayer/cli": "^9.1.3",
-    "@intlayer/config": "^9.1.3",
-    "@intlayer/core": "^9.1.3",
-    "@intlayer/lsp": "^9.1.3",
-    "@intlayer/svelte-compiler": "^9.1.3",
-    "@intlayer/types": "^9.1.3",
-    "@intlayer/unmerged-dictionaries-entry": "^9.1.3",
-    "@intlayer/vue-compiler": "^9.1.3",
+    "@intlayer/api": "^9.3.1",
+    "@intlayer/babel": "^9.3.1",
+    "@intlayer/engine": "^9.3.1",
+    "@intlayer/cli": "^9.3.1",
+    "@intlayer/config": "^9.3.1",
+    "@intlayer/core": "^9.3.1",
+    "@intlayer/lsp": "^9.3.1",
+    "@intlayer/svelte-compiler": "^9.3.1",
+    "@intlayer/types": "^9.3.1",
+    "@intlayer/unmerged-dictionaries-entry": "^9.3.1",
+    "@intlayer/vue-compiler": "^9.3.1",
     "@types/mocha": "^10.0.10",
-    "@types/node": "26.1.2",
+    "@types/node": "26.2.0",
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.0",
@@ -333,7 +333,7 @@
     "vscode-languageclient": "^10.0.0"
   },
   "dependencies": {
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "fast-glob": "^3.3.3",
     "oxc-parser": "^0.143.0",
     "picocolors": "^1.1.1"
