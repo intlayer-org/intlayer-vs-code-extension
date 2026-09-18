@@ -304,7 +304,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.12",
+    "@biomejs/biome": "2.5.14",
     "@intlayer/api": "^9.5.4",
     "@intlayer/babel": "^9.5.4",
     "@intlayer/engine": "^9.5.4",
@@ -316,14 +316,14 @@
     "@intlayer/types": "^9.5.4",
     "@intlayer/vue-compiler": "^9.5.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "26.5.0",
+    "@types/node": "26.6.1",
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "bun": "1.4.2",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.0",
     "fuse.js": "^7.3.0",
     "svelte": "^5.56.1",
     "tsdown": "0.23.0",
@@ -334,16 +334,16 @@
   "dependencies": {
     "esbuild": "0.28.2",
     "fast-glob": "^3.3.3",
-    "oxc-parser": "^0.149.0",
+    "oxc-parser": "^0.150.0",
     "picocolors": "^1.1.1"
   },
   "optionalDependencies": {
-    "@oxc-parser/binding-darwin-arm64": "0.149.0",
-    "@oxc-parser/binding-darwin-x64": "0.149.0",
-    "@oxc-parser/binding-linux-x64-gnu": "0.149.0",
-    "@oxc-parser/binding-linux-x64-musl": "0.149.0",
-    "@oxc-parser/binding-linux-arm64-gnu": "0.149.0",
-    "@oxc-parser/binding-win32-x64-msvc": "0.149.0",
-    "@oxc-parser/binding-win32-arm64-msvc": "0.149.0"
+    "@oxc-parser/binding-darwin-arm64": "0.150.0",
+    "@oxc-parser/binding-darwin-x64": "0.150.0",
+    "@oxc-parser/binding-linux-x64-gnu": "0.150.0",
+    "@oxc-parser/binding-linux-x64-musl": "0.150.0",
+    "@oxc-parser/binding-linux-arm64-gnu": "0.150.0",
+    "@oxc-parser/binding-win32-x64-msvc": "0.150.0",
+    "@oxc-parser/binding-win32-arm64-msvc": "0.150.0"
   }
 }
