@@ -12,7 +12,7 @@
     "internationalization",
     "vscode"
   ],
-  "version": "9.4.3",
+  "version": "9.5.4",
   "icon": "icon.png",
   "homepage": "https://intlayer.org",
   "bugs": {
@@ -304,30 +304,29 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.11",
-    "@intlayer/api": "^9.4.3",
-    "@intlayer/babel": "^9.4.3",
-    "@intlayer/engine": "^9.4.3",
-    "@intlayer/cli": "^9.4.3",
-    "@intlayer/config": "^9.4.3",
-    "@intlayer/core": "^9.4.3",
-    "@intlayer/lsp": "^9.4.3",
-    "@intlayer/svelte-compiler": "^9.4.3",
-    "@intlayer/types": "^9.4.3",
-    "@intlayer/unmerged-dictionaries-entry": "^9.4.3",
-    "@intlayer/vue-compiler": "^9.4.3",
+    "@biomejs/biome": "2.5.12",
+    "@intlayer/api": "^9.5.4",
+    "@intlayer/babel": "^9.5.4",
+    "@intlayer/engine": "^9.5.4",
+    "@intlayer/cli": "^9.5.4",
+    "@intlayer/config": "^9.5.4",
+    "@intlayer/core": "^9.5.4",
+    "@intlayer/lsp": "^9.5.4",
+    "@intlayer/svelte-compiler": "^9.5.4",
+    "@intlayer/types": "^9.5.4",
+    "@intlayer/vue-compiler": "^9.5.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "26.4.1",
+    "@types/node": "26.5.0",
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
-    "bun": "1.4.0",
+    "bun": "1.4.2",
     "dotenv": "^17.4.2",
     "fuse.js": "^7.3.0",
     "svelte": "^5.56.1",
-    "tsdown": "0.22.14",
+    "tsdown": "0.23.0",
     "typescript": "^7.0.2",
     "vsce": "^1.96.0",
     "vscode-languageclient": "^10.0.0"
@@ -335,16 +334,16 @@
   "dependencies": {
     "esbuild": "0.28.2",
     "fast-glob": "^3.3.3",
-    "oxc-parser": "^0.148.0",
+    "oxc-parser": "^0.149.0",
     "picocolors": "^1.1.1"
   },
   "optionalDependencies": {
-    "@oxc-parser/binding-darwin-arm64": "0.148.0",
-    "@oxc-parser/binding-darwin-x64": "0.148.0",
-    "@oxc-parser/binding-linux-x64-gnu": "0.148.0",
-    "@oxc-parser/binding-linux-x64-musl": "0.148.0",
-    "@oxc-parser/binding-linux-arm64-gnu": "0.148.0",
-    "@oxc-parser/binding-win32-x64-msvc": "0.148.0",
-    "@oxc-parser/binding-win32-arm64-msvc": "0.148.0"
+    "@oxc-parser/binding-darwin-arm64": "0.149.0",
+    "@oxc-parser/binding-darwin-x64": "0.149.0",
+    "@oxc-parser/binding-linux-x64-gnu": "0.149.0",
+    "@oxc-parser/binding-linux-x64-musl": "0.149.0",
+    "@oxc-parser/binding-linux-arm64-gnu": "0.149.0",
+    "@oxc-parser/binding-win32-x64-msvc": "0.149.0",
+    "@oxc-parser/binding-win32-arm64-msvc": "0.149.0"
   }
 }

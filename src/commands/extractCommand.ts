@@ -8,7 +8,7 @@ import {
   type GetConfigurationOptions,
   getConfiguration,
 } from "@intlayer/config/node";
-import { getUnmergedDictionaries } from "@intlayer/unmerged-dictionaries-entry";
+import { getUnmergedDictionaries } from "@intlayer/dictionaries-entry/unmerged";
 import { RelativePattern, Uri, window, workspace } from "vscode";
 import { findAllProjectRoots, findProjectRoot } from "../utils/findProjectRoot";
 import {
