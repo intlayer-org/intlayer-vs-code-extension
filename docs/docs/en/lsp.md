@@ -36,7 +36,7 @@ VS Code extension (client)
 @intlayer/lsp (server process)
         │
         ├─ reads workspace config  (@intlayer/config)
-        ├─ reads unmerged dictionaries  (@intlayer/unmerged-dictionaries-entry)
+        ├─ reads unmerged dictionaries  (@intlayer/dictionaries-entry/unmerged)
         └─ handles textDocument/definition requests
 ```
 
