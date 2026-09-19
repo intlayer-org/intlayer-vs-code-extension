@@ -37,6 +37,38 @@ async function copyPackageAssets(
 }
 
 /**
+ * VS Code platform target (`vsce package --target <target>`), e.g. `linux-x64`,
+ * `alpine-arm64`, `darwin-arm64`, `win32-x64`.
+ *
+ * When set, only the native bindings matching that target are copied into
+ * dist/node_modules so each platform-specific VSIX stays small. When unset
+ * (local builds), every installed binding is copied — which, with a default
+ * `bun install`, is just the host platform's.
+ */
+const vsceTarget = process.env.VSCE_TARGET;
+
+function bindingMatchesTarget(binding: string): boolean {
+  if (!vsceTarget) return true;
+
+  const [targetOs, targetArch] = vsceTarget.split("-");
+  // VS Code calls musl-based Linux "alpine"; node packages call it "linux" + "musl"
+  const nodeOs = targetOs === "alpine" ? "linux" : targetOs;
+
+  if (!binding.includes(`${nodeOs}-${targetArch}`)) return false;
+
+  // oxc-parser ships separate gnu/musl builds; esbuild ships a single
+  // statically linked linux binary with neither suffix.
+  if (nodeOs === "linux") {
+    const isMusl = binding.includes("musl");
+    const isGnu = binding.includes("gnu");
+    if (targetOs === "alpine" && isGnu) return false;
+    if (targetOs === "linux" && isMusl) return false;
+  }
+
+  return true;
+}
+
+/**
  * Copy a package (plus the installed subset of its platform-specific
  * optional dependencies) into dist/node_modules.
  *
@@ -58,13 +90,18 @@ async function copyRuntimeDependency(pkgName: string, destRoot: string) {
   });
   console.log(`✓ Copied runtime dep: ${pkgName} -> dist/node_modules`);
 
-  // Native bindings live in sibling optional packages; only the ones matching
-  // the current platform are installed.
+  // Native bindings live in sibling optional packages. A default `bun install`
+  // only installs the host platform's; CI installs them all
+  // (`bun install --os='*' --cpu='*'`) and filters per VSCE_TARGET.
   const { optionalDependencies = {} } = require(pkgJsonPath);
+  let copied = 0;
 
   for (const binding of Object.keys(optionalDependencies)) {
+    if (!bindingMatchesTarget(binding)) continue;
+
     const bindingRoot = resolve("node_modules", binding);
     if (!existsSync(bindingRoot)) continue;
+    copied++;
 
     await mkdir(dirname(resolve(destRoot, binding)), { recursive: true });
     await cp(bindingRoot, resolve(destRoot, binding), {
@@ -72,6 +109,13 @@ async function copyRuntimeDependency(pkgName: string, destRoot: string) {
       dereference: true,
     });
     console.log(`✓ Copied runtime dep: ${binding} -> dist/node_modules`);
+  }
+
+  if (vsceTarget && copied === 0) {
+    throw new Error(
+      `No native binding of ${pkgName} found for target ${vsceTarget}. ` +
+        `Run \`bun install --os='*' --cpu='*'\` first.`,
+    );
   }
 }
 

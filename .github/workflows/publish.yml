@@ -1,0 +1,147 @@
+name: Publish extension
+
+# Publishes platform-specific VSIX packages to the VS Code Marketplace and
+# Open VSX.
+#
+# Triggered by pushing a stable version tag (e.g. `v9.5.4`) whose version
+# matches package.json, or manually from the Actions tab.
+#
+# Required repository secrets:
+#   VS_CODE_MARKEPLACE_ACCESS_TOKEN
+#     Azure DevOps personal access token with the "Marketplace > Manage"
+#     scope, for the `intlayer` publisher.
+#   OPEN_VSX_ACCESS_TOKEN
+#     open-vsx.org access token for the `intlayer` namespace.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Only build the VSIX packages, do not publish"
+        type: boolean
+        default: false
+      pre-release:
+        description: "Publish as a pre-release"
+        type: boolean
+        default: false
+
+env:
+  BUN_VERSION: 1.4.2 # keep in sync with devDependencies.bun
+
+jobs:
+  package:
+    name: Package (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - win32-x64
+          - win32-arm64
+          - linux-x64
+          - linux-arm64
+          - alpine-x64
+          - alpine-arm64
+          - darwin-x64
+          - darwin-arm64
+    env:
+      # Read by tsdown.config.ts to ship only this target's native bindings
+      VSCE_TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches package.json version
+        if: github.event_name == 'push'
+        run: |
+          version=$(jq -r .version package.json)
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${version}"
+            exit 1
+          fi
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # Install native bindings for every platform, not just the runner's, so
+      # each matrix job can pick the ones matching its VSCE_TARGET.
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --os='*' --cpu='*'
+
+      # `vsce package` runs the `vscode:prepublish` script (tsdown compile)
+      # before packaging.
+      - name: Package
+        run: >
+          node_modules/.bin/vsce package
+          --no-dependencies
+          --target ${{ matrix.target }}
+          ${{ inputs.pre-release && '--pre-release' || '' }}
+          --out intlayer-vs-code-extension-${{ matrix.target }}.vsix
+
+      - name: Check shipped native bindings
+        run: |
+          echo "Native bindings in VSIX:"
+          unzip -l intlayer-vs-code-extension-${{ matrix.target }}.vsix \
+            | awk '{print $4}' | grep -E 'node_modules/@(esbuild|oxc-parser)/' \
+            | cut -d/ -f4-5 | sort -u
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ matrix.target }}
+          path: intlayer-vs-code-extension-${{ matrix.target }}.vsix
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: package
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # attach the VSIX files to the GitHub release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vsix-*
+          merge-multiple: true
+          path: vsix
+
+      - name: List packages
+        run: ls -la vsix
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VS_CODE_MARKEPLACE_ACCESS_TOKEN }}
+        run: >
+          node_modules/.bin/vsce publish
+          --skip-duplicate
+          ${{ inputs.pre-release && '--pre-release' || '' }}
+          --packagePath vsix/*.vsix
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OPEN_VSX_ACCESS_TOKEN }}
+        run: >
+          node_modules/.bin/ovsx publish
+          --skip-duplicate
+          ${{ inputs.pre-release && '--pre-release' || '' }}
+          --packagePath vsix/*.vsix
+
+      - name: Attach packages to GitHub release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vsix/*.vsix
+          generate_release_notes: true
+          prerelease: ${{ inputs.pre-release || false }}
