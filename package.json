@@ -1,6 +1,6 @@
 {
   "name": "intlayer-vs-code-extension",
-  "displayName": "Intlayer",
+  "displayName": "Intlayer (i18n)",
   "description": "Intlayer official VSCode extension. Helps you navigate to content files using useIntlayer keys. It also provides commands, as to create dictionary files.",
   "private": false,
   "keywords": [
