@@ -1,25 +1,27 @@
-import { existsSync } from "node:fs";
-import { stat } from "node:fs/promises";
-import { join } from "node:path";
 import {
   buildDictionary,
   createTypes,
   loadLocalDictionaries,
 } from "@intlayer/engine/build";
 import { getConfiguration } from "@intlayer/config/node";
+import { getContentWatcherOwner } from "@intlayer/engine/utils";
 import { type Disposable, window, workspace } from "vscode";
 import { findProjectRoot } from "../utils/findProjectRoot";
 import { getConfigurationOptions } from "../utils/getConfiguration";
 import { prefix } from "../utils/logFunctions";
 import { FILE_EXTENSIONS } from "@intlayer/config/defaultValues";
 
-const REBUILD_DELAY_MS = 5_000;
+/** Debounces bursts of saves on the same file (e.g. format on save). */
+const REBUILD_DELAY_MS = 300;
 
 /**
- * Watches content declaration file saves and rebuilds the dictionary if the
- * watcher (chokidar / app dev server) did not already do it within 5 seconds.
+ * Watches content declaration file saves and rebuilds the dictionary when no
+ * other Intlayer watcher owns the project.
  *
- * This keeps dictionaries up to date when the watcher is not running.
+ * `intlayer watch` and the Next.js dev server take the content watcher lock
+ * (`.intlayer/intlayer-content-watcher.lock`) while they run. When a live
+ * process holds it, that process rebuilds on its own, so the extension stands
+ * down. This keeps dictionaries up to date when no watcher is running.
  */
 export const contentFileSaveWatcher = (): Disposable => {
   const pendingTimers = new Map<string, NodeJS.Timeout>();
@@ -36,8 +38,6 @@ export const contentFileSaveWatcher = (): Disposable => {
 
     if (!fileExtensions.some((ext) => filePath.endsWith(ext))) return;
 
-    const saveTime = Date.now();
-
     const existing = pendingTimers.get(filePath);
     if (existing) clearTimeout(existing);
 
@@ -45,33 +45,16 @@ export const contentFileSaveWatcher = (): Disposable => {
       pendingTimers.delete(filePath);
 
       try {
+        // Checked at rebuild time rather than on save: a watcher may have
+        // started or stopped in between. Stale locks from dead processes are
+        // reclaimed by `getContentWatcherOwner` and read as "no owner".
+        if (await getContentWatcherOwner(config)) return;
+
         const localeDictionaries = await loadLocalDictionaries(
           filePath,
           config,
         );
         if (!localeDictionaries.length) return;
-
-        // Check whether any output dictionary file was not updated since the save.
-        // If the chokidar watcher or dev server already handled the save, the JSON
-        // mtime will be >= saveTime and we skip the rebuild.
-        let needsRebuild = false;
-        for (const localeDictionary of localeDictionaries) {
-          const dictPath = join(
-            config.system.dictionariesDir,
-            `${localeDictionary.key}.json`,
-          );
-          if (!existsSync(dictPath)) {
-            needsRebuild = true;
-            break;
-          }
-          const { mtimeMs } = await stat(dictPath);
-          if (mtimeMs < saveTime) {
-            needsRebuild = true;
-            break;
-          }
-        }
-
-        if (!needsRebuild) return;
 
         const dictionariesOutput = await buildDictionary(
           localeDictionaries,
