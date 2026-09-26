@@ -1,7 +1,7 @@
 {
   "name": "intlayer-vs-code-extension",
   "displayName": "Intlayer (i18n)",
-  "description": "Intlayer official VSCode extension. Helps you navigate to content files using useIntlayer keys. It also provides commands, as to create dictionary files.",
+  "description": "Intlayer official VSCode extension. Go to definition, hover and unused-key detection for useIntlayer keys and compat libraries (i18next, react-i18next, next-i18next, next-intl, react-intl, vue-i18n, Lingui). It also provides commands, as to create dictionary files.",
   "private": false,
   "keywords": [
     "intlayer",
@@ -10,7 +10,23 @@
     "multilingual",
     "i18n",
     "internationalization",
-    "vscode"
+    "localization",
+    "l10n",
+    "translation",
+    "vscode",
+    "react",
+    "nextjs",
+    "vue",
+    "svelte",
+    "i18next",
+    "react-i18next",
+    "next-i18next",
+    "next-intl",
+    "use-intl",
+    "react-intl",
+    "formatjs",
+    "vue-i18n",
+    "lingui"
   ],
   "version": "9.5.10",
   "icon": "icon.png",

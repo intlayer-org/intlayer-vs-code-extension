@@ -30,7 +30,7 @@
   </a>
 </p>
 
-**Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React and Vue projects. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
+**Intlayer** enhances your VS Code experience by enabling **Go to Definition** support for `useIntlayer` keys in React, Next.js, Vue and Svelte projects, as well as for keys used through the Intlayer compat packages for **i18next**, **react-i18next**, **next-i18next**, **next-intl**, **use-intl**, **react-intl**, **vue-i18n** and **Lingui**. With this extension, you can **command-click** (`Ctrl+Click` on Windows/Linux) on a `useIntlayer` key and instantly navigate to the corresponding content file.
 
 ## Overview
 
@@ -70,6 +70,21 @@ Extension link: [https://marketplace.visualstudio.com/items?itemName=Intlayer.in
 ![Intlayer Tab (Activity Bar)](https://github.com/aymericzip/intlayer-vs-code-extension/blob/master/assets/vscode_extention_search_dictionary.gif?raw=true)
 
 - **Intlayer Tab (Activity Bar)** – Browse and search dictionaries from a dedicated side tab with toolbar and context actions (Build, Pull, Push, Fill, Refresh, Test, Create File).
+
+## Compatible i18n libraries
+
+Already using another i18n library? Intlayer provides drop-in compat packages, and the extension understands their translation calls the same way it understands `useIntlayer`: navigation to the content file, hover previews and unused-key detection.
+
+| Library                                                                     | Intlayer compat package   | Supported forms                                                             |
+| --------------------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------- |
+| [i18next](https://www.i18next.com)                                          | `@intlayer/i18next`       | `i18next.getFixedT(lng, 'ns')`, `t('key')`                                  |
+| [react-i18next](https://react.i18next.com)                                  | `@intlayer/react-i18next` | `const { t } = useTranslation('ns')`, `t('key')`, `<Trans i18nKey="key" />` |
+| [next-i18next](https://github.com/i18next/next-i18next)                     | `@intlayer/next-i18next`  | `const { t } = useTranslation('ns')`, `t('key')`, `<Trans i18nKey="key" />` |
+| [next-intl](https://next-intl.dev)                                          | `@intlayer/next-intl`     | `useTranslations('ns')`, `await getTranslations('ns')`, `t('key')`          |
+| [use-intl](https://github.com/amannn/next-intl/tree/main/packages/use-intl) | `@intlayer/use-intl`      | `useTranslations('ns')`, `createTranslator({ namespace })`, `t('key')`      |
+| [react-intl (FormatJS)](https://formatjs.github.io)                         | `@intlayer/react-intl`    | `intl.formatMessage({ id })`, `<FormattedMessage id="key" />`               |
+| [vue-i18n](https://vue-i18n.intlify.dev)                                    | `@intlayer/vue-i18n`      | `const { t } = useI18n()`, `t('key')`, `{{ t('key') }}` in templates        |
+| [Lingui](https://lingui.dev)                                                | `@intlayer/lingui`        | `useLingui()`, `` t`…` ``, `i18n._('id')`, `<Trans id="key" />`             |
 
 ## Usage
 
